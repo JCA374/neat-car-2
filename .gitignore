@@ -6,8 +6,10 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Outputs/checkpoints/logs/plots
-outputs/
+# Outputs/checkpoints/logs/plots (but keep analysis/)
+outputs/checkpoints/
+outputs/logs/
+outputs/plots/
 
 # Editor/OS cruft
 .DS_Store
