@@ -186,7 +186,7 @@ def _build_population(config_path: str, checkpoint: Optional[str]) -> neat.Popul
 
 def _validate_state_size(config: neat.Config, env_kwargs) -> None:
     env = make_env(**env_kwargs)
-    state, _ = env.reset(seed=0)
+    state, _ = env.reset(seed=env_kwargs.get("seed", 0))
     env.close()
     if len(state) != config.genome_config.num_inputs:
         raise ValueError(
@@ -291,6 +291,12 @@ def parse_args(argv=None):
         help="Enable Gymnasium domain_randomize flag.",
     )
     parser.add_argument(
+        "--track-seed",
+        type=int,
+        default=123,
+        help="Fixed seed to lock the track layout during training (None = random each run).",
+    )
+    parser.add_argument(
         "--auto-visualize",
         action="store_true",
         help="Generate fitness and network plots automatically after each generation.",
@@ -322,6 +328,7 @@ def main(argv=None):
         "render_mode": None,
         "domain_randomize": args.domain_randomize,
         "continuous": True,
+        "seed": args.track_seed,
     }
     try:
         _validate_state_size(pop.config, env_kwargs)

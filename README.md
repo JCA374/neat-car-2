@@ -61,7 +61,6 @@ Network visualizations show:
 ```bash
 # Visual replay (opens window)
 python -m carracing_neat.play \
-  --genome outputs/checkpoints/best-genome-final.pkl \
   --config neat_config/neat.cfg \
   --max-steps 1000 \
   --render-mode human
@@ -69,6 +68,8 @@ python -m carracing_neat.play \
 # Headless evaluation
 python -m carracing_neat.play --render-mode None
 ```
+
+`play.py` will search `outputs/checkpoints` in order: `best-genome-final.pkl`, `best-genome.pkl`, then the latest `best-genome-gen-*.pkl`, so you usually don’t need to pass `--genome`.
 
 ## Notes
 

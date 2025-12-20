@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import glob
 import math
 import os
 import pickle
 import sys
-from typing import Optional
+from typing import Optional, Sequence
 
 import neat
 import numpy as np
@@ -34,6 +35,33 @@ def _decode_action(output: np.ndarray, prev_action: np.ndarray, smoothing: float
     return action
 
 
+def _resolve_genome_path(requested: str, checkpoint_dir: str) -> str:
+    """Resolve the genome path, falling back to best-known pickles in a dir."""
+    if requested and os.path.exists(requested):
+        return requested
+
+    search_order = []
+    if checkpoint_dir:
+        search_order.extend(
+            [
+                os.path.join(checkpoint_dir, "best-genome-final.pkl"),
+                os.path.join(checkpoint_dir, "best-genome.pkl"),
+            ]
+        )
+        gen_pkls = glob.glob(os.path.join(checkpoint_dir, "best-genome-gen-*.pkl"))
+        if gen_pkls:
+            gen_pkls.sort(key=lambda p: int(os.path.basename(p).split("-")[-1].split(".")[0]))
+            search_order.extend(reversed(gen_pkls))  # highest generation first
+
+    for cand in search_order:
+        if os.path.exists(cand):
+            return cand
+
+    raise FileNotFoundError(
+        f"Genome file not found. Tried requested '{requested}' and checkpoints in '{checkpoint_dir}'."
+    )
+
+
 def run_episode(
     genome_path: str,
     config_path: str,
@@ -42,9 +70,8 @@ def run_episode(
     action_smoothing: float,
     action_noise: float,
     domain_randomize: bool,
+    track_seed: Optional[int],
 ):
-    if not os.path.exists(genome_path):
-        raise FileNotFoundError(f"Genome file not found: {genome_path}")
 
     config = neat.Config(
         neat.DefaultGenome,
@@ -63,8 +90,12 @@ def run_episode(
         render_mode=render_mode,
         domain_randomize=domain_randomize,
         continuous=True,
+        seed=track_seed,
     )
-    state, _ = env.reset()
+    reset_kwargs = {}
+    if track_seed is not None:
+        reset_kwargs["seed"] = track_seed
+    state, _ = env.reset(**reset_kwargs)
     prev_action = np.zeros(env.action_space.shape[0], dtype=np.float32)
     total_reward = 0.0
 
@@ -95,6 +126,11 @@ def parse_args(argv=None):
         help="Path to a pickled genome to replay.",
     )
     parser.add_argument(
+        "--checkpoint-dir",
+        default="outputs/checkpoints",
+        help="Directory to search for best genome if --genome is not found.",
+    )
+    parser.add_argument(
         "--config",
         default="neat_config/neat.cfg",
         help="Path to NEAT config matching the genome.",
@@ -122,6 +158,12 @@ def parse_args(argv=None):
         action="store_true",
         help="Enable Gymnasium domain_randomize flag.",
     )
+    parser.add_argument(
+        "--track-seed",
+        type=int,
+        default=None,
+        help="Fixed seed to lock the track layout (None = random each run).",
+    )
     return parser.parse_args(argv)
 
 
@@ -139,13 +181,14 @@ def main(argv=None):
             render_mode = "human"
 
     total_reward, steps = run_episode(
-        genome_path=args.genome,
+        genome_path=_resolve_genome_path(args.genome, args.checkpoint_dir),
         config_path=args.config,
         max_steps=args.max_steps,
         render_mode=render_mode,
         action_smoothing=args.action_smoothing,
         action_noise=args.action_noise,
         domain_randomize=args.domain_randomize,
+        track_seed=args.track_seed,
     )
     print(f"Episode finished: reward={total_reward:.2f}, steps={steps}")
 

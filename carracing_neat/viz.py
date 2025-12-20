@@ -63,19 +63,15 @@ def plot_fitness(csv_path: str, output_path: str) -> None:
     if not generations:
         raise RuntimeError(f"No data in log file {csv_path}")
 
-    # Normalize generations to start from 0 for clarity
-    gen_offset = min(generations)
-    generations_norm = [g - gen_offset for g in generations]
-
     plt.figure(figsize=(10, 6))
-    plt.plot(generations_norm, best, label="Best fitness", linewidth=2, marker='o', markersize=4)
-    plt.plot(generations_norm, mean, label="Mean fitness", linestyle="--", linewidth=1.5, marker='s', markersize=3)
+    plt.plot(generations, best, label="Best fitness", linewidth=2, marker='o', markersize=4)
+    plt.plot(generations, mean, label="Mean fitness", linestyle="--", linewidth=1.5, marker='s', markersize=3)
 
     upper = [m + s for m, s in zip(mean, stdev)]
     lower = [m - s for m, s in zip(mean, stdev)]
-    plt.fill_between(generations_norm, lower, upper, color="C1", alpha=0.15, label="Mean ± stdev")
+    plt.fill_between(generations, lower, upper, color="C1", alpha=0.15, label="Mean ± stdev")
 
-    plt.xlabel("Generation (relative)", fontsize=12)
+    plt.xlabel("Generation", fontsize=12)
     plt.ylabel("Fitness", fontsize=12)
     plt.title("NEAT CarRacing Training Progress", fontsize=14, fontweight='bold')
     plt.legend(loc='best', fontsize=10)
@@ -88,12 +84,9 @@ def plot_fitness(csv_path: str, output_path: str) -> None:
     plt.savefig(output_path, dpi=150)
     plt.close()
 
-    if gen_offset > 0:
-        print(f"Note: Generations normalized (actual range: {min(generations)}-{max(generations)})")
-
 
 def _layered_positions(genome: neat.DefaultGenome, config: neat.Config):
-    """Compute layered positions with inputs on left, outputs on right, hidden in middle."""
+    """Compute fixed layered positions: inputs left, hidden middle, outputs right."""
     inputs = list(config.genome_config.input_keys)
     outputs = list(config.genome_config.output_keys)
     enabled_conns = [
@@ -102,48 +95,30 @@ def _layered_positions(genome: neat.DefaultGenome, config: neat.Config):
         if cg.enabled
     ]
 
-    # Get all hidden nodes
     hidden = list(set(genome.nodes.keys()) - set(inputs) - set(outputs))
-
-    # Try to determine layers using NEAT's built-in function
-    try:
-        layers = neat.graphs.feed_forward_layers(inputs, outputs, enabled_conns)
-        # Separate hidden layers (everything except first and last)
-        if len(layers) > 2:
-            hidden_layers = layers[1:-1]
-        else:
-            hidden_layers = [hidden] if hidden else []
-    except Exception:
-        # Fallback: all hidden in one layer
-        hidden_layers = [hidden] if hidden else []
 
     pos = {}
 
-    # Fixed y-positions for inputs (left side, x=0)
-    input_ys = np.linspace(1, -1, num=len(inputs)) if len(inputs) > 1 else [0]
-    for i, node in enumerate(sorted(inputs)):
-        pos[node] = (0, input_ys[i])
+    # Fixed x positions for layers
+    input_x = 0.0
+    hidden_x = 2.0
+    output_x = 4.0
 
-    # Fixed y-positions for outputs (right side, x=3)
+    # Place inputs at x=0 with fixed y positions
+    input_ys = np.linspace(1.5, -1.5, num=len(inputs)) if len(inputs) > 1 else [0]
+    for i, node in enumerate(sorted(inputs)):
+        pos[node] = (input_x, input_ys[i])
+
+    # Place outputs at x=4.0 with fixed y positions
     output_ys = np.linspace(0.5, -0.5, num=len(outputs)) if len(outputs) > 1 else [0]
     for i, node in enumerate(sorted(outputs)):
-        pos[node] = (3, output_ys[i])
+        pos[node] = (output_x, output_ys[i])
 
-    # Hidden nodes in the middle (x=1 to 2, distributed by layer)
-    if hidden_layers:
-        num_hidden_layers = len(hidden_layers)
-        for layer_idx, layer in enumerate(hidden_layers):
-            if not layer:
-                continue
-            x = 1.0 + (layer_idx / max(num_hidden_layers - 1, 1))
-            ys = np.linspace(1, -1, num=len(layer)) if len(layer) > 1 else [0]
-            for y, node in zip(ys, sorted(layer)):
-                pos[node] = (x, y)
-
-    # Ensure any stray nodes are placed
-    for node in set(genome.nodes.keys()) | set(inputs) | set(outputs):
-        if node not in pos:
-            pos[node] = (1.5, -1.5)
+    # Place hidden nodes in the middle at x=2.0
+    if hidden:
+        hidden_ys = np.linspace(1.5, -1.5, num=len(hidden)) if len(hidden) > 1 else [0]
+        for i, node in enumerate(sorted(hidden)):
+            pos[node] = (hidden_x, hidden_ys[i])
 
     return pos, enabled_conns, inputs, outputs
 
@@ -216,13 +191,13 @@ def plot_network(genome: neat.DefaultGenome, config: neat.Config, output_path: s
         ax.text(x + 0.3, y, label, ha="left", va="center", fontsize=9, fontweight='bold')
 
     # Add layer labels
-    ax.text(0, 1.4, "INPUTS", ha="center", va="bottom", fontsize=11, fontweight='bold', color='#3498db')
-    ax.text(3, 0.9, "OUTPUTS", ha="center", va="bottom", fontsize=11, fontweight='bold', color='#e74c3c')
+    ax.text(0, 1.9, "INPUTS", ha="center", va="bottom", fontsize=11, fontweight='bold', color='#3498db')
+    ax.text(4, 0.9, "OUTPUTS", ha="center", va="bottom", fontsize=11, fontweight='bold', color='#e74c3c')
     if hidden:
-        ax.text(1.5, 1.4, "HIDDEN", ha="center", va="bottom", fontsize=11, fontweight='bold', color='#2ecc71')
+        ax.text(2, 1.9, "HIDDEN", ha="center", va="bottom", fontsize=11, fontweight='bold', color='#2ecc71')
 
-    ax.set_xlim(-0.8, 3.8)
-    ax.set_ylim(-1.8, 1.8)
+    ax.set_xlim(-0.8, 4.8)
+    ax.set_ylim(-2.0, 2.3)
     ax.set_axis_off()
 
     # Add info text
