@@ -1,0 +1,17 @@
+# Virtual env
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Outputs/checkpoints/logs/plots
+outputs/
+
+# Editor/OS cruft
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo

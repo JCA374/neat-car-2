@@ -1,0 +1,4 @@
+gymnasium[box2d]==0.29.1
+neat-python==0.92
+numpy>=1.21
+matplotlib>=3.7
