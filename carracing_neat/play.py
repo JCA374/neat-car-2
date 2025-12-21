@@ -161,7 +161,7 @@ def parse_args(argv=None):
     parser.add_argument(
         "--track-seed",
         type=int,
-        default=None,
+        default=123,
         help="Fixed seed to lock the track layout (None = random each run).",
     )
     return parser.parse_args(argv)

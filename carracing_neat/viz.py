@@ -252,6 +252,12 @@ def visualize_all_checkpoints(checkpoint_dir: str, config_path: str, output_dir:
             continue
         gen_num = match.group(1)
 
+        # Check if output already exists
+        output_path = os.path.join(output_dir, f"network_gen_{gen_num}.png")
+        if os.path.exists(output_path):
+            print(f"  ⊘ Skipping generation {gen_num} (already exists)")
+            continue
+
         try:
             # Load the genome
             genome = _load_genome(genome_path)
@@ -261,7 +267,6 @@ def visualize_all_checkpoints(checkpoint_dir: str, config_path: str, output_dir:
                 continue
 
             # Generate visualization
-            output_path = os.path.join(output_dir, f"network_gen_{gen_num}.png")
             title = f"Generation {gen_num} - Best Fitness: {genome.fitness:.2f}"
             plot_network(genome, config, output_path, title=title)
             print(f"  ✓ Generated {output_path}")

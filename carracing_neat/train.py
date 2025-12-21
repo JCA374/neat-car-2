@@ -161,8 +161,9 @@ class VisualizationReporter(neat.reporting.BaseReporter):
             # Generate network plot for this generation's best genome
             if best_genome is not None and best_genome.fitness is not None:
                 network_path = os.path.join(self.networks_dir, f"network_gen_{self.generation}.png")
-                title = f"Generation {self.generation} - Best Fitness: {best_genome.fitness:.2f}"
-                plot_network(best_genome, config, network_path, title=title)
+                if not os.path.exists(network_path):
+                    title = f"Generation {self.generation} - Best Fitness: {best_genome.fitness:.2f}"
+                    plot_network(best_genome, config, network_path, title=title)
         except Exception as e:
             # Don't crash training if visualization fails
             print(f"Warning: Visualization failed for generation {self.generation}: {e}")
