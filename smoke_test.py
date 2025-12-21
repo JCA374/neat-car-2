@@ -1,24 +1,23 @@
 """
-Lightweight smoke test to confirm the CarRacing NEAT pipeline runs headlessly.
+Lightweight smoke test for the PPO pipeline.
 
 Checks:
-- Imports all project modules.
 - Instantiates the wrapped CarRacing env and verifies state shape.
 - Runs a few random steps to ensure the wrapper does not crash.
-- Runs a tiny genome evaluation (10 steps) to validate config + evaluator wiring.
+- Executes a tiny PPO training loop to ensure learning pipeline wiring.
 """
 
 from __future__ import annotations
 
 import math
-import os
 import random
 
-import neat
 import numpy as np
+from stable_baselines3 import PPO
+from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 
-from carracing_neat.env_state import make_env
-from carracing_neat.eval import EvalSettings, evaluate_genome
+from carracing_ppo.env import make_env
+from carracing_ppo import train as train_mod
 
 
 def assert_close(val, expected, name):
@@ -47,34 +46,53 @@ def test_env_basic():
     env.close()
 
 
-def test_eval_tiny():
-    cfg_path = os.path.join("neat_config", "neat.cfg")
-    config = neat.Config(
-        neat.DefaultGenome,
-        neat.DefaultReproduction,
-        neat.DefaultSpeciesSet,
-        neat.DefaultStagnation,
-        cfg_path,
+def test_tiny_ppo():
+    env = DummyVecEnv([lambda: make_env(render_mode=None, domain_randomize=False, seed=321)])
+    env = VecMonitor(env)
+    model = PPO(
+        "MlpPolicy",
+        env,
+        learning_rate=1e-3,
+        n_steps=8,
+        batch_size=8,
+        n_epochs=1,
+        gamma=0.99,
+        gae_lambda=0.95,
+        ent_coef=0.0,
+        clip_range=0.2,
+        verbose=0,
+        seed=1,
     )
-    # Ensure config input size matches wrapper output.
-    env = make_env(render_mode=None, domain_randomize=False, seed=0)
-    state, _ = env.reset()
-    assert_close(len(state), config.genome_config.num_inputs, "state_size_vs_config")
+    model.learn(total_timesteps=32)
     env.close()
 
-    # Build a fresh genome and run a minimal evaluation.
-    genome = neat.DefaultGenome(0)
-    genome.configure_new(config.genome_config)
-    fitness = evaluate_genome(
-        genome,
-        config,
-        env_kwargs={"render_mode": None, "domain_randomize": False},
-        settings=EvalSettings(max_steps=10, episodes=1, action_noise=0.0, action_smoothing=0.1),
-    )
-    assert math.isfinite(fitness)
+
+def test_train_entrypoint():
+    # Runs the real train entrypoint with tiny settings to catch missing deps (tensorboard/tqdm/rich).
+    args = [
+        "--total-timesteps",
+        "8",
+        "--num-envs",
+        "1",
+        "--n-steps",
+        "8",
+        "--batch-size",
+        "8",
+        "--eval-frequency",
+        "0",
+        "--checkpoint-frequency",
+        "0",
+        "--log-dir",
+        "outputs/logs_test",
+        "--checkpoint-dir",
+        "outputs/checkpoints_test",
+    ]
+    rc = train_mod.main(args)
+    assert rc == 0
 
 
 if __name__ == "__main__":
     test_env_basic()
-    test_eval_tiny()
+    test_tiny_ppo()
+    test_train_entrypoint()
     print("Smoke test passed.")

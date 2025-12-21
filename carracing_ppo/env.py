@@ -1,15 +1,9 @@
 """
-State wrapper for Gymnasium's CarRacing that exposes a compact state vector.
+Compact state wrapper for Gymnasium's CarRacing-v2 tailored for PPO training.
 
-The wrapper builds a vector of:
-    - 8 low-level car dynamics features
-    - N lidar-style distances sampled against road polygons (default N=24)
-The output length is fixed at 32 by default and matches neat_config/neat.cfg.
-
-The lidar distances are computed by stepping along rays in the world frame and
-stopping when the sample leaves the precomputed road polygons. This keeps the
-computation lightweight and CPU-only while providing spatial context beyond the
-raw RGB observation.
+The wrapper exposes a low-dimensional observation vector:
+    - 8 car-dynamics scalars
+    - N lidar-style distances sampled against road polygons (default N=32)
 """
 
 from __future__ import annotations
