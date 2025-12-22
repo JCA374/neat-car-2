@@ -9,7 +9,7 @@ from typing import List, Optional, Sequence
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback, EvalCallback
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecMonitor
+from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 from carracing_ppo.env import make_env
 
@@ -51,6 +51,18 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="Comma-separated MLP hidden sizes for policy/value networks.",
     )
     parser.add_argument("--domain-randomize", action="store_true", help="Enable Gymnasium domain randomization.")
+    parser.add_argument(
+        "--offtrack-penalty",
+        type=float,
+        default=1.0,
+        help="Penalty scale when traction falls below traction-threshold (discourages leaving track).",
+    )
+    parser.add_argument(
+        "--traction-threshold",
+        type=float,
+        default=0.95,
+        help="Traction value above which no offtrack penalty is applied.",
+    )
     parser.add_argument("--seed", type=int, default=0, help="Seed for reproducibility.")
     parser.add_argument(
         "--checkpoint-dir",
@@ -91,8 +103,15 @@ def _make_vector_envs(
     log_dir: str,
     vec_cls,
     start_method: Optional[str] = None,
+    offtrack_penalty: float = 0.5,
+    traction_threshold: float = 0.9,
 ):
-    env_kwargs = {"render_mode": None, "domain_randomize": domain_randomize}
+    env_kwargs = {
+        "render_mode": None,
+        "domain_randomize": domain_randomize,
+        "offtrack_penalty": offtrack_penalty,
+        "traction_threshold": traction_threshold,
+    }
     vec_env_kwargs = {}
     if start_method and vec_cls is SubprocVecEnv:
         vec_env_kwargs["start_method"] = start_method
@@ -153,8 +172,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             log_dir=args.log_dir,
             vec_cls=vec_cls,
             start_method=start_method,
+            offtrack_penalty=args.offtrack_penalty,
+            traction_threshold=args.traction_threshold,
         )
-        train_env = VecMonitor(train_env)
     except PermissionError as exc:
         if vec_cls is SubprocVecEnv:
             print(
@@ -169,8 +189,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 domain_randomize=args.domain_randomize,
                 log_dir=args.log_dir,
                 vec_cls=vec_cls,
+                offtrack_penalty=args.offtrack_penalty,
+                traction_threshold=args.traction_threshold,
             )
-            train_env = VecMonitor(train_env)
         else:
             raise
 
@@ -180,8 +201,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         domain_randomize=args.domain_randomize,
         log_dir=args.log_dir,
         vec_cls=DummyVecEnv,
+        offtrack_penalty=args.offtrack_penalty,
+        traction_threshold=args.traction_threshold,
     )
-    eval_env = VecMonitor(eval_env)
 
     policy_kwargs = dict(net_arch=dict(pi=args.policy_hidden_sizes, vf=args.policy_hidden_sizes))
 

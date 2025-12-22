@@ -54,11 +54,15 @@ class CarRacingStateWrapper(gym.Wrapper):
         lidar_rays: int = 32,
         lidar_max_dist: float = 45.0,
         lidar_step: float = 3.0,
+        offtrack_penalty: float = 1.0,
+        traction_threshold: float = 0.95,
     ) -> None:
         super().__init__(env)
         self.lidar_rays = lidar_rays
         self.lidar_max_dist = lidar_max_dist
         self.lidar_step = lidar_step
+        self.offtrack_penalty = offtrack_penalty
+        self.traction_threshold = traction_threshold
 
         self.lidar_angles = np.linspace(-0.9 * math.pi, 0.9 * math.pi, lidar_rays)
         self.base_feature_count = 8
@@ -86,6 +90,13 @@ class CarRacingStateWrapper(gym.Wrapper):
         action = np.asarray(action, dtype=np.float64)
         obs, reward, terminated, truncated, info = self.env.step(action)
         state = self._build_state(obs)
+
+        # Encourage staying on track using traction fraction (state[7]).
+        if self.offtrack_penalty > 0.0 and len(state) > 7:
+            traction = float(state[7])
+            delta = max(0.0, self.traction_threshold - traction)
+            reward -= self.offtrack_penalty * delta
+
         return state, reward, terminated, truncated, info
 
     # ------------------------------------------------------------------ utils
@@ -245,6 +256,8 @@ def make_env(
     continuous: bool = True,
     domain_randomize: bool = False,
     seed: Optional[int] = None,
+    offtrack_penalty: float = 1.0,
+    traction_threshold: float = 0.95,
     **kwargs,
 ) -> CarRacingStateWrapper:
     """
@@ -260,6 +273,10 @@ def make_env(
         Toggle Gymnasium's domain randomization option.
     seed: Optional[int]
         Optional environment seed for reproducibility.
+    offtrack_penalty: float
+        Penalty scale applied when traction falls below traction_threshold.
+    traction_threshold: float
+        Traction value above which no penalty is applied.
     kwargs:
         Passed through to gymnasium.make("CarRacing-v2", ...).
     """
@@ -272,4 +289,8 @@ def make_env(
     )
     if seed is not None:
         env.reset(seed=seed)
-    return CarRacingStateWrapper(env)
+    return CarRacingStateWrapper(
+        env,
+        offtrack_penalty=offtrack_penalty,
+        traction_threshold=traction_threshold,
+    )
