@@ -56,6 +56,8 @@ class CarRacingStateWrapper(gym.Wrapper):
         lidar_step: float = 3.0,
         offtrack_penalty: float = 1.0,
         traction_threshold: float = 0.95,
+        allow_multiple_laps: bool = True,
+        lap_completion_bonus: float = 100.0,
     ) -> None:
         super().__init__(env)
         self.lidar_rays = lidar_rays
@@ -63,6 +65,8 @@ class CarRacingStateWrapper(gym.Wrapper):
         self.lidar_step = lidar_step
         self.offtrack_penalty = offtrack_penalty
         self.traction_threshold = traction_threshold
+        self.allow_multiple_laps = allow_multiple_laps
+        self.lap_completion_bonus = lap_completion_bonus
 
         self.lidar_angles = np.linspace(-0.9 * math.pi, 0.9 * math.pi, lidar_rays)
         self.base_feature_count = 8
@@ -75,6 +79,7 @@ class CarRacingStateWrapper(gym.Wrapper):
 
         self._road_polygons: List[np.ndarray] = []
         self._road_bounds: List[Tuple[float, float, float, float]] = []
+        self._laps_completed = 0
 
     # ---------------------------------------------------------------------- #
     # Gym API
@@ -82,6 +87,7 @@ class CarRacingStateWrapper(gym.Wrapper):
     def reset(self, **kwargs):
         obs, info = self.env.reset(**kwargs)
         self._extract_road_geometry()
+        self._laps_completed = 0
         state = self._build_state(obs)
         return state, info
 
@@ -96,6 +102,23 @@ class CarRacingStateWrapper(gym.Wrapper):
             traction = float(state[7])
             delta = max(0.0, self.traction_threshold - traction)
             reward -= self.offtrack_penalty * delta
+
+        # Handle lap completion for multiple laps
+        if self.allow_multiple_laps and terminated and not truncated:
+            # Lap completed! Give bonus and reset tile tracking
+            self._laps_completed += 1
+            reward += self.lap_completion_bonus
+
+            # Reset tile visit tracking in base environment to allow new lap
+            base_env = self.env.unwrapped
+            if hasattr(base_env, 'tile_visited_count'):
+                base_env.tile_visited_count = 0
+
+            # Keep episode running (don't terminate)
+            terminated = False
+
+            # Add lap count to info
+            info['laps_completed'] = self._laps_completed
 
         return state, reward, terminated, truncated, info
 
@@ -258,6 +281,8 @@ def make_env(
     seed: Optional[int] = None,
     offtrack_penalty: float = 1.0,
     traction_threshold: float = 0.95,
+    allow_multiple_laps: bool = True,
+    lap_completion_bonus: float = 100.0,
     **kwargs,
 ) -> CarRacingStateWrapper:
     """
@@ -277,6 +302,10 @@ def make_env(
         Penalty scale applied when traction falls below traction_threshold.
     traction_threshold: float
         Traction value above which no penalty is applied.
+    allow_multiple_laps: bool
+        If True, episodes continue after lap completion allowing multiple laps.
+    lap_completion_bonus: float
+        Bonus reward given when completing a lap (when allow_multiple_laps=True).
     kwargs:
         Passed through to gymnasium.make("CarRacing-v2", ...).
     """
@@ -293,4 +322,6 @@ def make_env(
         env,
         offtrack_penalty=offtrack_penalty,
         traction_threshold=traction_threshold,
+        allow_multiple_laps=allow_multiple_laps,
+        lap_completion_bonus=lap_completion_bonus,
     )

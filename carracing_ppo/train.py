@@ -63,6 +63,18 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         default=0.95,
         help="Traction value above which no offtrack penalty is applied.",
     )
+    parser.add_argument(
+        "--allow-multiple-laps",
+        action="store_true",
+        default=True,
+        help="Allow episodes to continue after lap completion for multiple laps.",
+    )
+    parser.add_argument(
+        "--lap-completion-bonus",
+        type=float,
+        default=100.0,
+        help="Bonus reward given when completing a lap (when allow-multiple-laps is enabled).",
+    )
     parser.add_argument("--seed", type=int, default=0, help="Seed for reproducibility.")
     parser.add_argument(
         "--checkpoint-dir",
@@ -105,12 +117,16 @@ def _make_vector_envs(
     start_method: Optional[str] = None,
     offtrack_penalty: float = 0.5,
     traction_threshold: float = 0.9,
+    allow_multiple_laps: bool = True,
+    lap_completion_bonus: float = 100.0,
 ):
     env_kwargs = {
         "render_mode": None,
         "domain_randomize": domain_randomize,
         "offtrack_penalty": offtrack_penalty,
         "traction_threshold": traction_threshold,
+        "allow_multiple_laps": allow_multiple_laps,
+        "lap_completion_bonus": lap_completion_bonus,
     }
     vec_env_kwargs = {}
     if start_method and vec_cls is SubprocVecEnv:
@@ -174,6 +190,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             start_method=start_method,
             offtrack_penalty=args.offtrack_penalty,
             traction_threshold=args.traction_threshold,
+            allow_multiple_laps=args.allow_multiple_laps,
+            lap_completion_bonus=args.lap_completion_bonus,
         )
     except PermissionError as exc:
         if vec_cls is SubprocVecEnv:
@@ -191,6 +209,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 vec_cls=vec_cls,
                 offtrack_penalty=args.offtrack_penalty,
                 traction_threshold=args.traction_threshold,
+                allow_multiple_laps=args.allow_multiple_laps,
+                lap_completion_bonus=args.lap_completion_bonus,
             )
         else:
             raise
@@ -203,6 +223,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         vec_cls=DummyVecEnv,
         offtrack_penalty=args.offtrack_penalty,
         traction_threshold=args.traction_threshold,
+        allow_multiple_laps=args.allow_multiple_laps,
+        lap_completion_bonus=args.lap_completion_bonus,
     )
 
     policy_kwargs = dict(net_arch=dict(pi=args.policy_hidden_sizes, vf=args.policy_hidden_sizes))
