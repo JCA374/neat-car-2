@@ -7,8 +7,17 @@ __pycache__/
 *.pyo
 
 # Outputs/checkpoints/logs/plots (but keep analysis/)
-outputs/checkpoints/
-outputs/logs/
+# Ignore all checkpoint files in all checkpoint directories...
+outputs/checkpoints*/
+outputs/checkpoints*/*
+# ...except best and latest models
+!outputs/checkpoints*/*best*.zip
+!outputs/checkpoints*/*latest*.zip
+
+# Ignore all log files in all log directories
+outputs/logs*/
+
+# Ignore plots
 outputs/plots/
 
 # Editor/OS cruft

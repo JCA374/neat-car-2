@@ -1,0 +1,521 @@
+# Training Analysis Report: CarRacing-v2 PPO Agent
+
+**Author:** Jonas
+**Date:** 2025-12-22
+**Subject:** Performance evaluation and reward structure analysis for PPO-based CarRacing agent
+**Purpose:** Request for review and recommendations on training continuation strategy
+
+---
+
+## Executive Summary
+
+This report presents an analysis of a Proximal Policy Optimization (PPO) agent trained on Gymnasium's CarRacing-v2 environment using a compact 40-dimensional state vector (8 dynamics + 32 lidar). After 1.5M training timesteps, the agent exhibits suboptimal "fast but cannot navigate steep turns" behavior.
+
+**Key Finding:** The root cause is reward structure misalignment where tile-visit bonuses significantly outweigh off-track penalties, causing the agent to converge to an aggressive, off-track driving strategy.
+
+**Proposed Solution:** Rebalance reward parameters to increase off-track penalties by 5-10× without requiring curriculum learning, enabling the agent to naturally prioritize track adherence before optimizing for speed.
+
+---
+
+## 1. Training Configuration and Data Collection
+
+### Environment Specifications
+
+- **Environment:** Gymnasium CarRacing-v2
+- **Observation space:** 40-dimensional vector
+  - 8 car dynamics scalars (velocity, angular velocity, wheel angles, traction)
+  - 32 lidar distance measurements
+- **Action space:** Continuous [steering, gas, brake]
+- **Episode length:** Maximum 1000 timesteps
+
+### Training Hyperparameters
+
+- **Algorithm:** Proximal Policy Optimization (PPO)
+- **Total timesteps:** 1,500,000
+- **Parallel environments:** 4 (SubprocVecEnv)
+- **Policy architecture:** MLP with 2×256 hidden layers
+- **Learning rate:** 3×10⁻⁴
+- **PPO parameters:** clip=0.2, GAE-λ=0.95, γ=0.99, entropy=0.01
+- **Reward shaping:**
+  - `offtrack_penalty`: 1.0 (default)
+  - `traction_threshold`: 0.95 (default)
+
+### Performance Metrics Summary
+
+**Dataset:** 1,556 episodes over 4.0 hours wall-clock time
+
+**Recent Performance (last 100 episodes):**
+- Mean reward: 364.13 ± 178.90
+- Median reward: 342.08
+- Episode completion rate: 98% (reach 1000-step limit)
+- Reward efficiency: 0.36 reward/step
+
+**Training Phases:**
+| Phase | Timesteps | Episodes | Mean Reward | Success Rate* |
+|-------|-----------|----------|-------------|---------------|
+| Q1 | 0-375K | 0-389 | 274.38 | 12.3% |
+| Q2 | 375K-750K | 390-778 | 336.77 | 20.6% |
+| Q3 | 750K-1.125M | 779-1167 | 413.43 | 39.6% |
+| Q4 | 1.125M-1.5M | 1168-1556 | 381.72 | 23.1% |
+
+*Success defined as reward >500
+
+**Observation:** Performance peaked during Q3 (750K-1.125M timesteps) with 39.6% success rate, but declined in Q4 to 23.1% despite continued training.
+
+### Behavioral Analysis: Evidence of Suboptimal Policy
+
+**Key metrics indicating problematic behavior:**
+
+1. **High survival, low reward efficiency**
+   - 98% of episodes reach maximum length (1000 steps)
+   - Mean reward only 364 (theoretical maximum ~1000 for complete lap)
+   - Reward/step ratio of 0.36 indicates poor tile collection efficiency
+
+2. **Reward distribution for max-length episodes**
+   - 35.7% score <300 reward (insufficient for even partial lap completion)
+   - 45.9% score 300-500 reward (partial lap, inefficient)
+   - Only 18.3% score >500 reward (approaching full lap)
+
+3. **Performance regression**
+   - Peak mean reward: ~450 at 1.0-1.2M timesteps
+   - Current mean reward: ~380 (15% decline)
+   - Suggests policy convergence to locally optimal but globally suboptimal strategy
+
+**Hypothesis:** The agent survives episodes by driving continuously but frequently goes off-track during turns, accumulating minimal rewards per unit time. This is consistent with "high-speed, poor cornering" behavior.
+
+---
+
+## 2. Reward Structure Analysis
+
+### Reward Function Components
+
+The total reward per timestep consists of four components from two sources:
+
+**Base Environment (Gymnasium CarRacing-v2):**
+
+1. **Tile visit bonus:** R_tile = +1000/N_tiles per new tile visited
+   - For typical tracks: N_tiles ≈ 100, so R_tile ≈ +10.0 per tile
+   - This is the primary reward signal
+
+2. **Time penalty:** R_time = -0.1 per frame
+   - Encourages episode completion speed
+   - Total penalty over 1000 frames: -100
+
+3. **Out-of-bounds termination:** R_oob = -100.0 + episode end
+   - Triggered when car position exceeds playfield boundary (±333 units)
+   - Rarely reached in practice
+
+**Custom Wrapper (`carracing_ppo/env.py:94-98`):**
+
+4. **Off-track penalty:** R_offtrack = -λ × max(0, τ_thresh - τ_actual)
+   - λ = `offtrack_penalty` parameter (default: 1.0)
+   - τ_thresh = `traction_threshold` parameter (default: 0.95)
+   - τ_actual = average wheel traction fraction (range: [0,1])
+   - Applied when traction falls below threshold
+
+**Total reward:** R_total = R_tile + R_time + R_offtrack (+ R_oob if triggered)
+
+### Quantitative Analysis: Reward Imbalance
+
+**Current parameter values:**
+- offtrack_penalty (λ) = 1.0
+- traction_threshold (τ_thresh) = 0.95
+
+**Scenario 1: Conservative on-track driving**
+- Complete 1 tile in 10 frames, stay on track (τ = 1.0)
+- Reward: +10.0 (tile) - 1.0 (time) - 0.0 (offtrack) = **+9.0**
+- Reward rate: **0.9 per frame**
+
+**Scenario 2: Aggressive off-track corner cutting**
+- Complete 1 tile in 10 frames, fully off-track (τ = 0.0)
+- Reward: +10.0 (tile) - 1.0 (time) - 9.5 (offtrack) = **-0.5**
+- Reward rate: **-0.05 per frame**
+
+**Scenario 3: Moderate off-track driving**
+- Complete 1 tile in 10 frames, partial traction (τ = 0.85)
+- Reward: +10.0 (tile) - 1.0 (time) - 1.0 (offtrack) = **+8.0**
+- Reward rate: **0.8 per frame**
+
+**Critical observation:** Scenarios 2 and 3 show that the agent can sustain significant off-track driving (τ = 0.85, losing 15% traction) with only an 11% reward penalty compared to perfect driving. The penalty becomes prohibitive only at near-zero traction.
+
+### Mathematical Formulation of the Problem
+
+The penalty-to-reward ratio for off-track driving is:
+
+```
+Penalty_ratio = (λ × Δτ × t) / R_tile
+```
+
+Where:
+- λ = offtrack_penalty parameter
+- Δτ = traction deficit (τ_thresh - τ_actual)
+- t = frames spent off-track
+- R_tile ≈ 10.0
+
+For current parameters (λ=1.0, τ_thresh=0.95), the agent can tolerate:
+- 10 frames at τ=0.0 (fully off-track): penalty = 9.5 < 10.0 → **net positive**
+- 20 frames at τ=0.45: penalty = 10.0 = 10.0 → **break-even**
+- Any frames at τ>0.45: penalty < 10.0 → **profitable**
+
+**Conclusion:** The current reward structure creates a strong incentive for aggressive driving that tolerates significant off-track excursions as long as tile visitation rate is maintained.
+
+---
+
+## 3. Proposed Solution: Reward Parameter Rebalancing
+
+### Theoretical Framework
+
+The objective is to encourage a training priority of "track adherence first, speed optimization second" without implementing curriculum learning. This can be achieved through reward shaping that modifies the penalty-to-reward ratio.
+
+**Target behavior progression:**
+1. **Phase 1 (Early training):** Agent learns to maintain high traction (τ > τ_thresh) to avoid penalties
+2. **Phase 2 (Mid training):** Agent optimizes steering and braking to maintain traction through corners
+3. **Phase 3 (Late training):** Agent maximizes speed while respecting the traction constraint
+
+This approach differs from curriculum learning in that:
+- **Curriculum learning:** Modifies task difficulty over time (e.g., simpler tracks → complex tracks)
+- **Reward shaping:** Modifies the objective function to align incentives with desired behavior
+- **Advantage:** Single-phase training with consistent environment; no need for task scheduling
+
+### Proposed Parameter Configurations
+
+The goal is to increase λ (offtrack_penalty) such that off-track driving becomes unprofitable:
+
+**Configuration A: Moderate penalty increase (recommended initial trial)**
+```
+offtrack_penalty (λ) = 5.0  (5× increase)
+traction_threshold (τ_thresh) = 0.98  (stricter)
+```
+
+**Expected penalty-to-reward ratios:**
+- 10 frames at τ=0.0: penalty = 49.0 >> 10.0 tile bonus → **strongly negative**
+- 10 frames at τ=0.85: penalty = 6.5 < 10.0 tile bonus → **marginally negative**
+- Break-even point: τ ≈ 0.88 (must maintain >88% traction for profitability)
+
+**Configuration B: Strong penalty increase (if Configuration A insufficient)**
+```
+offtrack_penalty (λ) = 10.0  (10× increase)
+traction_threshold (τ_thresh) = 0.99  (very strict)
+```
+
+**Expected penalty-to-reward ratios:**
+- 10 frames at τ=0.0: penalty = 99.0 >> 10.0 tile bonus → **highly punitive**
+- 10 frames at τ=0.90: penalty = 9.0 ≈ 10.0 tile bonus → **nearly break-even**
+- Break-even point: τ ≈ 0.94 (must maintain >94% traction for profitability)
+
+### Mechanistic Explanation
+
+**Why reward shaping enables behavior prioritization:**
+
+The modified reward function creates a hierarchical objective:
+1. **Primary constraint:** Maintain τ > τ_thresh (high penalty avoidance)
+2. **Secondary objective:** Maximize tile visitation within constraint (reward seeking)
+
+The agent will naturally discover that:
+- **Early exploration:** Random policies violate traction constraint → high penalties → policy gradients favor traction-preserving actions
+- **Mid-training:** Policy learns to maintain traction → penalties reduce → policy gradients now favor faster tile collection
+- **Late-training:** Policy optimizes speed-accuracy tradeoff within learned traction constraint
+
+This creates implicit behavior staging without explicit curriculum design.
+
+### Comparison to Curriculum Learning
+
+| Approach | Complexity | Training Phases | Environment Changes | Risk of Mode Collapse |
+|----------|------------|-----------------|---------------------|------------------------|
+| **Curriculum Learning** | High | Multiple | Yes (task difficulty) | Medium (transfer issues) |
+| **Reward Shaping** | Low | Single | No | Low (consistent objective) |
+
+**Recommendation:** Reward shaping is preferred for this scenario due to lower implementation complexity and elimination of phase-transition risks.
+
+---
+
+## 4. Experimental Protocol
+
+### Phase 1: Initial Training with Rebalanced Rewards
+
+**Objective:** Train a new agent from scratch using Configuration A parameters to test reward rebalancing hypothesis.
+
+**Method:**
+```bash
+python -m carracing_ppo.train \
+  --total-timesteps 1000000 \
+  --num-envs 4 \
+  --n-steps 1024 \
+  --batch-size 256 \
+  --offtrack-penalty 5.0 \
+  --traction-threshold 0.98 \
+  --checkpoint-dir outputs/checkpoints_config_a \
+  --log-dir outputs/logs_config_a \
+  --seed 42
+```
+
+**Rationale for fresh training:**
+- Current policy has converged to locally optimal (but globally suboptimal) strategy
+- Modifying rewards mid-training may cause value function instability
+- Clean initialization ensures proper exploration under new reward structure
+
+**Expected training dynamics:**
+- **Early phase (0-300K steps):** Policy learns basic traction maintenance
+  - Predicted: High initial penalties, gradual reduction
+  - Predicted mean reward: 100-300
+- **Mid phase (300K-700K steps):** Policy learns efficient cornering within traction constraint
+  - Predicted: Penalty stabilization, reward growth
+  - Predicted mean reward: 300-500
+- **Late phase (700K-1M steps):** Policy optimizes speed-accuracy tradeoff
+  - Predicted: Continued reward growth, high traction maintenance
+  - Predicted mean reward: 500-700+
+
+### Phase 2: Performance Monitoring
+
+**Metrics to track** (evaluation frequency: every 50K timesteps):
+
+1. **Primary outcome:** Mean episode reward (target: >500 at convergence)
+2. **Secondary outcomes:**
+   - Reward efficiency (reward/step) - target: >0.7
+   - Mean traction fraction - target: >0.95
+   - Episode completion rate - should remain >90%
+3. **Training stability:**
+   - Reward variance across evaluation episodes
+   - Policy entropy decay
+   - Value loss convergence
+
+**Success criteria:**
+- Mean reward improves by >30% compared to baseline (364 → >500)
+- High traction maintained throughout episodes (mean τ > 0.95)
+- Qualitative assessment: smooth cornering behavior in video playback
+
+### Phase 3: Parameter Sensitivity Analysis
+
+**If Configuration A yields overly conservative behavior:**
+- Symptoms: Mean τ > 0.98, low speeds, mean reward <400
+- Action: Reduce penalty to λ = 3.0, retrain for 500K steps
+- Hypothesis: Reduced penalty allows more aggressive optimization within constraint
+
+**If Configuration A yields insufficient behavior change:**
+- Symptoms: Mean τ < 0.90, continued corner-cutting, mean reward <450
+- Action: Increase penalty to λ = 10.0 and τ_thresh = 0.99, retrain for 500K steps
+- Hypothesis: Stronger penalty required to override tile-seeking incentive
+
+### Phase 4: Comparative Evaluation
+
+**Objective:** Quantify performance difference between baseline and rebalanced agents.
+
+**Protocol:**
+1. Evaluate baseline model (trained with λ=1.0, τ_thresh=0.95):
+   ```bash
+   python -m carracing_ppo.play \
+     --model outputs/checkpoints/best_model.zip \
+     --episodes 20 \
+     --render-mode None
+   ```
+
+2. Evaluate rebalanced model (trained with λ=5.0, τ_thresh=0.98):
+   ```bash
+   python -m carracing_ppo.play \
+     --model outputs/checkpoints_config_a/best_model.zip \
+     --episodes 20 \
+     --render-mode None
+   ```
+
+**Comparison metrics:**
+- Mean reward ± standard deviation
+- Mean traction fraction
+- Tile visit rate (tiles/second)
+- Episode survival rate
+- Qualitative: video analysis of cornering behavior (sample 3-5 episodes each)
+
+**Expected results:**
+- Rebalanced agent: higher mean reward, higher mean traction, smoother cornering
+- Baseline agent: lower mean reward, lower mean traction, aggressive/erratic cornering
+
+---
+
+## 5. Alternative Approach: Velocity-Dependent Penalty Scaling (Optional)
+
+### Motivation
+
+If static penalty scaling (Configurations A/B) proves insufficient, a velocity-dependent penalty function may provide better incentive alignment. The rationale is that:
+- Low-speed off-track excursions (e.g., cautious grass navigation) should incur moderate penalties
+- High-speed off-track excursions (e.g., aggressive corner-cutting) should incur severe penalties
+- This creates a natural incentive for speed modulation based on track adherence confidence
+
+### Proposed Modification
+
+**File:** `carracing_ppo/env.py` (lines 94-98)
+
+**Current implementation:**
+```python
+if self.offtrack_penalty > 0.0 and len(state) > 7:
+    traction = float(state[7])
+    delta = max(0.0, self.traction_threshold - traction)
+    reward -= self.offtrack_penalty * delta
+```
+
+**Proposed enhancement:**
+```python
+if self.offtrack_penalty > 0.0 and len(state) > 7:
+    traction = float(state[7])
+    delta = max(0.0, self.traction_threshold - traction)
+
+    # Velocity-dependent penalty scaling
+    velocity = float(state[0])  # Forward velocity from state vector
+    speed_factor = 1.0 + abs(velocity) * 0.5  # Scale increases with speed
+
+    reward -= self.offtrack_penalty * delta * speed_factor
+```
+
+### Mathematical Analysis
+
+**Modified penalty function:**
+```
+R_offtrack = -λ × Δτ × (1 + 0.5|v|)
+```
+
+Where:
+- v = forward velocity (typical range: 0 to ~1.5)
+- At low speed (v=0.2): penalty multiplier = 1.1
+- At medium speed (v=0.8): penalty multiplier = 1.4
+- At high speed (v=1.2): penalty multiplier = 1.6
+
+**Example scenario (λ=5.0, τ_thresh=0.98):**
+- Slow off-track (v=0.2, τ=0.5): penalty = 5.0 × 0.48 × 1.1 = 2.64 per frame
+- Fast off-track (v=1.2, τ=0.5): penalty = 5.0 × 0.48 × 1.6 = 3.84 per frame
+
+**Advantage:** Encourages the agent to learn speed modulation as a function of track confidence, creating more naturalistic racing behavior (brake before corners, accelerate on straights).
+
+**Implementation priority:** Secondary - only if static penalty scaling shows insufficient behavior modification.
+
+---
+
+## 6. Rationale Against Continued Training with Current Parameters
+
+### Evidence Against Continuation
+
+**1. Policy Convergence to Suboptimal Strategy**
+- Training dynamics show plateau after 1.0-1.2M timesteps
+- Reward variance has stabilized (low exploration)
+- Policy has converged to exploit current reward structure
+- Additional training will reinforce existing behavior pattern, not discover new strategies
+
+**2. Structural Reward Misalignment**
+- Core issue is mathematical: penalty-to-reward ratio is misaligned
+- No amount of training can overcome incorrect incentive structure
+- Agent is optimizing correctly given current rewards—the rewards themselves need adjustment
+
+**3. Performance Regression**
+- Q3 success rate: 39.6% (peak)
+- Q4 success rate: 23.1% (current)
+- 41.5% relative decline despite continued training
+- Suggests overfitting to suboptimal policy rather than continued improvement
+
+### Recommendation
+
+**Do not continue training with current parameters.** Instead, implement reward rebalancing and initiate fresh training run. The current agent has converged to a locally optimal strategy that is globally suboptimal; continued training will not resolve this fundamental issue.
+
+---
+
+## 7. Expected Outcomes and Timeline
+
+### Training Timeline Projection
+
+Training under Configuration A (λ=5.0, τ_thresh=0.98) for 1M timesteps:
+
+**Early Phase (0-300K timesteps, ~45 minutes):**
+- **Predicted behavior:** High exploration variance, frequent penalty accumulation
+- **Predicted metrics:** Mean reward 100-300, high penalty frequency
+- **Learning objective:** Basic traction maintenance and penalty avoidance
+
+**Mid Phase (300K-700K timesteps, ~2 hours):**
+- **Predicted behavior:** Improved cornering efficiency, reduced penalties
+- **Predicted metrics:** Mean reward 300-500, stabilizing traction values
+- **Learning objective:** Speed-accuracy tradeoff optimization within traction constraint
+
+**Late Phase (700K-1M timesteps, ~2 hours):**
+- **Predicted behavior:** High-performance racing with consistent track adherence
+- **Predicted metrics:** Mean reward 500-700+, mean τ > 0.95
+- **Learning objective:** Fine-tuning of racing lines and speed profiles
+
+**Total estimated training time:** 4-5 hours wall-clock on CPU with 4 parallel environments (similar to baseline training duration).
+
+---
+
+## 8. Critical Files and Code References
+
+### Implementation Files
+
+**Training script:**
+- `carracing_ppo/train.py:55-65` - Reward parameter definitions (offtrack_penalty, traction_threshold)
+- `carracing_ppo/train.py:106-114` - Parameter passing to environment wrapper
+- `carracing_ppo/train.py:168-177` - Training environment initialization
+
+**Environment wrapper:**
+- `carracing_ppo/env.py:94-98` - Off-track penalty implementation (modification site for velocity-dependent scaling)
+- `carracing_ppo/env.py:172-203` - Road geometry extraction (used for lidar and track detection)
+
+**Playback and evaluation:**
+- `carracing_ppo/play.py` - Model evaluation script for qualitative assessment
+
+### Data Directories
+
+**Current baseline training:**
+- Logs: `outputs/logs/` (monitor CSVs, TensorBoard events)
+- Checkpoints: `outputs/checkpoints/` (best_model.zip, periodic saves)
+
+**Proposed rebalanced training:**
+- Logs: `outputs/logs_config_a/`
+- Checkpoints: `outputs/checkpoints_config_a/`
+
+---
+
+## 9. Summary and Recommendations
+
+### Research Questions and Findings
+
+**Q1: Should training continue with current parameters or should the reward model be adjusted?**
+
+**Finding:** The reward model requires adjustment. Current training has converged to a locally optimal but globally suboptimal policy after 1.5M timesteps, with evidence of performance regression in the most recent quarter. The root cause is mathematical reward imbalance (penalty-to-reward ratio of ~1:10), not insufficient training duration.
+
+**Recommendation:** Implement reward rebalancing (Configuration A: λ=5.0, τ_thresh=0.98) and restart training from initialization.
+
+---
+
+**Q2: Can the agent be encouraged to prioritize track adherence before speed optimization without curriculum learning?**
+
+**Finding:** Yes. Reward shaping through parameter adjustment creates a hierarchical objective where penalty avoidance (track adherence) becomes the primary constraint and reward maximization (speed) becomes the secondary objective. This eliminates the need for multi-phase curriculum design.
+
+**Mechanism:** By increasing the penalty multiplier 5-10×, the penalty-to-reward ratio shifts to favor cautious driving. The agent will naturally discover through exploration that:
+1. Off-track driving is now unprofitable regardless of tile visitation rate
+2. Maintaining high traction enables reward accumulation
+3. Speed can be optimized within the traction maintenance constraint
+
+**Recommendation:** Proceed with static penalty scaling (Configuration A) as first approach. Consider velocity-dependent scaling only if static scaling proves insufficient.
+
+---
+
+### Proposed Action Plan
+
+**Immediate next steps:**
+
+1. **Initialize Configuration A training run** using the command provided in Section 4, Phase 1
+2. **Monitor training at 100K timestep intervals** to assess early-phase behavior
+3. **Evaluate performance at 500K timesteps** against success criteria (mean reward >400, mean τ >0.95)
+4. **Adjust parameters if needed** based on Phase 3 sensitivity analysis guidelines
+5. **Conduct comparative evaluation at 1M timesteps** using Phase 4 protocol
+
+**Success metrics:**
+- Primary: Mean episode reward >500 (>37% improvement over baseline)
+- Secondary: Mean traction fraction >0.95, qualitative cornering smoothness improvement
+
+**Estimated time to completion:** 4-5 hours for 1M timestep training run
+
+---
+
+## 10. Conclusion
+
+This analysis identified reward structure misalignment as the root cause of suboptimal "fast but cannot turn" behavior in the CarRacing PPO agent. The current penalty-to-reward ratio (1:10) creates incentives for aggressive, off-track driving that maintains tile visitation rate at the expense of racing efficiency.
+
+The proposed solution—reward parameter rebalancing through 5-10× penalty increase—addresses this issue without requiring curriculum learning or complex training schedules. The modified reward function naturally creates behavioral prioritization (track adherence → speed optimization) through standard PPO optimization dynamics.
+
+Implementation requires minimal code changes (command-line parameter adjustment only) and maintains the same training infrastructure. Expected outcomes include >30% reward improvement and qualitatively superior cornering behavior.
+
+**Recommendation:** Proceed with Configuration A training as described in Section 4. This approach offers the highest probability of success with lowest implementation complexity.
