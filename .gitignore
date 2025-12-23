@@ -8,7 +8,6 @@ __pycache__/
 
 # Outputs/checkpoints/logs/plots (but keep analysis/)
 # Ignore all checkpoint files in all checkpoint directories...
-outputs/checkpoints*/
 outputs/checkpoints*/*
 # ...except best and latest models
 !outputs/checkpoints*/*best*.zip
