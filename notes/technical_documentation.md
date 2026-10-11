@@ -237,7 +237,9 @@ python -m carracing_ppo.play --deterministic --seed 3 --gif out.gif
 |---|---|---|---|
 | Default (baseline) | 1.0 | 0.95 | Learns fast, cuts corners over grass |
 | Moderate | 5–10 | 0.98 | Fewer excursions, still aggressive |
-| Strict (recommended) | 15 | 0.99 | Clean laps; best results so far |
+| Strict (recommended) | 15 | 0.99 | All four wheels must stay on road |
+
+Before Oct 2026 the traction feature read a non-existent wheel attribute and was always 1.0, so none of these settings had any effect in earlier runs (see the project page).
 
 Combine strict settings with `--allow-multiple-laps --lap-completion-bonus 100 --max-episode-steps 2000` to reward fast, repeated laps.
 

@@ -18,7 +18,7 @@ pip install -r requirements.txt
 ## Training
 
 ```bash
-# Recommended production run (12 hours, multi-lap with strong track adherence)
+# Recommended production run (v2 recipe, ~12 hours, multi-lap with strong track adherence)
 python -m carracing_ppo.train \
   --total-timesteps 4500000 \
   --num-envs 4 \
@@ -27,13 +27,16 @@ python -m carracing_ppo.train \
   --offtrack-penalty 15.0 \
   --traction-threshold 0.99 \
   --entropy-coef 0.005 \
+  --lr-schedule linear \
+  --target-kl 0.02 \
   --domain-randomize \
   --allow-multiple-laps \
   --lap-completion-bonus 100.0 \
+  --max-episode-steps 2000 \
   --eval-frequency 50000 \
   --checkpoint-frequency 100000 \
-  --checkpoint-dir outputs/checkpoints_multilap \
-  --log-dir outputs/logs_multilap \
+  --checkpoint-dir outputs/checkpoints_v2 \
+  --log-dir outputs/logs_v2 \
   --seed 42
 
 # Moderate run (balanced track adherence, ~4 hours)
@@ -73,14 +76,11 @@ python -m carracing_ppo.play --render-mode None --episodes 3
 ## Tests
 
 ```bash
-# Smoke test (validates pipeline)
-python tests/smoke_test.py
-
-# Multi-lap functionality test
-python tests/test_multilap.py
+pytest tests/
 ```
-- `smoke_test.py` validates the state wrapper shape and runs a tiny PPO learn loop to ensure wiring is intact.
-- `test_multilap.py` verifies multi-lap functionality and lap completion bonuses.
+- `smoke_test.py` validates the state wrapper shape, a tiny PPO learn loop, the train entrypoint (separate `monitor/` and `eval_monitor/`) and the `--[no-]allow-multiple-laps` flag.
+- `test_multilap.py` forces laps via the base env's `new_lap` flag: bonus paid once, tiles re-armed, out-of-bounds still terminates, time limit wins.
+- `test_traction.py` drives onto grass and checks the traction feature and the exact off-track penalty.
 
 ## Architecture Notes
 
@@ -88,7 +88,8 @@ python tests/test_multilap.py
 - **Policy/Value**: Shared MLP, two 256-unit layers by default (configurable via `--policy-hidden-sizes`).
 - **Actions**: SB3 PPO continuous policy with tanh-squashed outputs → steer [-1, 1], gas/brake [0, 1].
 - **Training**: PPO (clip 0.2, GAE λ 0.95, γ 0.99, entropy 0.005-0.01). Eval + checkpoint callbacks built into `carracing_ppo/train.py`.
-- **Multi-lap Racing**: Episodes continue after lap completion (when `--allow-multiple-laps` is enabled, default). Fast drivers complete multiple laps within the 1000-step limit for higher scores.
+- **Traction (state[7])**: fraction of wheels touching a road tile (`wheel.tiles` non-empty). Gymnasium wheels have no `ground_traction`; reading that attribute made traction a constant 1.0 and disabled the penalty in every run before Oct 2026.
+- **Multi-lap Racing**: CarRacing-v2 (gymnasium 0.29.1) reports a finished lap as `truncated`. With `--allow-multiple-laps` (default) the wrapper pays the bonus, resets `new_lap`, `tile_visited_count` and each tile's `road_visited`, and keeps the episode alive. A lap takes ~850 steps, so use `--max-episode-steps 2000` for more than one lap.
 
 ### Reward Structure
 
@@ -103,21 +104,21 @@ python tests/test_multilap.py
   - Default: `offtrack_penalty=1.0`, `traction_threshold=0.95` (too lenient, allows corner cutting)
 - Lap completion bonus: `+lap_completion_bonus` when completing a lap (default: 100.0)
   - Only applies when `allow_multiple_laps=True`
-  - Episode continues after lap, agent can start lap 2, 3, etc.
+  - Episode continues after lap, agent can start lap 2, 3, etc. `info["laps_completed"]` is logged in the monitor CSVs.
 
-**Scoring Example:**
-- Slow driver (1 lap, 900 steps): ~900 points (tiles - time penalties)
-- Fast driver (2 laps, 800 steps): ~2000+ points (2× tiles + 2× lap bonus - time penalties)
-- Super fast driver (3 laps, 900 steps): ~3100+ points
+**Scoring Example (2000-step episodes):**
+- One clean lap in ~850 steps, then partial lap 2: ~1000 (tiles) + 100 (bonus) + more tiles − 0.1/step
+- Two laps: ~2000 (tiles) + 200 (bonus) − time penalties
 
 ## Key Files
 
 - `carracing_ppo/env.py` — State wrapper (dynamics + lidar, multi-lap support, reward shaping)
 - `carracing_ppo/train.py` — PPO training entrypoint, multi-env setup, eval/checkpoint callbacks
-- `carracing_ppo/play.py` — Roll out saved models
-- `tests/smoke_test.py` — Pipeline sanity test
-- `tests/test_multilap.py` — Multi-lap functionality verification
-- `docs/training_analysis_report.txt` — Training analysis and reward structure recommendations
+- `carracing_ppo/play.py` — Roll out saved models (`--gif` to record, reward flags match train)
+- `tests/` — pytest: smoke, multi-lap, traction
+- `scripts/build_site_data.py`, `scripts/benchmark.py` — generate `docs/assets/data/*.json` and GIFs for the project page
+- `docs/index.html` — GitHub Pages project story (static, Chart.js from CDN)
+- `notes/` — technical documentation and the Dec 2025 training analysis report
 - `README.md` — Usage, quick start, and model summary
 
 ## Outputs
@@ -144,5 +145,6 @@ python tests/test_multilap.py
 
 ### Debugging
 - **Disable multi-lap** (for comparison): Add `--no-allow-multiple-laps` flag
+- **Late-run collapse** (reward peaks then falls, approx KL / clip fraction rising): use `--lr-schedule linear --target-kl 0.02`
 - **Check reward balance**: Monitor off-track penalties vs tile bonuses in TensorBoard
 - **Visual inspection**: Use `--render-mode human` during eval to observe driving behavior

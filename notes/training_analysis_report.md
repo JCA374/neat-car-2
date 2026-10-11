@@ -5,6 +5,8 @@
 **Subject:** Performance evaluation and reward structure analysis for PPO-based CarRacing agent
 **Purpose:** Request for review and recommendations on training continuation strategy
 
+> **Note (Oct 2026):** the reasoning below is sound, but the off-track penalty it analyses never actually fired. `traction_fraction` read a wheel attribute (`ground_traction`) that Gymnasium does not have, so it was always 1.0. The improvement seen after this report came from the other changes made with it, most likely the lower entropy coefficient (0.015 → 0.005); learning rate and seed also changed. See `docs/index.html`.
+
 ---
 
 ## Executive Summary
