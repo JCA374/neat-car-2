@@ -2,7 +2,7 @@
 
 Trains a PPO policy on Gymnasium's `CarRacing-v2` using a compact state vector (car dynamics + lidar-style distances) instead of pixels. CPU-only by default.
 
-**Project story:** [`docs/index.html`](docs/index.html) describes where the project started (NEAT), each step that changed results, and the bugs found along the way. It is published with GitHub Pages from `docs/`.
+**Project story:** <https://jca374.github.io/neat-car-2/> (source: [`docs/index.html`](docs/index.html)) describes where the project started (NEAT), each step that changed results, and the bugs found along the way. It is published with GitHub Pages from `docs/`.
 
 ## Model Summary
 
