@@ -167,9 +167,12 @@ class CarRacingStateWrapper(gym.Wrapper):
         traction_values: List[float] = []
         steer_angles: List[float] = []
         for wheel in wheels:
-            traction = getattr(wheel, "ground_traction", None)
-            if traction is not None:
-                traction_values.append(float(traction))
+            # Gymnasium's car_dynamics treats a wheel touching no road tile as on
+            # grass. (Wheels have no `ground_traction` attribute, which once made
+            # this feature a constant 1.0 and silently disabled the off-track penalty.)
+            tiles = getattr(wheel, "tiles", None)
+            if tiles is not None:
+                traction_values.append(1.0 if tiles else 0.0)
             joint = getattr(wheel, "joint", None)
             if joint is not None:
                 steer_angles.append(float(getattr(joint, "angle", 0.0)))

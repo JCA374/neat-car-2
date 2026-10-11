@@ -35,6 +35,18 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--total-timesteps", type=int, default=500_000, help="Total environment steps to train.")
     parser.add_argument("--num-envs", type=int, default=4, help="Parallel envs (>=1).")
     parser.add_argument("--learning-rate", type=float, default=3e-4, help="Adam learning rate.")
+    parser.add_argument(
+        "--lr-schedule",
+        choices=("constant", "linear"),
+        default="constant",
+        help="'linear' decays the learning rate to 0 over training (stops late-run collapse).",
+    )
+    parser.add_argument(
+        "--target-kl",
+        type=float,
+        default=None,
+        help="Stop an update's epochs early once approx KL exceeds this (e.g. 0.02).",
+    )
     parser.add_argument("--n-steps", type=int, default=1024, help="Rollout length per env before an update.")
     parser.add_argument("--batch-size", type=int, default=256, help="Batch size for PPO updates.")
     parser.add_argument("--n-epochs", type=int, default=10, help="Gradient passes per batch.")
@@ -112,6 +124,13 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="Path to a saved PPO zip to resume from. If missing, training starts fresh.",
     )
     return parser.parse_args(argv)
+
+
+def _learning_rate(args: argparse.Namespace):
+    if args.lr_schedule == "linear":
+        initial = args.learning_rate
+        return lambda progress_remaining: initial * progress_remaining
+    return args.learning_rate
 
 
 def _env_kwargs(args: argparse.Namespace) -> dict:
@@ -214,7 +233,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         model = PPO(
             policy="MlpPolicy",
             env=train_env,
-            learning_rate=args.learning_rate,
+            learning_rate=_learning_rate(args),
+            target_kl=args.target_kl,
             n_steps=args.n_steps,
             batch_size=args.batch_size,
             n_epochs=args.n_epochs,
