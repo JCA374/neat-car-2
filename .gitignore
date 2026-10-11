@@ -16,8 +16,10 @@ outputs/checkpoints*/*
 # Ignore all log files in all log directories
 outputs/logs*/
 
-# Ignore plots
+# Ignore plots and test artefacts
 outputs/plots/
+outputs/*_test/
+.pytest_cache/
 
 # Editor/OS cruft
 .DS_Store
