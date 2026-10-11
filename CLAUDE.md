@@ -4,7 +4,16 @@ Guidance for working on this repository.
 
 ## Project Overview
 
-PPO baseline for Gymnasium's `CarRacing-v2` using a compact state vector (8 car-dynamics scalars + 32 lidar distances). CPU-friendly defaults; Stable-Baselines3 handles policy/value updates and checkpointing.
+Learns Gymnasium's `CarRacing-v2` from a compact state vector (8 car-dynamics scalars + 32 lidar distances). Two learners share one env wrapper (`carracing_ppo/env.py`):
+- **NEAT** (`carracing_neat/`, main approach): neat-python, pop 100, all genomes in a generation drive the same random tracks, raw-score fitness, champion validated on 5 held-out tracks (seeds 101–505). Benchmark seeds (3, 11, 21, 34, 55) are reserved and never used for training or validation.
+- **PPO** (`carracing_ppo/`, baseline): Stable-Baselines3.
+
+```bash
+python -m carracing_neat.train --generations 150 --tracks-per-generation 3 --auto-visualize   # resumes from outputs/neat/checkpoints
+python -m carracing_neat.play --seed 3                     # best validated genome
+python scripts/build_site_data.py && python scripts/benchmark.py --stages neat   # refresh the project page
+```
+Headless envs skip CarRacing's unused pixel render and the lidar is vectorised (~1200 steps/s single process); `tests/test_lidar.py` checks it against the original loop.
 
 ## Environment Setup
 

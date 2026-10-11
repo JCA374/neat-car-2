@@ -1,6 +1,6 @@
-# PPO CarRacing (CPU-friendly)
+# NEAT + PPO CarRacing (CPU-friendly)
 
-Trains a PPO policy on Gymnasium's `CarRacing-v2` using a compact state vector (car dynamics + lidar-style distances) instead of pixels. CPU-only by default.
+Learns to drive Gymnasium's `CarRacing-v2` from a compact state vector (car dynamics + lidar-style distances) instead of pixels, either by evolving networks with **NEAT** (the main approach) or with **PPO** (the comparison baseline). CPU-only.
 
 **Project story:** <https://jca374.github.io/neat-car-2/> (source: [`docs/index.html`](docs/index.html)) describes where the project started (NEAT), each step that changed results, and the bugs found along the way. It is published with GitHub Pages from `docs/`.
 
@@ -22,7 +22,21 @@ pytest tests/
 ```
 The requirements use the PyTorch CPU wheel (`--extra-index-url https://download.pytorch.org/whl/cpu`).
 
-## Train
+## NEAT (main approach)
+
+```bash
+# Evolve (resumes automatically from outputs/neat/checkpoints)
+python -m carracing_neat.train --generations 150 --tracks-per-generation 3 --auto-visualize
+
+# Watch the best validated genome
+python -m carracing_neat.play --genome outputs/neat/checkpoints/best-genome.pkl --seed 3
+python -m carracing_neat.play --seed 3 --gif neat.gif
+```
+- Every genome in a generation drives the same `--tracks-per-generation` random tracks (new ones each generation); fitness is the raw game score.
+- Each generation's champion is also scored on 5 held-out tracks; `best-genome.pkl` is the best by that validation score.
+- Logs in `outputs/neat/logs/`: `fitness.csv`, `validation.csv`, `genome_stats.csv`. Config: `neat_config/neat.cfg` (pop 100).
+
+## PPO (baseline)
 
 ```bash
 # Quick smoke run
@@ -72,10 +86,12 @@ python -m carracing_ppo.play --deterministic --seed 3 --gif out.gif
 
 ## Repo structure
 
-- `carracing_ppo/env.py`: state wrapper (dynamics + lidar, traction, off-track penalty, multi-lap).
+- `carracing_neat/`: NEAT training (shared-track parallel evaluator, validation), replay, network plots.
+- `neat_config/neat.cfg`: NEAT hyperparameters.
+- `carracing_ppo/env.py`: shared state wrapper (used by both NEAT and PPO) (dynamics + lidar, traction, off-track penalty, multi-lap).
 - `carracing_ppo/train.py`: PPO training entrypoint with eval/checkpoint callbacks.
 - `carracing_ppo/play.py`: roll out a saved policy (human, headless or GIF).
-- `tests/`: pytest smoke test, multi-lap and traction behaviour.
+- `tests/`: pytest: smoke, multi-lap, traction, lidar equivalence, NEAT evaluation.
 - `scripts/`: plotting, `build_site_data.py` and `benchmark.py` (generate the project page's data and GIFs).
 - `docs/`: GitHub Pages site.
 - `notes/`: technical documentation and the Dec 2025 training analysis report.

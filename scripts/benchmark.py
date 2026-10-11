@@ -1,7 +1,7 @@
 """
 Apples-to-apples benchmark of every stage's best model.
 
-Each model drives the same fixed tracks for up to 1000 steps and is scored with
+Each model (PPO checkpoint or NEAT genome) drives the same fixed tracks for up to 1000 steps and is scored with
 the *raw* CarRacing-v2 reward (no off-track penalty, no lap bonus, single lap),
 so runs trained with different reward shaping can be compared. Also records a
 GIF per stage on the first track.
@@ -29,6 +29,7 @@ MODELS = {
     "strict": "outputs/checkpoints_strict/best_model.zip",
     "multilap": "outputs/checkpoints_multilap/best_model.zip",
     "v2": "outputs/checkpoints_v2/best_model.zip",
+    "neat": "outputs/neat/checkpoints/best-genome.pkl",
 }
 # Trained before the traction fix: they only ever saw state[7] == 1.0.
 LEGACY_TRACTION = {"baseline", "improved", "collapsed", "strict", "multilap"}
@@ -36,7 +37,50 @@ SEEDS = [3, 11, 21, 34, 55]
 GIF_SEED = SEEDS[0]
 
 
-def run_episode(model: PPO, seed: int, record: bool, legacy: bool):
+class PPOPolicy:
+    def __init__(self, path: str, legacy: bool) -> None:
+        self.model = PPO.load(path, device="cpu")
+        self.legacy = legacy
+
+    def reset(self) -> None:
+        pass
+
+    def __call__(self, obs: np.ndarray) -> np.ndarray:
+        obs = obs.copy()
+        if self.legacy:
+            obs[7] = 1.0
+        return self.model.predict(obs, deterministic=True)[0]
+
+
+class NEATPolicy:
+    def __init__(self, path: str, config_path: str = "neat_config/neat.cfg") -> None:
+        import neat
+
+        from carracing_neat.eval import EvalSettings, decode_action
+        from carracing_neat.play import load_genome
+
+        genome, config = load_genome(path, config_path)
+        self.net = neat.nn.FeedForwardNetwork.create(genome, config)
+        self.decode = decode_action
+        self.smoothing = EvalSettings().action_smoothing
+        self.reset()
+
+    def reset(self) -> None:
+        self.prev = np.zeros(3, dtype=np.float32)
+
+    def __call__(self, obs: np.ndarray) -> np.ndarray:
+        self.prev = self.decode(self.net.activate(obs), self.prev, self.smoothing)
+        return self.prev
+
+
+def load_policy(stage: str):
+    path = MODELS[stage]
+    if path.endswith(".pkl"):
+        return NEATPolicy(path)
+    return PPOPolicy(path, legacy=stage in LEGACY_TRACTION)
+
+
+def run_episode(policy, seed: int, record: bool):
     env = make_env(
         render_mode="rgb_array" if record else None,
         offtrack_penalty=0.0,
@@ -44,13 +88,11 @@ def run_episode(model: PPO, seed: int, record: bool, legacy: bool):
         max_episode_steps=1000,
     )
     obs, _ = env.reset(seed=seed)
+    policy.reset()
     total, frames, info, steps = 0.0, [], {}, 0
     traction = []
     for steps in range(1, 1001):
-        policy_obs = obs.copy()
-        if legacy:
-            policy_obs[7] = 1.0
-        action, _ = model.predict(policy_obs, deterministic=True)
+        action = policy(obs)
         obs, reward, terminated, truncated, info = env.step(action)
         total += float(reward)
         traction.append(float(obs[7]))
@@ -86,10 +128,10 @@ def main() -> None:
         if not os.path.exists(path):
             print(f"skip {stage}: {path} missing")
             continue
-        model = PPO.load(path, device="cpu")
+        policy = load_policy(stage)
         episodes = []
         for seed in SEEDS:
-            ep, frames = run_episode(model, seed, record=seed == GIF_SEED, legacy=stage in LEGACY_TRACTION)
+            ep, frames = run_episode(policy, seed, record=seed == GIF_SEED)
             episodes.append(ep)
             print(stage, ep, flush=True)
             if frames:

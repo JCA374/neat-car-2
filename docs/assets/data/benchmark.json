@@ -226,6 +226,50 @@
      "offtrack_pct": 4.1
     }
    ]
+  },
+  "v2": {
+   "model": "outputs/checkpoints_v2/best_model.zip",
+   "mean": -47.9,
+   "std": 11.1,
+   "laps": 0,
+   "offtrack_pct": 0.0,
+   "episodes": [
+    {
+     "seed": 3,
+     "score": -37.3,
+     "steps": 1000,
+     "lap": 0,
+     "offtrack_pct": 0.0
+    },
+    {
+     "seed": 11,
+     "score": -69.1,
+     "steps": 1000,
+     "lap": 0,
+     "offtrack_pct": 0.0
+    },
+    {
+     "seed": 21,
+     "score": -46.7,
+     "steps": 1000,
+     "lap": 0,
+     "offtrack_pct": 0.0
+    },
+    {
+     "seed": 34,
+     "score": -44.1,
+     "steps": 1000,
+     "lap": 0,
+     "offtrack_pct": 0.0
+    },
+    {
+     "seed": 55,
+     "score": -42.1,
+     "steps": 1000,
+     "lap": 0,
+     "offtrack_pct": 0.0
+    }
+   ]
   }
  }
 }

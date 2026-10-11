@@ -96,6 +96,34 @@ def summarize(key: str, label: str, log_dir: str, ckpt_dir: str) -> Optional[dic
     return run
 
 
+def summarize_neat(log_dir: str = "outputs/neat/logs") -> Optional[dict]:
+    """Per-generation NEAT stats: train fitness (best/mean), held-out validation, network size."""
+    fitness_path = os.path.join(log_dir, "fitness.csv")
+    if not os.path.exists(fitness_path):
+        return None
+    fit = pd.read_csv(fitness_path)
+    val_path = os.path.join(log_dir, "validation.csv")
+    val = pd.read_csv(val_path) if os.path.exists(val_path) else pd.DataFrame()
+    out = {
+        "generations": int(len(fit)),
+        "hours": round(float(fit["time_s"].iloc[-1]) / 3600, 2) if len(fit) else 0,
+        "best": [[int(g), round(float(v), 1)] for g, v in zip(fit["generation"], fit["best_fitness"])],
+        "mean": [[int(g), round(float(v), 1)] for g, v in zip(fit["generation"], fit["mean_fitness"])],
+    }
+    if len(val):
+        out["validation"] = [[int(g), round(float(v), 1)] for g, v in zip(val["generation"], val["validation_score"])]
+        out["hidden_nodes"] = [[int(g), int(v)] for g, v in zip(val["generation"], val["hidden_nodes"])]
+        out["connections"] = [[int(g), int(v)] for g, v in zip(val["generation"], val["enabled_connections"])]
+        best = val.loc[val["validation_score"].idxmax()]
+        out["best_validation"] = {
+            "generation": int(best["generation"]),
+            "score": round(float(best["validation_score"]), 1),
+            "hidden_nodes": int(best["hidden_nodes"]),
+            "connections": int(best["enabled_connections"]),
+        }
+    return out
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", default="docs/assets/data/runs.json")
@@ -103,7 +131,7 @@ def main() -> None:
     runs = [r for r in (summarize(*spec) for spec in RUNS) if r]
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w") as fh:
-        json.dump({"runs": runs}, fh, separators=(",", ":"))
+        json.dump({"runs": runs, "neat": summarize_neat()}, fh, separators=(",", ":"))
     for r in runs:
         print(
             f"{r['key']:9s} eps={r['episodes']:5d} steps={r['steps']:8d} last400={r['mean_last400']:6.1f} "
