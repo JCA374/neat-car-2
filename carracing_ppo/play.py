@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import argparse
 import os
-from typing import Optional, Sequence
+from typing import List, Optional, Sequence
 
 import numpy as np
 from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import DummyVecEnv
 
 from carracing_ppo.env import make_env
 
@@ -51,7 +50,35 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--deterministic", action="store_true", help="Use deterministic actions.")
     parser.add_argument("--domain-randomize", action="store_true", help="Enable domain randomization.")
     parser.add_argument("--seed", type=int, default=None, help="Optional environment seed.")
+    # Reward shaping: match the training run so printed rewards are comparable.
+    parser.add_argument("--offtrack-penalty", type=float, default=1.0, help="Same as train.py.")
+    parser.add_argument("--traction-threshold", type=float, default=0.95, help="Same as train.py.")
+    parser.add_argument(
+        "--allow-multiple-laps", action=argparse.BooleanOptionalAction, default=True, help="Same as train.py."
+    )
+    parser.add_argument("--lap-completion-bonus", type=float, default=100.0, help="Same as train.py.")
+    parser.add_argument(
+        "--gif",
+        default=None,
+        help="Record the first episode to this GIF path (forces render-mode rgb_array).",
+    )
+    parser.add_argument("--gif-every", type=int, default=2, help="Keep every Nth frame in the GIF.")
+    parser.add_argument("--gif-width", type=int, default=320, help="GIF width in pixels.")
     return parser.parse_args(argv)
+
+
+def _save_gif(frames: List[np.ndarray], path: str, every: int, width: int) -> None:
+    import imageio.v2 as imageio
+    from PIL import Image
+
+    kept = []
+    for frame in frames[::every]:
+        img = Image.fromarray(frame)
+        height = int(img.height * width / img.width)
+        kept.append(np.asarray(img.resize((width, height), Image.BILINEAR)))
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    imageio.mimsave(path, kept, duration=1000 * every / 50, loop=0)
+    print(f"Saved {len(kept)} frames to {path}")
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -64,20 +91,37 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print(f"Loading model from {model_path}")
     model = PPO.load(model_path, device="auto")
 
-    env = DummyVecEnv(
-        [lambda: make_env(render_mode=render_mode, domain_randomize=args.domain_randomize, seed=args.seed)]
+    if args.gif:
+        render_mode = "rgb_array"
+    env_kwargs = dict(
+        render_mode=render_mode,
+        domain_randomize=args.domain_randomize,
+        seed=args.seed,
+        offtrack_penalty=args.offtrack_penalty,
+        traction_threshold=args.traction_threshold,
+        allow_multiple_laps=args.allow_multiple_laps,
+        lap_completion_bonus=args.lap_completion_bonus,
+        max_episode_steps=args.max_steps,
     )
+    env = make_env(**env_kwargs)
 
     for ep in range(args.episodes):
-        obs = env.reset()
+        obs, _ = env.reset(seed=args.seed if ep == 0 else None)
+        frames: List[np.ndarray] = []
         total_reward = 0.0
+        laps = 0
         for step in range(args.max_steps):
             action, _ = model.predict(obs, deterministic=args.deterministic)
-            obs, reward, done, infos = env.step(action)
-            total_reward += float(reward[0])
-            if done[0]:
+            obs, reward, terminated, truncated, info = env.step(action)
+            total_reward += float(reward)
+            laps = info.get("laps_completed", laps)
+            if args.gif and ep == 0:
+                frames.append(env.render())
+            if terminated or truncated:
                 break
-        print(f"Episode {ep + 1}: reward={total_reward:.2f}, steps={step + 1}")
+        print(f"Episode {ep + 1}: reward={total_reward:.2f}, steps={step + 1}, laps={laps}")
+        if frames:
+            _save_gif(frames, args.gif, args.gif_every, args.gif_width)
 
     env.close()
     return 0

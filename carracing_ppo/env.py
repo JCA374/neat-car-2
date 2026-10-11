@@ -80,6 +80,9 @@ class CarRacingStateWrapper(gym.Wrapper):
         self._road_polygons: List[np.ndarray] = []
         self._road_bounds: List[Tuple[float, float, float, float]] = []
         self._laps_completed = 0
+        self._steps = 0
+        spec = getattr(env, "spec", None)
+        self._max_steps: Optional[int] = getattr(spec, "max_episode_steps", None)
 
     # ---------------------------------------------------------------------- #
     # Gym API
@@ -88,6 +91,7 @@ class CarRacingStateWrapper(gym.Wrapper):
         obs, info = self.env.reset(**kwargs)
         self._extract_road_geometry()
         self._laps_completed = 0
+        self._steps = 0
         state = self._build_state(obs)
         return state, info
 
@@ -103,24 +107,34 @@ class CarRacingStateWrapper(gym.Wrapper):
             delta = max(0.0, self.traction_threshold - traction)
             reward -= self.offtrack_penalty * delta
 
-        # Handle lap completion for multiple laps
-        if self.allow_multiple_laps and terminated and not truncated:
-            # Lap completed! Give bonus and reset tile tracking
+        self._steps += 1
+        if self._lap_finished():
             self._laps_completed += 1
-            reward += self.lap_completion_bonus
-
-            # Reset tile visit tracking in base environment to allow new lap
-            base_env = self.env.unwrapped
-            if hasattr(base_env, 'tile_visited_count'):
-                base_env.tile_visited_count = 0
-
-            # Keep episode running (don't terminate)
-            terminated = False
-
-            # Add lap count to info
-            info['laps_completed'] = self._laps_completed
+            if self.allow_multiple_laps:
+                # CarRacing reports a finished lap as truncation. Pay the bonus,
+                # re-arm every tile so the next lap earns tile rewards again, and
+                # keep driving unless the time limit was hit on this same step.
+                # Out-of-bounds (terminated, -100) is left untouched.
+                reward += self.lap_completion_bonus
+                self._start_new_lap()
+                truncated = self._max_steps is not None and self._steps >= self._max_steps
+        info["laps_completed"] = self._laps_completed
 
         return state, reward, terminated, truncated, info
+
+    def _lap_finished(self) -> bool:
+        base = self.env.unwrapped
+        track = getattr(base, "track", None) or []
+        return bool(getattr(base, "new_lap", False)) or (
+            len(track) > 0 and getattr(base, "tile_visited_count", 0) == len(track)
+        )
+
+    def _start_new_lap(self) -> None:
+        base = self.env.unwrapped
+        base.new_lap = False
+        base.tile_visited_count = 0
+        for tile in getattr(base, "road", None) or []:
+            tile.road_visited = False
 
     # ------------------------------------------------------------------ utils
     def _build_state(self, obs) -> np.ndarray:
@@ -283,6 +297,7 @@ def make_env(
     traction_threshold: float = 0.95,
     allow_multiple_laps: bool = True,
     lap_completion_bonus: float = 100.0,
+    max_episode_steps: Optional[int] = None,
     **kwargs,
 ) -> CarRacingStateWrapper:
     """
@@ -306,9 +321,14 @@ def make_env(
         If True, episodes continue after lap completion allowing multiple laps.
     lap_completion_bonus: float
         Bonus reward given when completing a lap (when allow_multiple_laps=True).
+    max_episode_steps: Optional[int]
+        Override the 1000-step time limit (a lap takes ~850 steps, so a second
+        lap needs a longer limit or a faster driver).
     kwargs:
         Passed through to gymnasium.make("CarRacing-v2", ...).
     """
+    if max_episode_steps is not None:
+        kwargs["max_episode_steps"] = max_episode_steps
     env = gym.make(
         "CarRacing-v2",
         render_mode=render_mode,

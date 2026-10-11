@@ -65,15 +65,21 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--allow-multiple-laps",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         default=True,
-        help="Allow episodes to continue after lap completion for multiple laps.",
+        help="Keep driving after a lap (bonus + fresh tiles). Disable with --no-allow-multiple-laps.",
     )
     parser.add_argument(
         "--lap-completion-bonus",
         type=float,
         default=100.0,
         help="Bonus reward given when completing a lap (when allow-multiple-laps is enabled).",
+    )
+    parser.add_argument(
+        "--max-episode-steps",
+        type=int,
+        default=None,
+        help="Override CarRacing's 1000-step limit (a lap takes ~850 steps).",
     )
     parser.add_argument("--seed", type=int, default=0, help="Seed for reproducibility.")
     parser.add_argument(
@@ -108,26 +114,26 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def _env_kwargs(args: argparse.Namespace) -> dict:
+    return {
+        "render_mode": None,
+        "domain_randomize": args.domain_randomize,
+        "offtrack_penalty": args.offtrack_penalty,
+        "traction_threshold": args.traction_threshold,
+        "allow_multiple_laps": args.allow_multiple_laps,
+        "lap_completion_bonus": args.lap_completion_bonus,
+        "max_episode_steps": args.max_episode_steps,
+    }
+
+
 def _make_vector_envs(
+    env_kwargs: dict,
     num_envs: int,
     seed: int,
-    domain_randomize: bool,
-    log_dir: str,
+    monitor_dir: str,
     vec_cls,
     start_method: Optional[str] = None,
-    offtrack_penalty: float = 0.5,
-    traction_threshold: float = 0.9,
-    allow_multiple_laps: bool = True,
-    lap_completion_bonus: float = 100.0,
 ):
-    env_kwargs = {
-        "render_mode": None,
-        "domain_randomize": domain_randomize,
-        "offtrack_penalty": offtrack_penalty,
-        "traction_threshold": traction_threshold,
-        "allow_multiple_laps": allow_multiple_laps,
-        "lap_completion_bonus": lap_completion_bonus,
-    }
     vec_env_kwargs = {}
     if start_method and vec_cls is SubprocVecEnv:
         vec_env_kwargs["start_method"] = start_method
@@ -136,7 +142,8 @@ def _make_vector_envs(
         n_envs=num_envs,
         seed=seed,
         vec_env_cls=vec_cls,
-        monitor_dir=os.path.join(log_dir, "monitor"),
+        monitor_dir=monitor_dir,
+        monitor_kwargs={"info_keywords": ("laps_completed",)},
         vec_env_kwargs=vec_env_kwargs or None,
     )
 
@@ -178,53 +185,24 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     os.makedirs(args.checkpoint_dir, exist_ok=True)
     os.makedirs(args.log_dir, exist_ok=True)
 
+    env_kwargs = _env_kwargs(args)
+    train_monitor = os.path.join(args.log_dir, "monitor")
     vec_cls = DummyVecEnv if args.num_envs == 1 else SubprocVecEnv
     start_method = "fork" if vec_cls is SubprocVecEnv else None
     try:
         train_env = _make_vector_envs(
-            num_envs=args.num_envs,
-            seed=args.seed,
-            domain_randomize=args.domain_randomize,
-            log_dir=args.log_dir,
-            vec_cls=vec_cls,
-            start_method=start_method,
-            offtrack_penalty=args.offtrack_penalty,
-            traction_threshold=args.traction_threshold,
-            allow_multiple_laps=args.allow_multiple_laps,
-            lap_completion_bonus=args.lap_completion_bonus,
+            env_kwargs, args.num_envs, args.seed, train_monitor, vec_cls, start_method
         )
     except PermissionError as exc:
-        if vec_cls is SubprocVecEnv:
-            print(
-                f"SubprocVecEnv unavailable ({exc}); falling back to DummyVecEnv with num_envs=1.",
-                flush=True,
-            )
-            vec_cls = DummyVecEnv
-            args.num_envs = 1
-            train_env = _make_vector_envs(
-                num_envs=1,
-                seed=args.seed,
-                domain_randomize=args.domain_randomize,
-                log_dir=args.log_dir,
-                vec_cls=vec_cls,
-                offtrack_penalty=args.offtrack_penalty,
-                traction_threshold=args.traction_threshold,
-                allow_multiple_laps=args.allow_multiple_laps,
-                lap_completion_bonus=args.lap_completion_bonus,
-            )
-        else:
+        if vec_cls is not SubprocVecEnv:
             raise
+        print(f"SubprocVecEnv unavailable ({exc}); falling back to DummyVecEnv with num_envs=1.", flush=True)
+        args.num_envs = 1
+        train_env = _make_vector_envs(env_kwargs, 1, args.seed, train_monitor, DummyVecEnv)
 
+    # Separate monitor dir: sharing "monitor/" made eval and train env 0 both write 0.monitor.csv.
     eval_env = _make_vector_envs(
-        num_envs=1,
-        seed=args.seed + 42,
-        domain_randomize=args.domain_randomize,
-        log_dir=args.log_dir,
-        vec_cls=DummyVecEnv,
-        offtrack_penalty=args.offtrack_penalty,
-        traction_threshold=args.traction_threshold,
-        allow_multiple_laps=args.allow_multiple_laps,
-        lap_completion_bonus=args.lap_completion_bonus,
+        env_kwargs, 1, args.seed + 42, os.path.join(args.log_dir, "eval_monitor"), DummyVecEnv
     )
 
     policy_kwargs = dict(net_arch=dict(pi=args.policy_hidden_sizes, vf=args.policy_hidden_sizes))

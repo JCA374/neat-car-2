@@ -10,6 +10,7 @@ Checks:
 from __future__ import annotations
 
 import math
+import os
 import random
 
 import numpy as np
@@ -89,10 +90,19 @@ def test_train_entrypoint():
     ]
     rc = train_mod.main(args)
     assert rc == 0
+    # Train and eval envs must log to separate monitor files.
+    assert os.path.exists("outputs/logs_test/monitor/0.monitor.csv")
+    assert os.path.exists("outputs/logs_test/eval_monitor/0.monitor.csv")
+
+
+def test_allow_multiple_laps_flag():
+    assert train_mod.parse_args([]).allow_multiple_laps is True
+    assert train_mod.parse_args(["--no-allow-multiple-laps"]).allow_multiple_laps is False
 
 
 if __name__ == "__main__":
     test_env_basic()
     test_tiny_ppo()
     test_train_entrypoint()
+    test_allow_multiple_laps_flag()
     print("Smoke test passed.")
