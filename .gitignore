@@ -19,6 +19,7 @@ outputs/logs*/
 # Ignore plots and test artefacts
 outputs/plots/
 outputs/*_test/
+outputs/neat_smoke/
 .pytest_cache/
 
 # Editor/OS cruft
@@ -27,3 +28,7 @@ outputs/*_test/
 .vscode/
 *.swp
 *.swo
+# NEAT: keep only the validated best genome and logs
+outputs/neat/checkpoints/*
+!outputs/neat/checkpoints/best-genome.pkl
+outputs/neat/plots/

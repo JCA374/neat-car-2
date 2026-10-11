@@ -21,23 +21,6 @@ except Exception as exc:  # pragma: no cover - handled at runtime by the user
     ) from exc
 
 
-def _point_in_poly(point: Tuple[float, float], poly: np.ndarray) -> bool:
-    """Check if a 2D point is inside a polygon using a winding test."""
-    x, y = point
-    inside = False
-    j = len(poly) - 1
-    for i in range(len(poly)):
-        xi, yi = poly[i]
-        xj, yj = poly[j]
-        intersect = (yi > y) != (yj > y) and (
-            x < (xj - xi) * (y - yi) / (yj - yi + 1e-9) + xi
-        )
-        if intersect:
-            inside = not inside
-        j = i
-    return inside
-
-
 class CarRacingStateWrapper(gym.Wrapper):
     """
     Wraps CarRacing to emit a fixed-length, low-dimensional state vector.
@@ -79,6 +62,8 @@ class CarRacingStateWrapper(gym.Wrapper):
 
         self._road_polygons: List[np.ndarray] = []
         self._road_bounds: List[Tuple[float, float, float, float]] = []
+        self._poly_array: Optional[np.ndarray] = None
+        self._bounds_array: Optional[np.ndarray] = None
         self._laps_completed = 0
         self._steps = 0
         spec = getattr(env, "spec", None)
@@ -242,53 +227,60 @@ class CarRacingStateWrapper(gym.Wrapper):
             ys = poly[:, 1]
             self._road_bounds.append((float(xs.min()), float(xs.max()), float(ys.min()), float(ys.max())))
 
+        # Stacked copies for the vectorised lidar. Shorter polygons are padded by
+        # repeating their last vertex: a zero-length edge never counts as a crossing.
+        if self._road_polygons:
+            n_vertices = max(len(poly) for poly in self._road_polygons)
+            padded = [
+                np.vstack([poly, np.repeat(poly[-1:], n_vertices - len(poly), axis=0)])
+                for poly in self._road_polygons
+            ]
+            self._poly_array = np.stack(padded).astype(np.float64)
+            self._bounds_array = np.asarray(self._road_bounds, dtype=np.float64)
+        else:
+            self._poly_array = None
+            self._bounds_array = None
+
     def _lidar_distances(self, origin: np.ndarray, heading: float) -> np.ndarray:
-        """Sample ray distances against cached road polygons."""
-        if not self._road_polygons:
+        """Distance along each ray to the first sample point that is off the road.
+
+        All sample points (rays x steps) are tested against every nearby road
+        polygon at once with a vectorised crossing-number test.
+        """
+        if self._poly_array is None:
             return np.ones(self.lidar_rays, dtype=np.float32)
 
+        ox, oy = float(origin[0]), float(origin[1])
+        bounds = self._bounds_array
         margin = self.lidar_max_dist + 2.0
-        candidates = [
-            idx
-            for idx, (xmin, xmax, ymin, ymax) in enumerate(self._road_bounds)
-            if (origin[0] >= xmin - margin)
-            and (origin[0] <= xmax + margin)
-            and (origin[1] >= ymin - margin)
-            and (origin[1] <= ymax + margin)
-        ]
-        if not candidates:
+        near = (
+            (ox >= bounds[:, 0] - margin)
+            & (ox <= bounds[:, 1] + margin)
+            & (oy >= bounds[:, 2] - margin)
+            & (oy <= bounds[:, 3] + margin)
+        )
+        if not near.any():
             return np.ones(self.lidar_rays, dtype=np.float32)
 
-        distances: List[float] = []
-        for rel_angle in self.lidar_angles:
-            angle = heading + rel_angle
-            dir_x = math.cos(angle)
-            dir_y = math.sin(angle)
+        polys = self._poly_array[near]                       # (P, V, 2)
+        steps = np.arange(self.lidar_step, self.lidar_max_dist + 1e-9, self.lidar_step)  # (S,)
+        angles = heading + self.lidar_angles                 # (R,)
+        px = ox + np.cos(angles)[:, None] * steps[None, :]   # (R, S)
+        py = oy + np.sin(angles)[:, None] * steps[None, :]
 
-            distance = self.lidar_max_dist
-            step = self.lidar_step
-            travelled = step
-            while travelled <= self.lidar_max_dist:
-                sample = origin + np.array([dir_x * travelled, dir_y * travelled], dtype=np.float32)
-                if not self._point_on_road(sample, candidates):
-                    distance = travelled
-                    break
-                travelled += step
+        x = px.reshape(-1, 1, 1)                             # (R*S, 1, 1)
+        y = py.reshape(-1, 1, 1)
+        xi, yi = polys[None, :, :, 0], polys[None, :, :, 1]  # (1, P, V)
+        prev = np.roll(polys, 1, axis=1)                     # edge i -> i-1
+        xj, yj = prev[None, :, :, 0], prev[None, :, :, 1]
+        crosses = ((yi > y) != (yj > y)) & (x < (xj - xi) * (y - yi) / (yj - yi + 1e-9) + xi)
+        on_road = ((crosses.sum(axis=2) % 2) == 1).any(axis=1).reshape(px.shape)  # (R, S)
 
-            distances.append(np.clip(distance / self.lidar_max_dist, 0.0, 1.0))
-
-        return np.asarray(distances, dtype=np.float32)
-
-    def _point_on_road(self, point: np.ndarray, candidates: List[int]) -> bool:
-        """Return True if the point lies within any cached road polygon."""
-        px, py = point
-        for idx in candidates:
-            xmin, xmax, ymin, ymax = self._road_bounds[idx]
-            if px < xmin - 1.0 or px > xmax + 1.0 or py < ymin - 1.0 or py > ymax + 1.0:
-                continue
-            if _point_in_poly((px, py), self._road_polygons[idx]):
-                return True
-        return False
+        off_road = ~on_road
+        hit = off_road.any(axis=1)
+        first_off = off_road.argmax(axis=1)
+        distance = np.where(hit, steps[first_off], self.lidar_max_dist)
+        return np.clip(distance / self.lidar_max_dist, 0.0, 1.0).astype(np.float32)
 
 
 def make_env(
@@ -339,6 +331,12 @@ def make_env(
         domain_randomize=domain_randomize,
         **kwargs,
     )
+    if render_mode is None:
+        # The wrapper reads Box2D state, never pixels, so skip CarRacing's per-step
+        # 96x96 software render (~2/3 of step time). A constant blank frame keeps
+        # Gymnasium's observation checks happy.
+        blank = np.zeros(env.observation_space.shape, dtype=env.observation_space.dtype)
+        env.unwrapped._render = lambda mode, *a, **k: blank if mode == "state_pixels" else None
     if seed is not None:
         env.reset(seed=seed)
     return CarRacingStateWrapper(

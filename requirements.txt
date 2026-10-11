@@ -10,3 +10,4 @@ matplotlib>=3.7
 pandas>=2.0
 imageio>=2.31
 pytest>=8.0
+neat-python==0.92
