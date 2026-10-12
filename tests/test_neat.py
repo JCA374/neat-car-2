@@ -64,3 +64,16 @@ def test_evaluator_survives_checkpoint_pickling():
 def test_settings_replace_keeps_other_fields():
     settings = EvalSettings(max_steps=123, offtrack_penalty=2.0)
     assert dataclasses.replace(settings, seeds=[7]).max_steps == 123
+
+
+def test_decode_reaches_full_control_range():
+    import numpy as np
+
+    from carracing_neat.eval import decode_action
+
+    zero = np.zeros(3, dtype=np.float32)
+    assert np.allclose(decode_action([-1.0, 1.0, -1.0], zero, 0.0), [-1.0, 1.0, 0.0])
+    assert np.allclose(decode_action([1.0, -1.0, 1.0], zero, 0.0), [1.0, 0.0, 1.0])
+    # The old double-tanh decoding could never release the brake or floor the gas.
+    legacy = decode_action([-1.0, 1.0, -1.0], zero, 0.0, legacy=True)
+    assert np.allclose(legacy, [-0.7616, 0.8808, 0.1192], atol=1e-3)

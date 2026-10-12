@@ -31,6 +31,8 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=None, help="Track seed (default: random).")
     parser.add_argument("--render-mode", default="human", help='"human", "rgb_array" or "none".')
     parser.add_argument("--action-smoothing", type=float, default=0.1, help="Same as training.")
+    parser.add_argument("--legacy-decode", action="store_true",
+                        help="Old double-tanh output decoding (genomes evolved before Oct 12 2026).")
     parser.add_argument("--gif", default=None, help="Record the first episode to this GIF path.")
     return parser.parse_args(argv)
 
@@ -42,7 +44,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     render_mode = None if args.render_mode.lower() == "none" else args.render_mode
     if args.gif:
         render_mode = "rgb_array"
-    settings = EvalSettings(max_steps=args.max_steps, action_smoothing=args.action_smoothing)
+    settings = EvalSettings(max_steps=args.max_steps, action_smoothing=args.action_smoothing,
+                            legacy_decode=args.legacy_decode)
 
     print(f"Genome {genome.key} from {args.genome}")
     for ep in range(args.episodes):

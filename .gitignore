@@ -33,3 +33,7 @@ outputs/neat/checkpoints/*
 !outputs/neat/checkpoints/best-genome.pkl
 outputs/neat/plots/
 outputs/neat/logs/train.out
+outputs/neat_v2/checkpoints/*
+!outputs/neat_v2/checkpoints/best-genome.pkl
+outputs/neat_v2/plots/
+outputs/neat_v2/logs/train.out

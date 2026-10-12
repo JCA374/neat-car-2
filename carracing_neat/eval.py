@@ -31,19 +31,21 @@ class EvalSettings:
     domain_randomize: bool = False
     # Stop an episode early when no new tile is reached for this many steps.
     patience: int = 100
+    # Genomes evolved before Oct 12 2026 expect the old double-tanh decoding.
+    legacy_decode: bool = False
     seeds: Sequence[int] = field(default_factory=lambda: [0])
 
 
-def decode_action(output: Sequence[float], prev_action: np.ndarray, smoothing: float) -> np.ndarray:
-    """Map network outputs to CarRacing's continuous control range."""
-    action = np.array(
-        [
-            math.tanh(output[0]),
-            (math.tanh(output[1]) + 1.0) / 2.0,
-            (math.tanh(output[2]) + 1.0) / 2.0,
-        ],
-        dtype=np.float32,
-    )
+def decode_action(output: Sequence[float], prev_action: np.ndarray, smoothing: float,
+                  legacy: bool = False) -> np.ndarray:
+    """Map network outputs (already tanh, so in [-1, 1]) to CarRacing controls.
+
+    ``legacy`` reproduces the original decoding, which applied tanh a second
+    time: that capped steering at 0.76 and gas at 0.881 and left the brake at
+    0.119 or more on every frame.
+    """
+    o = [math.tanh(v) for v in output[:3]] if legacy else output[:3]
+    action = np.array([o[0], (o[1] + 1.0) / 2.0, (o[2] + 1.0) / 2.0], dtype=np.float32)
     if smoothing > 0.0:
         blend = float(np.clip(smoothing, 0.0, 0.95))
         action = blend * prev_action + (1.0 - blend) * action
@@ -78,7 +80,7 @@ def run_episode(net, settings: EvalSettings, seed: int, render_mode: Optional[st
     total, steps, since_tile, laps = 0.0, 0, 0, 0
     frames: List[np.ndarray] = []
     for steps in range(1, settings.max_steps + 1):
-        action = decode_action(net.activate(state), prev_action, settings.action_smoothing)
+        action = decode_action(net.activate(state), prev_action, settings.action_smoothing, settings.legacy_decode)
         prev_action = action
         tiles_before = env.unwrapped.tile_visited_count
         state, reward, terminated, truncated, info = env.step(action)

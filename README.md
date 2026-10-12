@@ -29,7 +29,9 @@ The requirements use the PyTorch CPU wheel (`--extra-index-url https://download.
 python -m carracing_neat.train --generations 150 --tracks-per-generation 3 --auto-visualize
 
 # Watch the best validated genome
-python -m carracing_neat.play --genome outputs/neat/checkpoints/best-genome.pkl --seed 3
+python -m carracing_neat.play --genome outputs/neat_v2/checkpoints/best-genome.pkl --seed 3
+# genomes from the first run (outputs/neat/) need the old decoding
+python -m carracing_neat.play --genome outputs/neat/checkpoints/best-genome.pkl --legacy-decode --seed 3
 python -m carracing_neat.play --seed 3 --gif neat.gif
 ```
 - Every genome in a generation drives the same `--tracks-per-generation` random tracks (new ones each generation); fitness is the raw game score.

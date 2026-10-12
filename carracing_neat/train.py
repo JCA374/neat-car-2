@@ -312,6 +312,8 @@ def parse_args(argv=None):
     parser.add_argument("--traction-threshold", type=float, default=0.95, help="Traction below which the penalty applies.")
     parser.add_argument("--action-smoothing", type=float, default=0.1, help="Blend factor for previous action [0, 0.95].")
     parser.add_argument("--domain-randomize", action="store_true", help="Enable Gymnasium domain randomization.")
+    parser.add_argument("--legacy-decode", action="store_true",
+                        help="Old double-tanh output decoding (only to reproduce runs before Oct 12 2026).")
     parser.add_argument("--validate-every", type=int, default=1, help="Validate the champion every N generations.")
     parser.add_argument("--checkpoint-dir", default="outputs/neat/checkpoints", help="Checkpoints and best genomes.")
     parser.add_argument("--log-dir", default="outputs/neat/logs", help="fitness.csv, genome_stats.csv, validation.csv.")
@@ -351,6 +353,7 @@ def main(argv=None):
         traction_threshold=args.traction_threshold,
         domain_randomize=args.domain_randomize,
         patience=args.patience,
+        legacy_decode=args.legacy_decode,
     )
     evaluator = SharedTrackEvaluator(pop, settings, args.num_workers, args.tracks_per_generation, args.seed)
 

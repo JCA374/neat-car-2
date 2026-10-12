@@ -30,7 +30,10 @@ MODELS = {
     "multilap": "outputs/checkpoints_multilap/best_model.zip",
     "v2": "outputs/checkpoints_v2/best_model.zip",
     "neat": "outputs/neat/checkpoints/best-genome.pkl",
+    "neat2": "outputs/neat_v2/checkpoints/best-genome.pkl",
 }
+# NEAT genomes evolved with the old double-tanh output decoding.
+LEGACY_DECODE = {"neat"}
 # Trained before the traction fix: they only ever saw state[7] == 1.0.
 LEGACY_TRACTION = {"baseline", "improved", "collapsed", "strict", "multilap"}
 SEEDS = [3, 11, 21, 34, 55]
@@ -53,7 +56,7 @@ class PPOPolicy:
 
 
 class NEATPolicy:
-    def __init__(self, path: str, config_path: str = "neat_config/neat.cfg") -> None:
+    def __init__(self, path: str, legacy_decode: bool, config_path: str = "neat_config/neat.cfg") -> None:
         import neat
 
         from carracing_neat.eval import EvalSettings, decode_action
@@ -62,6 +65,7 @@ class NEATPolicy:
         genome, config = load_genome(path, config_path)
         self.net = neat.nn.FeedForwardNetwork.create(genome, config)
         self.decode = decode_action
+        self.legacy_decode = legacy_decode
         self.smoothing = EvalSettings().action_smoothing
         self.reset()
 
@@ -69,14 +73,14 @@ class NEATPolicy:
         self.prev = np.zeros(3, dtype=np.float32)
 
     def __call__(self, obs: np.ndarray) -> np.ndarray:
-        self.prev = self.decode(self.net.activate(obs), self.prev, self.smoothing)
+        self.prev = self.decode(self.net.activate(obs), self.prev, self.smoothing, self.legacy_decode)
         return self.prev
 
 
 def load_policy(stage: str):
     path = MODELS[stage]
     if path.endswith(".pkl"):
-        return NEATPolicy(path)
+        return NEATPolicy(path, legacy_decode=stage in LEGACY_DECODE)
     return PPOPolicy(path, legacy=stage in LEGACY_TRACTION)
 
 
