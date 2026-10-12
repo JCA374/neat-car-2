@@ -153,8 +153,9 @@ def plot_network(genome: neat.DefaultGenome, config: neat.Config, output_path: s
 
     # Add labels for inputs and outputs with fixed positions
     # Must match CarRacingStateWrapper: 8 dynamics values, then lidar rays spread
-    # over -162°..+162° around the heading.
-    lidar_deg = np.degrees(np.linspace(-0.9 * np.pi, 0.9 * np.pi, len(inputs) - 8))
+    # over -162..+162 deg around the car's local +x axis (its right side). Label
+    # them relative to the nose (local +y), + = left.
+    lidar_deg = (np.degrees(np.linspace(-0.9 * np.pi, 0.9 * np.pi, len(inputs) - 8)) - 90 + 180) % 360 - 180
     input_labels = [
         "Speed", "Vx (local)", "Vy (local)", "cos(θ)", "sin(θ)",
         "ω (ang.vel)", "Steer (cur)", "Traction"

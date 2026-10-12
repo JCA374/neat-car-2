@@ -85,7 +85,11 @@ pre code { background: none; padding: 0; }
 .small { font-size: 0.88rem; }
 .eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.78rem; color: var(--text-3); font-weight: 600; margin: 0 0 6px; }
 
-header.hero { padding: 56px 0 8px; }
+header.hero { padding: 20px 0 8px; }
+.tabs { display: flex; gap: 4px; padding: 14px 0 0; border-bottom: 1px solid var(--border); }
+.tabs a { text-decoration: none; color: var(--text-2); padding: 8px 14px; border-radius: 8px 8px 0 0; font-weight: 500; font-size: 0.95rem; border: 1px solid transparent; border-bottom: none; margin-bottom: -1px; }
+.tabs a:hover { color: var(--text); }
+.tabs a.active { color: var(--text); background: var(--bg); border-color: var(--border); }
 .hero-grid { display: grid; grid-template-columns: 1fr 300px; gap: 28px; align-items: center; }
 .hero-gif { width: 100%; border-radius: 10px; border: 1px solid var(--border); display: block; background: var(--surface-2); aspect-ratio: 3 / 2; object-fit: cover; }
 .lede { font-size: 1.12rem; color: var(--text-2); }
@@ -156,6 +160,10 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border
 <body>
 <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle colour theme">◐ Theme</button>
 <main>
+<nav class="tabs" aria-label="Pages">
+  <a href="index.html" class="active" aria-current="page">The story</a>
+  <a href="network.html">The network</a>
+</nav>
 
 <header class="hero">
   <div class="hero-grid">
@@ -303,7 +311,7 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border
         <div>
           <p class="meta"><span>Oct 2026</span><a href="https://github.com/JCA374/neat-car-2/commit/c6cd38a">c6cd38a</a></p>
           <h3>8 · Back to NEAT <span class="tag info" id="neatTag">evolving</span></h3>
-          <p>We went back to the original idea of evolving the network itself, this time with the lessons from PPO. <a href="#neat">Details below</a>.</p>
+          <p>We went back to the original idea of evolving the network itself, this time with the lessons from PPO. <a href="#neat">Details below</a>, and you can explore the evolved network on <a href="network.html">its own page</a>.</p>
           <div class="kv"><span>pop 100</span><span>3 shared tracks / generation</span><span>fitness = raw game score</span><span>5 held-out validation tracks</span></div>
           <div class="result" id="neatResult"><span class="pending">Evolution in progress.</span></div>
         </div>

@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inside the Evolved Driver</title>
+<meta name="description" content="Explore the NEAT network that learned to drive CarRacing: nodes, connections, how it grew over generations, and how milestone individuals drive.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #fcfcfb; --surface: #ffffff; --surface-2: #f4f3f0; --border: #e4e2dc;
+  --text: #0b0b0b; --text-2: #52514e; --text-3: #7a7974; --accent: #2a78d6;
+  --pos: #2a78d6; --neg: #e34948; --neutral: #d9d7d1;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4;
+  --good: #1d7a3a; --grid: #ecebe7; --code-bg: #f4f3f0;
+  --grass: #cfe6c4; --road: #8d8c88; --car: #0b0b0b; --ray: #eb6834;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #141413; --surface: #1a1a19; --surface-2: #232321; --border: #34332f;
+    --text: #ffffff; --text-2: #c3c2b7; --text-3: #8f8e86; --accent: #3987e5;
+    --pos: #3987e5; --neg: #e66767; --neutral: #46453f;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181;
+    --good: #4cb36b; --grid: #2a2a27; --code-bg: #232321;
+    --grass: #24331f; --road: #5c5b57; --car: #ffffff; --ray: #d95926;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141413; --surface: #1a1a19; --surface-2: #232321; --border: #34332f;
+  --text: #ffffff; --text-2: #c3c2b7; --text-3: #8f8e86; --accent: #3987e5;
+  --pos: #3987e5; --neg: #e66767; --neutral: #46453f;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181;
+  --good: #4cb36b; --grid: #2a2a27; --code-bg: #232321;
+  --grass: #24331f; --road: #5c5b57; --car: #ffffff; --ray: #d95926;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1120px; margin: 0 auto; padding: 0 16px 80px; }
+.narrow { max-width: 760px; }
+h1 { font-size: clamp(1.9rem, 5vw, 2.6rem); line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.01em; }
+h2 { font-size: 1.5rem; margin: 56px 0 8px; letter-spacing: -0.01em; }
+h3 { font-size: 1.05rem; margin: 0 0 4px; }
+p { margin: 0 0 12px; }
+a { color: var(--accent); }
+code { font-family: "JetBrains Mono", monospace; font-size: 0.85em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+.muted { color: var(--text-2); }
+.small { font-size: 0.86rem; }
+.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.76rem; color: var(--text-3); font-weight: 600; margin: 0 0 6px; }
+
+.tabs { display: flex; gap: 4px; padding: 14px 0 0; border-bottom: 1px solid var(--border); margin-bottom: 36px; }
+.tabs a { text-decoration: none; color: var(--text-2); padding: 8px 14px; border-radius: 8px 8px 0 0; font-weight: 500; font-size: 0.95rem; border: 1px solid transparent; border-bottom: none; margin-bottom: -1px; }
+.tabs a:hover { color: var(--text); }
+.tabs a.active { color: var(--text); background: var(--bg); border-color: var(--border); }
+.theme-toggle { margin-left: auto; align-self: center; background: var(--surface); color: var(--text-2); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 0.8rem; cursor: pointer; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin: 16px 0; }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin: 0 0 12px; font-size: 0.88rem; color: var(--text-2); }
+.controls label { display: inline-flex; align-items: center; gap: 8px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.seg button, .pill { font: inherit; font-size: 0.85rem; background: var(--surface); color: var(--text-2); border: none; padding: 5px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button.on, .pill.on { background: var(--text); color: var(--bg); }
+.pill { border: 1px solid var(--border); border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; }
+.pill i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.btn { font: inherit; font-size: 0.85rem; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; cursor: pointer; min-width: 38px; }
+.btn:hover { border-color: var(--text-3); }
+input[type=range] { accent-color: var(--accent); }
+.gen-slider { flex: 1 1 240px; min-width: 180px; }
+.gen-slider input { width: 100%; }
+
+.explorer { display: grid; grid-template-columns: 1fr 230px; gap: 16px; }
+.netbox { position: relative; background: var(--surface); border-radius: 8px; }
+.netbox svg { width: 100%; height: auto; display: block; }
+.side .stat { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.side .stat:last-child { border-bottom: none; }
+.side .num { font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.side .lbl { font-size: 0.8rem; color: var(--text-2); line-height: 1.35; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.8rem; color: var(--text-2); margin-top: 8px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.swatch-line { width: 22px; height: 3px; border-radius: 2px; display: inline-block; }
+.swatch-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; border: 1.5px solid var(--text-3); }
+.grad { width: 90px; height: 10px; border-radius: 5px; display: inline-block; background: linear-gradient(90deg, var(--neg), var(--neutral), var(--pos)); }
+
+.tooltip { position: absolute; pointer-events: none; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 0.8rem; line-height: 1.45; box-shadow: 0 4px 14px rgba(0,0,0,0.12); max-width: 260px; z-index: 5; display: none; }
+.tooltip b { font-weight: 600; }
+.tooltip .mono { font-family: "JetBrains Mono", monospace; font-size: 0.76rem; color: var(--text-2); }
+
+.spark { margin-top: 10px; }
+.spark svg { width: 100%; height: 70px; display: block; cursor: pointer; }
+
+.watch { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 16px; align-items: start; }
+.trackbox { position: relative; }
+.trackbox canvas { width: 100%; aspect-ratio: 1 / 1; display: block; border-radius: 8px; background: var(--grass); }
+.readout { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+.readout div { background: var(--surface-2); border-radius: 8px; padding: 6px 8px; }
+.readout .k { font-size: 0.72rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; }
+.readout .v { font-weight: 600; font-variant-numeric: tabular-nums; }
+.bars { display: grid; grid-template-columns: 50px 1fr 44px; gap: 4px 8px; align-items: center; font-size: 0.8rem; margin-top: 10px; color: var(--text-2); }
+.bar { height: 8px; background: var(--surface-2); border-radius: 4px; position: relative; overflow: hidden; }
+.bar b { position: absolute; top: 0; bottom: 0; background: var(--accent); border-radius: 4px; }
+.bar.center::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--text-3); }
+.player { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 0.85rem; color: var(--text-2); }
+.player input[type=range] { flex: 1; }
+
+.overlay-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 16px; }
+#overlayCanvas { width: 100%; aspect-ratio: 1 / 1; display: block; border-radius: 8px; background: var(--grass); }
+.chart-wrap { position: relative; height: 320px; }
+.ind-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-top: 12px; }
+.ind { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--surface); }
+.ind h3 { display: flex; align-items: center; gap: 8px; }
+.ind h3 i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; }
+.ind dl { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; margin: 8px 0 10px; font-size: 0.82rem; }
+.ind dt { color: var(--text-2); }
+.ind dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+.ind p { font-size: 0.84rem; color: var(--text-2); }
+
+footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-3); }
+@media (max-width: 860px) {
+  .explorer, .watch, .overlay-grid { grid-template-columns: 1fr; }
+  .readout { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<main>
+<nav class="tabs" aria-label="Pages">
+  <a href="index.html">The story</a>
+  <a href="network.html" class="active" aria-current="page">The network</a>
+  <button class="theme-toggle" id="themeToggle" type="button">◐ Theme</button>
+</nav>
+
+<header class="narrow">
+  <p class="eyebrow">NEAT · neuroevolution of augmenting topologies</p>
+  <h1>Inside the evolved driver</h1>
+  <p class="muted">Nobody designed this network. It started as 40 sensor inputs wired straight to 3 controls, and evolution added hidden nodes, rewired connections and tuned weights until it could lap a track it had never seen. This page shows the network itself, what it computes while driving, and how its ancestors drove along the way.</p>
+  <p class="small muted"><strong>Reading the diagrams:</strong> inputs on the left (8 car readings, then 32 lidar distances labelled by direction: 0° is straight ahead, +90° is the car's left), evolved hidden nodes in the middle, and the three controls on the right. A <span style="color:var(--pos);font-weight:600">blue</span> connection pushes the next node up and a <span style="color:var(--neg);font-weight:600">red</span> one pushes it down. Thicker lines mean stronger weights. Hover over anything for details.</p>
+</header>
+
+<section id="explorer">
+  <h2>1 · The network, generation by generation</h2>
+  <p class="muted narrow">Each generation's champion. Drag the slider or press ▶ to watch structure appear. Nodes and connections that are new compared with the previous champion get a green ring.</p>
+  <div class="card">
+    <div class="controls">
+      <div class="seg" id="runSeg" role="group" aria-label="Run"></div>
+      <button class="btn" id="genPlay" type="button" aria-label="Play through generations">▶</button>
+      <label class="gen-slider"><span id="genLabel">Generation –</span><input type="range" id="genSlider" min="0" max="0" value="0" aria-label="Generation"></label>
+      <label>Hide weights below <input type="range" id="wMin" min="0" max="2" step="0.1" value="0" aria-label="Minimum absolute weight"><span id="wMinLabel" style="width:28px">0.0</span></label>
+      <label><input type="checkbox" id="hideDead"> Hide dead-end nodes</label>
+    </div>
+    <div class="explorer">
+      <div class="netbox" id="explorerBox"><svg id="explorerSvg" role="img" aria-label="Network diagram of the selected champion"></svg></div>
+      <div class="side">
+        <div class="stat"><div class="num" id="sVal">–</div><div class="lbl">score on the 5 held-out validation tracks</div></div>
+        <div class="stat"><div class="num" id="sHidden">–</div><div class="lbl" id="sHiddenLbl">hidden nodes</div></div>
+        <div class="stat"><div class="num" id="sConns">–</div><div class="lbl" id="sConnsLbl">enabled connections</div></div>
+        <div class="stat"><div class="num" id="sNew">–</div><div class="lbl">new since the previous champion</div></div>
+        <div class="spark"><div class="lbl small muted">Validation score per generation (click to jump)</div><svg id="spark" role="img" aria-label="Validation score per generation"></svg></div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="swatch-line" style="background:var(--pos)"></i>positive weight</span>
+      <span><i class="swatch-line" style="background:var(--neg)"></i>negative weight</span>
+      <span><i class="swatch-dot" style="border-color:var(--good);border-width:2.5px"></i>new this generation</span>
+      <span><i class="swatch-dot" style="border-style:dashed"></i>dead end (no path to a control)</span>
+    </div>
+  </div>
+</section>
+
+<section id="watch">
+  <h2>2 · Watch it think</h2>
+  <p class="muted narrow">A recorded drive on one track, frame by frame. On the left is what the car does, including the orange lidar rays it actually senses. On the right is the network at that same moment: each node is coloured by its value, and each connection is drawn by how much signal it carries right now (input × weight).</p>
+  <div class="card">
+    <div class="controls" id="indPills" role="group" aria-label="Individual"></div>
+    <div class="watch">
+      <div>
+        <div class="trackbox"><canvas id="trackCanvas" width="720" height="720" role="img" aria-label="Track view with the car and its lidar rays"></canvas></div>
+        <div class="controls" style="margin-top:8px">
+          <div class="seg" id="viewSeg" role="group" aria-label="Camera"><button type="button" class="on" data-v="follow">Follow car</button><button type="button" data-v="whole">Whole track</button></div>
+        </div>
+        <div class="readout">
+          <div><div class="k">Frame</div><div class="v" id="rFrame">0</div></div>
+          <div><div class="k">Speed</div><div class="v" id="rSpeed">0</div></div>
+          <div><div class="k">Tiles</div><div class="v" id="rTiles">0</div></div>
+          <div><div class="k">Grass</div><div class="v" id="rGrass">–</div></div>
+        </div>
+        <div class="bars">
+          <span>Steer</span><div class="bar center"><b id="bSteer"></b></div><span id="vSteer">0</span>
+          <span>Gas</span><div class="bar"><b id="bGas"></b></div><span id="vGas">0</span>
+          <span>Brake</span><div class="bar"><b id="bBrake" style="background:var(--neg)"></b></div><span id="vBrake">0</span>
+        </div>
+      </div>
+      <div>
+        <div class="netbox" id="watchBox"><svg id="watchSvg" role="img" aria-label="Network activations at the current frame"></svg></div>
+        <div class="legend"><span><i class="grad"></i>node value −1 … 0 … +1</span><span>line opacity = signal carried this frame</span></div>
+      </div>
+    </div>
+    <div class="player">
+      <button class="btn" id="wPlay" type="button" aria-label="Play or pause">▶</button>
+      <input type="range" id="wSlider" min="0" max="0" value="0" aria-label="Frame">
+      <div class="seg" id="speedSeg" role="group" aria-label="Playback speed"><button type="button" data-s="0.5">½×</button><button type="button" class="on" data-s="1">1×</button><button type="button" data-s="3">3×</button></div>
+    </div>
+    <p class="small muted" style="margin-top:10px" id="blindNote">Look closely at the rays: they fan out around the car's <em>right-hand side</em>, which leaves a 36° blind gap centred on its left. That is how the sensor was built from day one. The docs had always called the rays "forward-biased", and only these drawings showed otherwise. Evolution learned to drive with it anyway.</p>
+  </div>
+</section>
+
+<section id="individuals">
+  <h2>3 · How the drivers evolved</h2>
+  <p class="muted narrow">Champions from milestone generations, all driving the same track (track 3, also used for the GIFs on the story page). Generation 0 is a random network. The others are the first champions to pass 300 and 600 on the validation tracks, and the best of each run. Click <em>Watch</em> on any card to replay it above.</p>
+  <div class="card">
+    <div class="overlay-grid">
+      <div><canvas id="overlayCanvas" width="720" height="720" role="img" aria-label="Paths of each milestone driver on the same track"></canvas>
+        <div class="legend" id="overlayLegend"></div></div>
+      <div>
+        <h3>Progress around the track</h3>
+        <p class="small muted" style="margin:0">Share of the track's tiles reached, by frame. A steeper line means a faster car, and a flat line means the car is stuck or off the road.</p>
+        <div class="chart-wrap"><canvas id="progressChart" role="img" aria-label="Line chart of track progress over time per individual"></canvas></div>
+      </div>
+    </div>
+    <div class="ind-grid" id="indCards"></div>
+  </div>
+</section>
+
+<footer>Data: <code>scripts/export_network_data.py</code> exports every generation's champion genome and records the milestone drives frame by frame. Source: <a href="https://github.com/JCA374/neat-car-2">github.com/JCA374/neat-car-2</a>. <a href="index.html">← Back to the story</a></footer>
+<div class="tooltip" id="tip"></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  try { var saved = localStorage.getItem("theme"); if (saved) root.setAttribute("data-theme", saved); } catch (e) {}
+  function css(n) { return getComputedStyle(root).getPropertyValue(n).trim(); }
+  function fmt(v, d) { return v == null || isNaN(v) ? "–" : Number(v).toLocaleString("en-US", { maximumFractionDigits: d == null ? 1 : d }); }
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent) {
+    var e = document.createElementNS(SVGNS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  var tip = document.getElementById("tip");
+  function showTip(html, evt) {
+    tip.innerHTML = html; tip.style.display = "block";
+    var main = document.querySelector("main").getBoundingClientRect();
+    var x = evt.clientX - main.left + 14, y = evt.clientY - main.top + window.scrollY - main.top * 0 + 14;
+    var pageY = evt.pageY - (window.scrollY + main.top) + 14;
+    var maxX = main.width - tip.offsetWidth - 4;
+    tip.style.left = Math.min(x, maxX) + "px";
+    tip.style.top = (evt.pageY - document.querySelector("main").offsetTop + 14) + "px";
+  }
+  function hideTip() { tip.style.display = "none"; }
+
+  var DATA = null;
+  var IND_COLORS = ["--s1", "--s2", "--s3", "--s4", "--s5"];
+
+  // ------------------------------------------------------------------ layout
+  var W = 760, H = 640, IN_X = 150, OUT_X = 640, TOP = 22;
+  function layout(graph, opts) {
+    var pos = {};
+    var inputs = DATA.inputs, gapAfter = 8, step = (H - TOP * 2 - 18) / (inputs.length - 1);
+    inputs.forEach(function (n, i) { pos[n.key] = { x: IN_X, y: TOP + i * step + (i >= gapAfter ? 18 : 0) }; });
+    var hidden = graph.nodes.filter(function (n) { return n.type === "hidden" && !(opts.hideDead && !n.used); });
+    var maxLayer = hidden.reduce(function (m, n) { return Math.max(m, n.layer); }, 1);
+    var byLayer = {};
+    hidden.forEach(function (n) { (byLayer[n.layer] = byLayer[n.layer] || []).push(n); });
+    Object.keys(byLayer).forEach(function (L) {
+      var list = byLayer[L].sort(function (a, b) { return a.k - b.k; });
+      var x = IN_X + (OUT_X - IN_X) * (Number(L) / (maxLayer + 1));
+      var span = Math.min(H - 2 * TOP - 40, list.length * 46);
+      list.forEach(function (n, i) {
+        var y = H / 2 - span / 2 + (list.length === 1 ? span / 2 : (i * span) / (list.length - 1));
+        pos[n.k] = { x: x, y: y };
+      });
+    });
+    var outs = graph.nodes.filter(function (n) { return n.type === "output"; }).sort(function (a, b) { return a.k - b.k; });
+    outs.forEach(function (n, i) { pos[n.k] = { x: OUT_X, y: H / 2 + (i - 1) * 110 }; });
+    return pos;
+  }
+  function labelFor(key) {
+    if (key < 0) return DATA.inputs[-key - 1].label;
+    var o = DATA.outputs.filter(function (x) { return x.key === key; })[0];
+    return o ? o.label : "Hidden " + key;
+  }
+  function edgePath(a, b) {
+    var dx = Math.max(40, (b.x - a.x) * 0.5);
+    return "M" + a.x + "," + a.y + " C" + (a.x + dx) + "," + a.y + " " + (b.x - dx) + "," + b.y + " " + b.x + "," + b.y;
+  }
+  function wWidth(w) { return 0.6 + 3.2 * Math.min(Math.abs(w) / 3, 1); }
+
+  /** Draw a network. Returns {update(values)} for activation playback. */
+  function drawNetwork(svg, graph, opts) {
+    opts = opts || {};
+    svg.innerHTML = "";
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    var pos = layout(graph, opts);
+    var nodeInfo = {};
+    graph.nodes.forEach(function (n) { nodeInfo[n.k] = n; });
+    var isNewNode = {}, isNewConn = {};
+    if (opts.prev) {
+      var prevNodes = {}, prevConns = {};
+      opts.prev.nodes.forEach(function (n) { prevNodes[n.k] = 1; });
+      opts.prev.conns.forEach(function (c) { prevConns[c[0] + ">" + c[1]] = 1; });
+      graph.nodes.forEach(function (n) { if (!prevNodes[n.k]) isNewNode[n.k] = 1; });
+      graph.conns.forEach(function (c) { if (!prevConns[c[0] + ">" + c[1]]) isNewConn[c[0] + ">" + c[1]] = 1; });
+    }
+    var gEdges = el("g", {}, svg), gNew = el("g", {}, svg), gNodes = el("g", {}, svg), gLabels = el("g", {}, svg);
+    var pos_ = css("--pos"), neg_ = css("--neg"), good = css("--good");
+    var edges = [];
+    graph.conns.forEach(function (c) {
+      var a = pos[c[0]], b = pos[c[1]];
+      if (!a || !b || Math.abs(c[2]) < (opts.minWeight || 0)) return;
+      var base = 0.25 + 0.55 * Math.min(Math.abs(c[2]) / 3, 1);
+      var p = el("path", { d: edgePath(a, b), fill: "none", stroke: c[2] >= 0 ? pos_ : neg_, "stroke-width": wWidth(c[2]),
+        "stroke-opacity": base, "stroke-linecap": "round" }, gEdges);
+      if (isNewConn[c[0] + ">" + c[1]]) el("path", { d: edgePath(a, b), fill: "none", stroke: good, "stroke-width": wWidth(c[2]) + 4, "stroke-opacity": 0.28 }, gNew);
+      p.addEventListener("mousemove", function (e) {
+        showTip("<b>" + labelFor(c[0]) + " → " + labelFor(c[1]) + "</b><br>weight <span class='mono'>" + c[2].toFixed(2) + "</span>" +
+          (isNewConn[c[0] + ">" + c[1]] ? "<br><span style='color:" + good + "'>new this generation</span>" : ""), e);
+      });
+      p.addEventListener("mouseleave", hideTip);
+      edges.push({ c: c, p: p, base: base });
+    });
+    var nodes = {};
+    function addNode(key, kind, r) {
+      var at = pos[key]; if (!at) return;
+      var info = nodeInfo[key];
+      var dead = kind === "hidden" && info && !info.used;
+      var circ = el("circle", { cx: at.x, cy: at.y, r: r, fill: kind === "input" ? css("--surface-2") : css("--surface"),
+        stroke: css("--text-3"), "stroke-width": 1.4, "stroke-dasharray": dead ? "3 2" : "none" }, gNodes);
+      if (isNewNode[key]) el("circle", { cx: at.x, cy: at.y, r: r + 4, fill: "none", stroke: good, "stroke-width": 2.5 }, gNodes);
+      circ.style.cursor = "pointer";
+      circ.addEventListener("mousemove", function (e) { focus(key); showTip(nodeTip(key, kind, info, dead), e); });
+      circ.addEventListener("mouseleave", function () { focus(null); hideTip(); });
+      nodes[key] = { circ: circ, kind: kind };
+    }
+    function nodeTip(key, kind, info, dead) {
+      var ins = graph.conns.filter(function (c) { return c[1] === key; }), outs = graph.conns.filter(function (c) { return c[0] === key; });
+      var top = ins.slice().sort(function (a, b) { return Math.abs(b[2]) - Math.abs(a[2]); }).slice(0, 4);
+      var h = "<b>" + labelFor(key) + "</b>" + (kind === "hidden" ? " <span class='mono'>#" + key + "</span>" : "");
+      if (info && info.b != null) h += "<br>bias <span class='mono'>" + info.b.toFixed(2) + "</span>";
+      if (nodes[key] && nodes[key].value != null) h += "<br>value now <span class='mono'>" + nodes[key].value.toFixed(2) + "</span>";
+      h += "<br>" + ins.length + " in · " + outs.length + " out";
+      if (dead) h += "<br><i>dead end: no path to a control</i>";
+      if (top.length) h += "<br><span class='mono'>" + top.map(function (c) { return labelFor(c[0]) + " " + (c[2] >= 0 ? "+" : "") + c[2].toFixed(1); }).join("<br>") + "</span>";
+      return h;
+    }
+    DATA.inputs.forEach(function (n) { addNode(n.key, "input", 5); });
+    graph.nodes.forEach(function (n) { if (n.type === "hidden" && pos[n.k]) addNode(n.k, "hidden", 10); });
+    graph.nodes.forEach(function (n) { if (n.type === "output") addNode(n.k, "output", 13); });
+    // labels
+    DATA.inputs.forEach(function (n, i) {
+      var at = pos[n.key];
+      var t = el("text", { x: at.x - 10, y: at.y + 3.5, "text-anchor": "end", "font-size": 10, fill: css("--text-2") }, gLabels);
+      t.textContent = n.label;
+    });
+    var g1 = el("text", { x: IN_X - 10, y: 12, "text-anchor": "end", "font-size": 10, "font-weight": 600, fill: css("--text-3") }, gLabels);
+    g1.textContent = "CAR READINGS";
+    var firstLidar = pos[DATA.inputs[8].key];
+    var g2 = el("text", { x: IN_X - 10, y: firstLidar.y - 9, "text-anchor": "end", "font-size": 10, "font-weight": 600, fill: css("--text-3") }, gLabels);
+    g2.textContent = "LIDAR (0° = ahead)";
+    graph.nodes.filter(function (n) { return n.type === "output"; }).forEach(function (n) {
+      var at = pos[n.k];
+      var t = el("text", { x: at.x + 20, y: at.y + 4.5, "font-size": 13, "font-weight": 600, fill: css("--text") }, gLabels);
+      t.textContent = labelFor(n.k);
+    });
+    graph.nodes.filter(function (n) { return n.type === "hidden" && pos[n.k]; }).forEach(function (n) {
+      var at = pos[n.k];
+      var t = el("text", { x: at.x, y: at.y + 3, "text-anchor": "middle", "font-size": 7.5, fill: css("--text-3"), "pointer-events": "none" }, gLabels);
+      t.textContent = n.k;
+    });
+    function focus(key) {
+      edges.forEach(function (e) {
+        var on = key == null || e.c[0] === key || e.c[1] === key;
+        e.p.setAttribute("stroke-opacity", key == null ? (e.cur != null ? e.cur : e.base) : (on ? 0.95 : 0.04));
+      });
+    }
+    var neutral = css("--neutral");
+    function mix(a, b, t) {
+      var pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+      var r = Math.round(((pa >> 16) & 255) * (1 - t) + ((pb >> 16) & 255) * t);
+      var g = Math.round(((pa >> 8) & 255) * (1 - t) + ((pb >> 8) & 255) * t);
+      var bl = Math.round((pa & 255) * (1 - t) + (pb & 255) * t);
+      return "rgb(" + r + "," + g + "," + bl + ")";
+    }
+    return {
+      update: function (values) {
+        for (var k in nodes) {
+          var v = values[k]; if (v == null) continue;
+          nodes[k].value = v;
+          var t = Math.min(Math.abs(v), 1);
+          nodes[k].circ.setAttribute("fill", mix(neutral, v >= 0 ? pos_ : neg_, t));
+        }
+        edges.forEach(function (e) {
+          var src = values[e.c[0]];
+          if (src == null) return;
+          var s = Math.min(Math.abs(src * e.c[2]) / 1.5, 1);
+          e.cur = 0.05 + 0.9 * s;
+          e.p.setAttribute("stroke-opacity", e.cur);
+        });
+      }
+    };
+  }
+
+  // ------------------------------------------------------------- explorer
+  var exp = { run: 0, idx: 0, timer: null };
+  function runGens() { return DATA.runs[exp.run].generations; }
+  function renderExplorer() {
+    var gens = runGens(), g = gens[exp.idx], prev = exp.idx > 0 ? gens[exp.idx - 1] : null;
+    drawNetwork(document.getElementById("explorerSvg"), g, {
+      prev: prev, minWeight: Number(document.getElementById("wMin").value), hideDead: document.getElementById("hideDead").checked
+    });
+    document.getElementById("genLabel").textContent = "Generation " + g.gen;
+    var hidden = g.nodes.filter(function (n) { return n.type === "hidden"; });
+    var used = hidden.filter(function (n) { return n.used; }).length;
+    document.getElementById("sVal").textContent = fmt(g.validation);
+    document.getElementById("sHidden").textContent = hidden.length;
+    document.getElementById("sHiddenLbl").textContent = "hidden nodes (" + used + " reach a control)";
+    document.getElementById("sConns").textContent = g.conns.length;
+    document.getElementById("sConnsLbl").textContent = "enabled connections (" + g.disabled + " disabled genes)";
+    if (prev) {
+      var pn = {}, pc = {};
+      prev.nodes.forEach(function (n) { pn[n.k] = 1; }); prev.conns.forEach(function (c) { pc[c[0] + ">" + c[1]] = 1; });
+      var nn = g.nodes.filter(function (n) { return !pn[n.k]; }).length, nc = g.conns.filter(function (c) { return !pc[c[0] + ">" + c[1]]; }).length;
+      document.getElementById("sNew").textContent = (prev.id === g.id) ? "same" : nn + " nodes · " + nc + " conns";
+    } else document.getElementById("sNew").textContent = "–";
+    drawSpark();
+  }
+  function drawSpark() {
+    var svg = document.getElementById("spark"), gens = runGens();
+    svg.innerHTML = ""; var w = 230, h = 70; svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+    var vals = gens.map(function (g) { return g.validation; }).filter(function (v) { return v != null; });
+    var lo = Math.min.apply(null, vals.concat([0])), hi = Math.max.apply(null, vals);
+    function X(i) { return 4 + (i / Math.max(1, gens.length - 1)) * (w - 8); }
+    function Y(v) { return h - 6 - ((v - lo) / Math.max(1, hi - lo)) * (h - 14); }
+    var d = gens.map(function (g, i) { return g.validation == null ? "" : (i ? "L" : "M") + X(i) + "," + Y(g.validation); }).join(" ");
+    el("path", { d: d, fill: "none", stroke: css("--accent"), "stroke-width": 1.6 }, svg);
+    var cur = gens[exp.idx];
+    el("line", { x1: X(exp.idx), x2: X(exp.idx), y1: 0, y2: h, stroke: css("--text-3"), "stroke-dasharray": "2 2" }, svg);
+    if (cur.validation != null) el("circle", { cx: X(exp.idx), cy: Y(cur.validation), r: 3.5, fill: css("--accent"), stroke: css("--surface"), "stroke-width": 1.5 }, svg);
+    svg.onclick = function (e) {
+      var r = svg.getBoundingClientRect(), t = (e.clientX - r.left) / r.width;
+      setGen(Math.round(t * (gens.length - 1)));
+    };
+  }
+  function setGen(i) {
+    var gens = runGens(); exp.idx = Math.max(0, Math.min(gens.length - 1, i));
+    document.getElementById("genSlider").value = exp.idx; renderExplorer();
+  }
+  function setupExplorer() {
+    var seg = document.getElementById("runSeg");
+    DATA.runs.forEach(function (r, i) {
+      var b = document.createElement("button"); b.type = "button"; b.textContent = r.label; if (i === exp.run) b.className = "on";
+      b.onclick = function () { exp.run = i; [].forEach.call(seg.children, function (c, j) { c.className = j === i ? "on" : ""; }); initRun(); };
+      seg.appendChild(b);
+    });
+    function initRun() {
+      var gens = runGens(), slider = document.getElementById("genSlider");
+      slider.max = gens.length - 1;
+      var best = 0; gens.forEach(function (g, i) { if ((g.validation || -1e9) > (gens[best].validation || -1e9)) best = i; });
+      setGen(best);
+    }
+    document.getElementById("genSlider").oninput = function (e) { setGen(Number(e.target.value)); };
+    document.getElementById("wMin").oninput = function (e) { document.getElementById("wMinLabel").textContent = Number(e.target.value).toFixed(1); renderExplorer(); };
+    document.getElementById("hideDead").onchange = renderExplorer;
+    document.getElementById("genPlay").onclick = function () {
+      var btn = this;
+      if (exp.timer) { clearInterval(exp.timer); exp.timer = null; btn.textContent = "▶"; return; }
+      if (exp.idx >= runGens().length - 1) setGen(0);
+      btn.textContent = "❚❚";
+      exp.timer = setInterval(function () {
+        if (exp.idx >= runGens().length - 1) { clearInterval(exp.timer); exp.timer = null; btn.textContent = "▶"; return; }
+        setGen(exp.idx + 1);
+      }, 180);
+    };
+    initRun();
+  }
+
+  // ------------------------------------------------------------ track drawing
+  var LIDAR_REL = null; // radians, relative to hull.angle (local +x)
+  function drawTrack(canvas, view, overlays) {
+    var ctx = canvas.getContext("2d"), Wc = canvas.width, Hc = canvas.height;
+    var b = DATA.track.bounds;
+    var cx, cy, scale, ang = 0;
+    if (view.mode === "follow") { cx = view.x; cy = view.y; scale = Wc / 100; ang = view.a; }
+    else { cx = (b[0] + b[2]) / 2; cy = (b[1] + b[3]) / 2; scale = Math.min(Wc / (b[2] - b[0]), Hc / (b[3] - b[1])) * 0.92; }
+    var ca = Math.cos(ang), sa = Math.sin(ang);
+    function S(x, y) { var dx = x - cx, dy = y - cy; var rx = dx * ca + dy * sa, ry = -dx * sa + dy * ca; return [Wc / 2 + rx * scale, Hc / 2 - ry * scale]; }
+    ctx.fillStyle = css("--grass"); ctx.fillRect(0, 0, Wc, Hc);
+    ctx.fillStyle = css("--road");
+    DATA.track.polys.forEach(function (p) {
+      ctx.beginPath();
+      for (var i = 0; i < p.length; i += 2) { var q = S(p[i], p[i + 1]); if (i) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); }
+      ctx.closePath(); ctx.fill();
+    });
+    var st = S(DATA.track.start[0], DATA.track.start[1]);
+    ctx.fillStyle = css("--text"); ctx.beginPath(); ctx.arc(st[0], st[1], 4, 0, 7); ctx.fill();
+    (overlays || []).forEach(function (o) {
+      ctx.strokeStyle = o.color; ctx.lineWidth = o.width || 2.5; ctx.lineJoin = "round"; ctx.globalAlpha = o.alpha || 1;
+      ctx.beginPath();
+      for (var i = 0; i <= Math.min(o.upto, o.ind.x.length - 1); i++) { var q = S(o.ind.x[i], o.ind.y[i]); if (i) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); }
+      ctx.stroke(); ctx.globalAlpha = 1;
+    });
+    return { S: S, ctx: ctx, scale: scale };
+  }
+  function drawCar(t, ind, f, color) {
+    var ctx = t.ctx, x = ind.x[f], y = ind.y[f], a = ind.a[f];
+    // lidar rays exactly as the wrapper casts them: angle = hull.angle + rel, length = value * 45
+    var inp = ind.inputs[f], c = t.S(x, y);
+    ctx.lineWidth = 1.2;
+    LIDAR_REL.forEach(function (rel, j) {
+      var v = inp[8 + j], ra = a + rel, ex = x + Math.cos(ra) * 45 * v, ey = y + Math.sin(ra) * 45 * v;
+      var e = t.S(ex, ey);
+      ctx.strokeStyle = css("--ray"); ctx.globalAlpha = v >= 0.999 ? 0.25 : 0.75;
+      ctx.beginPath(); ctx.moveTo(c[0], c[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
+      if (v < 0.999) { ctx.globalAlpha = 1; ctx.fillStyle = css("--ray"); ctx.beginPath(); ctx.arc(e[0], e[1], 3, 0, 7); ctx.fill(); }
+    });
+    ctx.globalAlpha = 1;
+    // car body: nose along local +y
+    var fx = -Math.sin(a), fy = Math.cos(a), rx = Math.cos(a), ry = Math.sin(a);
+    var pts = [[2.2, -4.2], [2.2, 3.2], [0, 5], [-2.2, 3.2], [-2.2, -4.2]].map(function (p) { return t.S(x + rx * p[0] + fx * p[1], y + ry * p[0] + fy * p[1]); });
+    ctx.fillStyle = color || css("--car"); ctx.strokeStyle = css("--surface"); ctx.lineWidth = 1.5;
+    ctx.beginPath(); pts.forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+
+  // ---------------------------------------------------------------- watch
+  var W8 = { ind: 0, f: 0, playing: false, speed: 1, mode: "follow", net: null, last: 0, acc: 0 };
+  function indLabel(ind) { return (ind.run === "run2" ? "Run 2 · gen " : "Gen ") + ind.gen; }
+  function setInd(i) {
+    W8.ind = i; W8.f = 0;
+    var ind = DATA.individuals[i];
+    [].forEach.call(document.getElementById("indPills").children, function (c, j) { c.className = "pill" + (j === i ? " on" : ""); });
+    var slider = document.getElementById("wSlider"); slider.max = ind.x.length - 1; slider.value = 0;
+    W8.net = drawNetwork(document.getElementById("watchSvg"), ind.graph, {});
+    renderFrame();
+  }
+  function renderFrame() {
+    var ind = DATA.individuals[W8.ind], f = W8.f;
+    var color = css(IND_COLORS[W8.ind % IND_COLORS.length]);
+    var t = drawTrack(document.getElementById("trackCanvas"), { mode: W8.mode, x: ind.x[f], y: ind.y[f], a: ind.a[f] },
+      [{ ind: ind, upto: f, color: color, width: W8.mode === "follow" ? 4 : 2.5 }]);
+    drawCar(t, ind, f);
+    var values = {};
+    ind.inputs[f].forEach(function (v, i) { values[-(i + 1)] = v; });
+    ind.node_keys.forEach(function (k, i) { values[k] = ind.nodes[f][i]; });
+    W8.net.update(values);
+    var act = ind.actions[f];
+    document.getElementById("rFrame").textContent = f * ind.every;
+    document.getElementById("rSpeed").textContent = fmt(ind.v[f], 0);
+    document.getElementById("rTiles").textContent = ind.tiles[f] + " / " + ind.tiles_total;
+    document.getElementById("rGrass").textContent = ind.inputs[f][7] < 0.99 ? Math.round((1 - ind.inputs[f][7]) * 4) + " wheel" + (Math.round((1 - ind.inputs[f][7]) * 4) === 1 ? "" : "s") : "none";
+    var sb = document.getElementById("bSteer"); var s = act[0];
+    sb.style.left = (50 + Math.min(0, s) * 50) + "%"; sb.style.width = Math.abs(s) * 50 + "%";
+    document.getElementById("bGas").style.width = act[1] * 100 + "%";
+    document.getElementById("bBrake").style.width = act[2] * 100 + "%";
+    document.getElementById("vSteer").textContent = s.toFixed(2);
+    document.getElementById("vGas").textContent = act[1].toFixed(2);
+    document.getElementById("vBrake").textContent = act[2].toFixed(2);
+    document.getElementById("wSlider").value = f;
+  }
+  function tick(ts) {
+    if (!W8.playing) return;
+    var ind = DATA.individuals[W8.ind];
+    var dt = W8.last ? ts - W8.last : 0; W8.last = ts;
+    W8.acc += dt * W8.speed * (50 / ind.every) / 1000; // game runs at 50 frames/s; we stored every `every`-th
+    var adv = Math.floor(W8.acc);
+    if (adv > 0) {
+      W8.acc -= adv; W8.f = Math.min(ind.x.length - 1, W8.f + adv); renderFrame();
+      if (W8.f >= ind.x.length - 1) { W8.playing = false; document.getElementById("wPlay").textContent = "▶"; return; }
+    }
+    requestAnimationFrame(tick);
+  }
+  function setupWatch() {
+    var pills = document.getElementById("indPills");
+    DATA.individuals.forEach(function (ind, i) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "pill";
+      b.innerHTML = '<i style="background:' + css(IND_COLORS[i % IND_COLORS.length]) + '"></i>' + indLabel(ind);
+      b.onclick = function () { setInd(i); };
+      pills.appendChild(b);
+    });
+    document.getElementById("wPlay").onclick = function () {
+      var ind = DATA.individuals[W8.ind];
+      W8.playing = !W8.playing; this.textContent = W8.playing ? "❚❚" : "▶";
+      if (W8.playing) { if (W8.f >= ind.x.length - 1) W8.f = 0; W8.last = 0; W8.acc = 0; requestAnimationFrame(tick); }
+    };
+    document.getElementById("wSlider").oninput = function (e) { W8.f = Number(e.target.value); renderFrame(); };
+    [].forEach.call(document.querySelectorAll("#speedSeg button"), function (b) {
+      b.onclick = function () { W8.speed = Number(b.dataset.s); [].forEach.call(b.parentNode.children, function (c) { c.className = c === b ? "on" : ""; }); };
+    });
+    [].forEach.call(document.querySelectorAll("#viewSeg button"), function (b) {
+      b.onclick = function () { W8.mode = b.dataset.v; [].forEach.call(b.parentNode.children, function (c) { c.className = c === b ? "on" : ""; }); renderFrame(); };
+    });
+    var best = DATA.individuals.length - 1;
+    DATA.individuals.forEach(function (ind, i) { if (ind.score > DATA.individuals[best].score) best = i; });
+    setInd(best); W8.f = Math.min(150, DATA.individuals[best].x.length - 1); renderFrame();
+  }
+
+  // ---------------------------------------------------------- individuals
+  var progressChart = null;
+  // Behaviour notes, written from the recorded drives (scripts/export_network_data.py).
+  var NOTES = {
+    "run1-gen0": "A random network. It creeps forward (never faster than 13), brakes 40% of the time, and comes to a stop for good after 22 tiles.",
+    "run1-gen5": "Already stays on the road for the whole drive, but slowly: heavy braking keeps it at about 29 on average, and it reaches 64% of the track in 1000 frames.",
+    "run1-gen25": "As fast as the later champions for 650 frames. Then, at the tight corner, it brakes almost to a standstill and crawls for the rest of the time. Its end dot marks the spot.",
+    "run1-gen127": "Run 1's best. Fast and smooth, never on the grass, and laps the track in 915 frames, all with gas capped at 0.88 and the brake stuck at 0.12 or more.",
+    "run2": "The first runs with the full gas and brake range. Its top speed rises from 60 to 80, and it controls speed with the throttle instead of the brake (41% gas and 5% brake on average, versus 85% and 12%)."
+  };
+  function setupIndividuals() {
+    var inds = DATA.individuals;
+    var t = drawTrack(document.getElementById("overlayCanvas"), { mode: "whole" },
+      inds.map(function (ind, i) { return { ind: ind, upto: ind.x.length - 1, color: css(IND_COLORS[i % IND_COLORS.length]), width: 2.5, alpha: 0.9 }; }));
+    inds.forEach(function (ind, i) {
+      var f = ind.x.length - 1, e = t.S(ind.x[f], ind.y[f]);
+      t.ctx.fillStyle = css(IND_COLORS[i % IND_COLORS.length]); t.ctx.strokeStyle = css("--surface"); t.ctx.lineWidth = 2;
+      t.ctx.beginPath(); t.ctx.arc(e[0], e[1], 6, 0, 7); t.ctx.fill(); t.ctx.stroke();
+    });
+    document.getElementById("overlayLegend").innerHTML = inds.map(function (ind, i) {
+      return '<span><i class="swatch-line" style="background:' + css(IND_COLORS[i % IND_COLORS.length]) + '"></i>' + indLabel(ind) + "</span>";
+    }).join("") + "<span>● where each one is at its last frame</span>";
+
+    if (progressChart) progressChart.destroy();
+    progressChart = new Chart(document.getElementById("progressChart"), {
+      type: "line",
+      data: { datasets: inds.map(function (ind, i) {
+        return { label: indLabel(ind), data: ind.tiles.map(function (n, j) { return { x: j * ind.every, y: 100 * n / ind.tiles_total }; }),
+          borderColor: css(IND_COLORS[i % IND_COLORS.length]), backgroundColor: css(IND_COLORS[i % IND_COLORS.length]),
+          borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0 };
+      }) },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        interaction: { mode: "nearest", axis: "x", intersect: false },
+        plugins: { legend: { display: true, position: "bottom", labels: { boxWidth: 14, boxHeight: 3, color: css("--text-2") } },
+          tooltip: { backgroundColor: css("--surface"), titleColor: css("--text"), bodyColor: css("--text-2"), borderColor: css("--border"), borderWidth: 1,
+            callbacks: { title: function (it) { return "Frame " + it[0].parsed.x; }, label: function (c) { return " " + c.dataset.label + ": " + c.parsed.y.toFixed(0) + "% of track"; } } } },
+        scales: {
+          x: { type: "linear", max: 1000, grid: { color: css("--grid") }, border: { display: false }, ticks: { color: css("--text-3") }, title: { display: true, text: "frame (50 per second)", color: css("--text-3") } },
+          y: { min: 0, max: 100, grid: { color: css("--grid") }, border: { display: false }, ticks: { color: css("--text-3"), callback: function (v) { return v + "%"; } }, title: { display: true, text: "track reached", color: css("--text-3") } }
+        }
+      }
+    });
+
+    document.getElementById("indCards").innerHTML = inds.map(function (ind, i) {
+      var hidden = ind.graph.nodes.filter(function (n) { return n.type === "hidden"; }).length;
+      return '<div class="ind"><h3><i style="background:' + css(IND_COLORS[i % IND_COLORS.length]) + '"></i>' + indLabel(ind) + "</h3>" +
+        "<dl><dt>Validation (5 tracks)</dt><dd>" + fmt(ind.validation) + "</dd>" +
+        "<dt>Score on this track</dt><dd>" + fmt(ind.score) + "</dd>" +
+        "<dt>Track reached</dt><dd>" + Math.round(100 * ind.tiles[ind.tiles.length - 1] / ind.tiles_total) + "%" + (ind.laps ? " (lap in " + ind.steps + " frames)" : "") + "</dd>" +
+        "<dt>Frames on grass</dt><dd>" + fmt(ind.offtrack_pct) + "%</dd>" +
+        "<dt>Average speed</dt><dd>" + fmt(ind.avg_speed, 0) + "</dd>" +
+        "<dt>Hidden nodes</dt><dd>" + hidden + "</dd>" +
+        "<dt>Connections</dt><dd>" + ind.graph.conns.length + "</dd></dl>" +
+        ((NOTES[ind.id] || NOTES[ind.run]) ? "<p>" + (NOTES[ind.id] || NOTES[ind.run]) + "</p>" : "") +
+        '<button class="btn" type="button" data-i="' + i + '">Watch ↑</button></div>';
+    }).join("");
+    [].forEach.call(document.querySelectorAll("#indCards button"), function (b) {
+      b.onclick = function () { setInd(Number(b.dataset.i)); document.getElementById("watch").scrollIntoView({ behavior: "smooth" }); };
+    });
+  }
+
+  function drawAll() { renderExplorer(); renderFrame(); setupIndividuals(); }
+  document.getElementById("themeToggle").addEventListener("click", function () {
+    var dark = getComputedStyle(root).colorScheme.indexOf("dark") !== -1, next = dark ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("theme", next); } catch (e) {}
+    if (DATA) { W8.net = drawNetwork(document.getElementById("watchSvg"), DATA.individuals[W8.ind].graph, {}); drawAll(); }
+  });
+
+  fetch("assets/data/network.json").then(function (r) { return r.json(); }).then(function (d) {
+    DATA = d;
+    LIDAR_REL = DATA.inputs.filter(function (n) { return n.group === "lidar"; }).map(function (n) { return n.angle * Math.PI / 180; });
+    setupExplorer(); setupWatch(); setupIndividuals();
+  });
+})();
+</script>
+</body>
+</html>
