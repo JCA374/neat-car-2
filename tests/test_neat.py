@@ -77,3 +77,33 @@ def test_decode_reaches_full_control_range():
     # The old double-tanh decoding could never release the brake or floor the gas.
     legacy = decode_action([-1.0, 1.0, -1.0], zero, 0.0, legacy=True)
     assert np.allclose(legacy, [-0.7616, 0.8808, 0.1192], atol=1e-3)
+
+
+def test_species_target_moves_threshold(tmp_path):
+    from types import SimpleNamespace
+
+    from carracing_neat.train import SpeciesTargetReporter
+
+    config = _config()
+    start = config.species_set_config.compatibility_threshold
+    reporter = SpeciesTargetReporter(target=6, step=0.1, csv_path=str(tmp_path / "species.csv"))
+    one = SimpleNamespace(species={1: SimpleNamespace(members={1: None, 2: None})})
+    reporter.post_evaluate(config, None, one, None)
+    assert config.species_set_config.compatibility_threshold == start - 0.1
+    many = SimpleNamespace(species={i: SimpleNamespace(members={}) for i in range(9)})
+    reporter.post_evaluate(config, None, many, None)
+    assert abs(config.species_set_config.compatibility_threshold - start) < 1e-9
+    assert (tmp_path / "species.csv").read_text().count("\n") == 3
+
+
+def test_resume_reapplies_speciation_settings_in_place():
+    from carracing_neat.train import _apply_speciation_settings
+
+    config = _config()
+    stagnation_cfg = config.stagnation_config
+    stagnation_cfg.max_stagnation = 3
+    config.species_set_config.compatibility_threshold = 9.0
+    _apply_speciation_settings(config, CONFIG)
+    assert config.stagnation_config is stagnation_cfg  # live objects keep their reference
+    assert stagnation_cfg.max_stagnation == 15
+    assert config.species_set_config.compatibility_threshold == 1.5

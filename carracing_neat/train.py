@@ -181,6 +181,52 @@ class ValidationReporter(neat.reporting.BaseReporter):
         print(f"Validation gen {self.generation}: {score:.1f} on {len(VALIDATION_SEEDS)} held-out tracks{marker}")
 
 
+class SpeciesTargetReporter(neat.reporting.BaseReporter):
+    """Steer compatibility_threshold toward a target number of species.
+
+    With a fully connected start, genomes differ by small distances relative to
+    their size, so a fixed threshold left the whole population in one species
+    (no protection for new structure). After each evaluation, nudge the
+    threshold used by the next speciation step and log species counts.
+    """
+
+    def __init__(self, target: int, step: float, csv_path: str, minimum: float = 0.3) -> None:
+        self.target = target
+        self.step = step
+        self.minimum = minimum
+        self.csv_path = csv_path
+        self.generation = 0
+        if not os.path.exists(csv_path):
+            with open(csv_path, "w", encoding="utf-8") as f:
+                f.write("generation,species,threshold,sizes\n")
+
+    def start_generation(self, generation):
+        self.generation = generation
+
+    def post_evaluate(self, config, population, species, best_genome):
+        count = len(species.species)
+        cfg = config.species_set_config
+        sizes = " ".join(str(len(s.members)) for s in species.species.values())
+        with open(self.csv_path, "a", encoding="utf-8") as f:
+            f.write(f"{self.generation},{count},{cfg.compatibility_threshold:.3f},{sizes}\n")
+        if count < self.target:
+            cfg.compatibility_threshold = max(self.minimum, cfg.compatibility_threshold - self.step)
+        elif count > self.target:
+            cfg.compatibility_threshold += self.step
+
+
+def _apply_speciation_settings(config: neat.Config, config_path: str) -> None:
+    """A restored checkpoint carries its own pickled config. Re-apply the
+    speciation/stagnation/reproduction settings from the config file in place,
+    because the live species set, stagnation and reproduction objects hold
+    references to these exact config objects."""
+    fresh = neat.Config(
+        neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path
+    )
+    for section in ("species_set_config", "stagnation_config", "reproduction_config"):
+        getattr(config, section).__dict__.update(getattr(fresh, section).__dict__)
+
+
 class GenomeStatsReporter(neat.reporting.BaseReporter):
     """Log node and enabled-connection counts of the best genome per generation."""
 
@@ -314,6 +360,9 @@ def parse_args(argv=None):
     parser.add_argument("--domain-randomize", action="store_true", help="Enable Gymnasium domain randomization.")
     parser.add_argument("--legacy-decode", action="store_true",
                         help="Old double-tanh output decoding (only to reproduce runs before Oct 12 2026).")
+    parser.add_argument("--target-species", type=int, default=6,
+                        help="Adjust compatibility_threshold each generation toward this many species (0 = fixed).")
+    parser.add_argument("--threshold-step", type=float, default=0.1, help="Threshold change per generation.")
     parser.add_argument("--validate-every", type=int, default=1, help="Validate the champion every N generations.")
     parser.add_argument("--checkpoint-dir", default="outputs/neat/checkpoints", help="Checkpoints and best genomes.")
     parser.add_argument("--log-dir", default="outputs/neat/logs", help="fitness.csv, genome_stats.csv, validation.csv.")
@@ -330,6 +379,7 @@ def main(argv=None):
     fitness_log = os.path.join(args.log_dir, "fitness.csv")
     genome_log = os.path.join(args.log_dir, "genome_stats.csv")
     validation_log = os.path.join(args.log_dir, "validation.csv")
+    species_log = os.path.join(args.log_dir, "species.csv")
 
     resume_ckpt = None
     if args.resume == "auto":
@@ -338,11 +388,12 @@ def main(argv=None):
     elif args.resume and args.resume != "none":
         resume_ckpt = args.resume
     if resume_ckpt is None:
-        _reset_logs([fitness_log, genome_log, validation_log])
+        _reset_logs([fitness_log, genome_log, validation_log, species_log])
 
     pop = _build_population(args.config, resume_ckpt)
     if resume_ckpt is not None:
-        _drop_rows_from([fitness_log, genome_log, validation_log], pop.generation)
+        _drop_rows_from([fitness_log, genome_log, validation_log, species_log], pop.generation)
+        _apply_speciation_settings(pop.config, args.config)
     config = pop.config
     _validate_state_size(config)
 
@@ -368,6 +419,8 @@ def main(argv=None):
         ),
         ValidationReporter(evaluator, args.checkpoint_dir, validation_log, args.validate_every),
     ]
+    if args.target_species > 0:
+        reporters.append(SpeciesTargetReporter(args.target_species, args.threshold_step, species_log))
     if args.auto_visualize:
         plots = os.path.join(os.path.dirname(args.log_dir.rstrip("/")) or ".", "plots")
         reporters.append(
