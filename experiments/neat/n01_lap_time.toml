@@ -1,0 +1,14 @@
+id = "n01_lap_time"
+model = "neat"
+parent = "n00_baseline"
+title = "Fixed controls + reward lap time"
+why = """
+Same recipe as the baseline, but with the corrected output decoding (full gas, brake can release),
+speciation on, and +1 fitness per frame a lap finishes under 1000 frames, so faster laps clearly win.
+Fresh start, so the training time is honest.
+"""
+
+[train]
+generations = 100
+tracks-per-generation = 3
+lap-time-bonus = 1.0

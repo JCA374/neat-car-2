@@ -3,700 +3,202 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Teaching a Car to Race</title>
-<meta name="description" content="How a CPU-only CarRacing agent went from evolved networks to PPO, which reward fixes mattered, and the bugs we found on the way.">
+<title>NEAT vs PPO</title>
+<meta name="description" content="Two ways to learn CarRacing on a laptop CPU, improved step by step: the fastest lap for the least training time.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-:root {
-  color-scheme: light;
-  --bg: #fcfcfb;
-  --surface: #ffffff;
-  --surface-2: #f4f3f0;
-  --border: #e4e2dc;
-  --text: #0b0b0b;
-  --text-2: #52514e;
-  --text-3: #7a7974;
-  --accent: #2a78d6;
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --series-3: #1baf7a;
-  --good: #1d7a3a;
-  --bad: #c0362c;
-  --grid: #ecebe7;
-  --code-bg: #f4f3f0;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --bg: #141413;
-    --surface: #1a1a19;
-    --surface-2: #232321;
-    --border: #34332f;
-    --text: #ffffff;
-    --text-2: #c3c2b7;
-    --text-3: #8f8e86;
-    --accent: #3987e5;
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
-    --good: #4cb36b;
-    --bad: #e66767;
-    --grid: #2a2a27;
-    --code-bg: #232321;
-  }
-}
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #141413;
-  --surface: #1a1a19;
-  --surface-2: #232321;
-  --border: #34332f;
-  --text: #ffffff;
-  --text-2: #c3c2b7;
-  --text-3: #8f8e86;
-  --accent: #3987e5;
-  --series-1: #3987e5;
-  --series-2: #d95926;
-  --series-3: #199e70;
-  --good: #4cb36b;
-  --bad: #e66767;
-  --grid: #2a2a27;
-  --code-bg: #232321;
-}
-* { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0; background: var(--bg); color: var(--text);
-  font: 16px/1.65 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-main { max-width: 860px; margin: 0 auto; padding: 0 16px 80px; }
-h1, h2, h3 { line-height: 1.25; letter-spacing: -0.01em; }
-h1 { font-size: clamp(2rem, 6vw, 2.9rem); margin: 0 0 12px; }
-h2 { font-size: 1.6rem; margin: 64px 0 12px; }
-h3 { font-size: 1.15rem; margin: 0 0 6px; }
-p { margin: 0 0 14px; }
-a { color: var(--accent); }
-code, pre { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.86em; }
-code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
-pre { background: var(--code-bg); padding: 14px 16px; border-radius: 8px; overflow-x: auto; line-height: 1.5; border: 1px solid var(--border); }
-pre code { background: none; padding: 0; }
-.muted { color: var(--text-2); }
-.small { font-size: 0.88rem; }
-.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.78rem; color: var(--text-3); font-weight: 600; margin: 0 0 6px; }
-
-header.hero { padding: 20px 0 8px; }
-.tabs { display: flex; gap: 4px; padding: 14px 0 0; border-bottom: 1px solid var(--border); }
-.tabs a { text-decoration: none; color: var(--text-2); padding: 8px 14px; border-radius: 8px 8px 0 0; font-weight: 500; font-size: 0.95rem; border: 1px solid transparent; border-bottom: none; margin-bottom: -1px; }
-.tabs a:hover { color: var(--text); }
-.tabs a.active { color: var(--text); background: var(--bg); border-color: var(--border); }
-.hero-grid { display: grid; grid-template-columns: 1fr 300px; gap: 28px; align-items: center; }
-.hero-gif { width: 100%; border-radius: 10px; border: 1px solid var(--border); display: block; background: var(--surface-2); aspect-ratio: 3 / 2; object-fit: cover; }
-.lede { font-size: 1.12rem; color: var(--text-2); }
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 28px 0 0; }
-.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
-.stat .num { font-size: 1.7rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.stat .lbl { font-size: 0.85rem; color: var(--text-2); line-height: 1.4; }
-
-nav.toc { margin: 28px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
-nav.toc a { font-size: 0.85rem; text-decoration: none; color: var(--text-2); border: 1px solid var(--border); border-radius: 999px; padding: 3px 12px; background: var(--surface); }
-nav.toc a:hover { color: var(--text); border-color: var(--text-3); }
-
-.timeline { position: relative; margin: 24px 0 0; padding-left: 28px; }
-.timeline::before { content: ""; position: absolute; left: 8px; top: 6px; bottom: 6px; width: 2px; background: var(--border); }
-.step { position: relative; margin: 0 0 22px; }
-.step::before { content: ""; position: absolute; left: -26px; top: 22px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
-.step.bad::before { border-color: var(--bad); }
-.step.good::before { border-color: var(--good); background: var(--good); }
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
-.card-grid { display: grid; grid-template-columns: 1fr 240px; gap: 20px; }
-.card-grid img { width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block; background: var(--surface-2); aspect-ratio: 3 / 2; object-fit: cover; }
-.card figure { margin: 0; }
-.card figcaption { font-size: 0.78rem; color: var(--text-3); margin-top: 6px; line-height: 1.4; }
-.meta { font-size: 0.8rem; color: var(--text-3); margin: 0 0 8px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
-.meta a { color: var(--text-3); }
-.kv { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
-.kv span { font-size: 0.78rem; font-family: "JetBrains Mono", monospace; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 1px 7px; color: var(--text-2); }
-.result { margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); font-size: 0.93rem; }
-.result strong { font-variant-numeric: tabular-nums; }
-.tag { display: inline-block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; margin-left: 6px; vertical-align: 2px; }
-.tag.bad { color: var(--bad); }
-.tag.good { color: var(--good); }
-.tag.info { color: var(--text-3); }
-
-.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 18px 12px; margin: 18px 0; }
-.chart-card h3 { margin-bottom: 2px; }
-.chart-wrap { position: relative; height: 340px; margin-top: 10px; }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.85rem; color: var(--text-2); margin-top: 8px; }
-.legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
-details.table-view { margin-top: 10px; font-size: 0.88rem; }
-details.table-view summary { cursor: pointer; color: var(--text-2); }
-
-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
-th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
-th { font-weight: 600; color: var(--text-2); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
-td.num, th.num { text-align: right; }
-.table-scroll { overflow-x: auto; }
-
-.bug { border-left: 3px solid var(--bad); padding: 2px 0 2px 16px; margin: 0 0 22px; }
-.bug h3 { margin-bottom: 4px; }
-.gif-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.gif-row figure { margin: 0; }
-.gif-row img { width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block; background: var(--surface-2); aspect-ratio: 3 / 2; object-fit: cover; }
-.gif-row figcaption { font-size: 0.82rem; color: var(--text-2); margin-top: 4px; }
-.pending { color: var(--text-3); font-style: italic; }
-.theme-toggle { position: fixed; top: 12px; right: 12px; background: var(--surface); color: var(--text-2); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 0.8rem; cursor: pointer; z-index: 5; }
-footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-3); }
-
-@media (max-width: 720px) {
-  .hero-grid, .card-grid { grid-template-columns: 1fr; }
-  .hero-grid .hero-gif { max-width: 360px; }
-  .stats { grid-template-columns: 1fr; }
-  .gif-row { grid-template-columns: 1fr 1fr; }
-  .chart-wrap { height: 280px; }
-}
-</style>
+<link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
-<button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle colour theme">◐ Theme</button>
 <main>
 <nav class="tabs" aria-label="Pages">
-  <a href="index.html" class="active" aria-current="page">The story</a>
-  <a href="network.html">The network</a>
+  <a href="index.html" class="active" aria-current="page">Overview</a>
+  <a href="neat.html"><i style="background:var(--neat)"></i>NEAT</a>
+  <a href="ppo.html"><i style="background:var(--ppo)"></i>PPO</a>
   <a href="race.html">Race</a>
+  <button class="theme-toggle" id="themeToggle" type="button">◐ Theme</button>
 </nav>
 
-<header class="hero">
-  <div class="hero-grid">
-    <div>
-      <p class="eyebrow">CarRacing-v2 · CPU only · Dec 2025 → Oct 2026</p>
-      <h1>Teaching a car to race, one fix at a time</h1>
-      <p class="lede">We started with neuroevolution and a car that wandered off into the grass. This page covers each step after that: what we changed, why, and what the numbers said. It includes the step that made things worse, the twist (the reward fix we credited for our biggest jump had never actually run), and how we came back to evolving networks in the end.</p>
-    </div>
-    <img class="hero-gif" id="heroGif" src="assets/gifs/strict.gif" alt="Top-down view of the trained car driving the track">
-  </div>
-  <div class="stats">
-    <div class="stat"><div class="num" id="statBaseline">383</div><div class="lbl">avg. training reward, first PPO agent (last 400 episodes)</div></div>
-    <div class="stat"><div class="num" id="statBest">607</div><div class="lbl">avg. training reward after lowering the entropy bonus (+58%)</div></div>
-    <div class="stat"><div class="num" id="statBench">–</div><div class="lbl" id="statBenchLbl">best raw CarRacing score in our 5-track benchmark</div></div>
-  </div>
-  <nav class="toc" aria-label="Sections">
-    <a href="#start">Where we started</a>
-    <a href="#journey">Step by step</a>
-    <a href="#neat">Back to NEAT</a>
-    <a href="#reward">The reward math</a>
-    <a href="#bugs">Bugs we found</a>
-    <a href="#results">Results</a>
-    <a href="#reproduce">Reproduce</a>
-  </nav>
+<header class="narrow">
+  <p class="eyebrow">CarRacing-v2 · CPU only</p>
+  <h1>NEAT vs PPO: the fastest lap for the least training</h1>
+  <p class="lede">Two ways to teach the same car to drive: <strong style="color:var(--neat)">NEAT</strong> evolves small networks, and <strong style="color:var(--ppo)">PPO</strong> trains a fixed neural network with reinforcement learning. Both see the same 40 numbers (8 car readings + 32 lidar distances) and output steering, gas and brake. Each one improves in small steps, and every step is timed on the same laptop.</p>
+  <p class="small muted" id="hw">Hardware: –</p>
 </header>
 
-<section id="start">
-  <h2>Where we started</h2>
-  <p>CarRacing-v2 normally hands the agent a 96×96 image each frame. Learning from pixels needs a GPU and patience, and we had neither, only a laptop CPU. So from the very first commit we gave the car a <strong>compact 40-number description of the world</strong>:</p>
-  <ul>
-    <li><strong>8 dynamics values:</strong> speed, velocity in the car's own frame, heading (cos/sin), spin rate, steering angle, and <em>traction</em> (how many wheels are on asphalt).</li>
-    <li><strong>32 "lidar" rays</strong> fanned around the car. Each reports how far the road extends in that direction, read straight from the Box2D track polygons.</li>
-  </ul>
-  <p>The network outputs three numbers: steering, gas and brake.</p>
-  <p>The first learner was <strong>NEAT</strong>, which evolves both the weights and the shape of small networks. A population of 60 networks started with no hidden layer (40 inputs wired straight to 3 outputs). After 62 generations the best network had grown 10 hidden nodes and 119 connections, including a recurrent loop that fed the last steering command back into the gas decision. It scored <strong>636</strong> against a target of 700.</p>
-  <p>The catch was speed. Every fitness evaluation is a full 1000-frame episode for each of 60 genomes, run on one CPU, and progress had flattened out. After two days we switched algorithms but kept the 40-number state, which carried over unchanged.</p>
-  <p class="small muted">Looking back, that 636 was also hard to trust. Each genome drove its own random track, so a network could win just by drawing an easy one. Much of its fitness came from a speed bonus that paid out even on grass. And it had the same broken traction input described in <a href="#bugs">bug 1</a>. We fixed all three when we <a href="#neat">came back to NEAT</a>.</p>
+<section>
+  <h2>Current champions</h2>
+  <div class="duel" id="duel"></div>
 </section>
 
-<section id="journey">
-  <h2>Step by step</h2>
-  <p class="muted">Each card shows what changed, the settings, and what came out. Rewards are the average episode reward while training (in the December runs the penalty never fired, so this is effectively the game score); the <a href="#results">results</a> section compares every model on the same tracks with the raw game score. GIFs show each model's best checkpoint on the same track.</p>
-
-  <div class="timeline">
-
-    <div class="step">
-      <div class="card">
-        <p class="meta"><span>Dec 20–21, 2025</span><a href="https://github.com/JCA374/neat-car-2/commit/a61dad3">a61dad3</a><a href="https://github.com/JCA374/neat-car-2/commit/a97d367">a97d367</a></p>
-        <h3>0 · NEAT on a lidar state vector</h3>
-        <p>We built the state wrapper and evolved networks with neat-python, and added network visualisations and fitness plots to watch the topology grow.</p>
-        <div class="kv"><span>pop 60</span><span>40 → 3 tanh</span><span>fitness target 700</span></div>
-        <div class="result">Best fitness <strong>636</strong> at generation 62, then a plateau. Each generation was too slow on CPU to keep iterating.</div>
-      </div>
+<section>
+  <h2>Lap time vs training time</h2>
+  <p class="muted narrow">Every step of both ladders. Lower is a faster car and further left is cheaper to train, so the best models sit in the bottom-left corner. A hollow marker means the model didn't finish all five tracks; its lap time is averaged over the tracks it did finish.</p>
+  <div class="card">
+    <div class="chart-wrap" style="height:380px"><canvas id="scatter" role="img" aria-label="Scatter plot of mean lap time against training time for every step"></canvas></div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--neat)"></i>NEAT</span>
+      <span><i class="dot" style="background:var(--ppo)"></i>PPO</span>
+      <span><i class="dot" style="border:2px solid var(--text-3)"></i>hollow: not every track finished</span>
+      <span><i class="swatch-line" style="background:repeating-linear-gradient(90deg,var(--text-3) 0 4px,transparent 4px 7px)"></i>best trade-off so far (5/5 finished)</span>
     </div>
-
-    <div class="step bad">
-      <div class="card card-grid">
-        <div>
-          <p class="meta"><span>Dec 21–22</span><a href="https://github.com/JCA374/neat-car-2/commit/4313fdd">4313fdd</a></p>
-          <h3>1 · Switch to PPO <span class="tag bad">fast, can't turn</span></h3>
-          <p>We replaced NEAT with Stable-Baselines3 PPO: a 2×256 MLP, 4 parallel environments and 1.5M steps (about 4 h). The wrapper was meant to subtract a mild penalty when traction dropped below 95%.</p>
-          <div class="kv"><span>entropy 0.015</span><span>lr 2.5e-4</span><span>offtrack_penalty 1.0*</span><span>1.5M steps</span></div>
-          <div class="result">Average reward <strong>383</strong>. 98% of episodes ran the full 1000 frames, but only 1.7% finished a lap. The car learned to floor it and cut across the grass.</div>
-          <p class="small muted" style="margin-top:10px">TensorBoard showed why it never settled: the policy's action noise <em>grew</em> from 1.0 to 1.94 during training. The entropy bonus was paying the agent to stay random. *Settings are read back from the saved checkpoint. As it turned out, the penalty never ran (<a href="#bugs">bug 1</a>).</p>
-        </div>
-        <figure><img src="assets/gifs/baseline.gif" alt="Baseline PPO car driving" loading="lazy"><figcaption>Baseline best checkpoint</figcaption></figure>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="card">
-        <p class="meta"><span>Dec 22</span><a href="https://github.com/JCA374/neat-car-2/commit/194c067">194c067</a><a href="https://github.com/JCA374/neat-car-2/commit/93aeaba">93aeaba</a></p>
-        <h3>2 · Diagnose it: the reward paid for cutting corners</h3>
-        <p>We wrote plotting scripts and a <a href="https://github.com/JCA374/neat-car-2/blob/main/notes/training_analysis_report.md">training analysis report</a>. The key finding is arithmetic: one road tile is worth +10, and a whole frame fully on grass cost only −0.95. Cutting a corner that skips a curve was simply profitable (<a href="#reward">the math is below</a>). The plan: make leaving the road cost more than it gains, rather than train longer. The arithmetic was right. What we didn't check was whether the penalty term ever fired.</p>
-      </div>
-    </div>
-
-    <div class="step good">
-      <div class="card card-grid">
-        <div>
-          <p class="meta"><span>Dec 22</span><span>run: <code>improved</code></span></p>
-          <h3>3 · "Strict reward" <span class="tag good">+106% peak</span></h3>
-          <p>We raised the penalty 15× and tightened the threshold so that even one wheel on the grass would cost reward. In the same change we cut the entropy bonus from 0.015 to 0.005 so the policy could commit.</p>
-          <div class="kv"><span>offtrack_penalty 15</span><span>traction_threshold 0.99</span><span>entropy 0.005</span><span>lr 3e-4</span></div>
-          <div class="result">By 500k steps the average training reward hit <strong>789</strong> and the evaluation score <strong>848</strong>, the best we had seen. We credited the penalty. In fact the penalty was still a no-op (<a href="#bugs">bug 1</a>), so the jump came from the other changes, most likely <strong>lowering the entropy bonus</strong>, which finally let the agent stop dithering. (The learning rate and seed changed too, so this isn't a clean ablation.)</div>
-        </div>
-        <figure><img src="assets/gifs/improved.gif" alt="Car after strict reward shaping" loading="lazy"><figcaption>Best checkpoint (≈500k steps)</figcaption></figure>
-      </div>
-    </div>
-
-    <div class="step bad">
-      <div class="card card-grid">
-        <div>
-          <p class="meta"><span>Dec 22–23</span><span>same run, 4.5M steps</span></p>
-          <h3>4 · …then it collapsed <span class="tag bad">−68%</span></h3>
-          <p>We let the strict run continue to 4.5M steps, about 12 hours. Instead of getting better, it got steadily worse.</p>
-          <div class="result">Training reward fell from <strong>789</strong> to <strong>~250</strong>. Over the same stretch the size of each policy update (approx. KL) doubled from 0.007 to 0.016, and the fraction of clipped updates rose from 8% to 18%. With a constant learning rate, PPO kept taking big steps after the policy was already good, and those steps knocked it off its peak.</div>
-          <p class="small muted" style="margin-top:10px">The automatic "best model" checkpoint saved us: it still held the 500k-step peak.</p>
-        </div>
-        <figure><img src="assets/gifs/collapsed.gif" alt="The same run after 4.5M steps" loading="lazy"><figcaption>Final checkpoint (4.5M steps)</figcaption></figure>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="card card-grid">
-        <div>
-          <p class="meta"><span>Dec 23</span><span>runs: <code>strict</code>, <code>multilap</code></span><a href="https://github.com/JCA374/neat-car-2/commit/3fd7033">3fd7033</a></p>
-          <h3>5 · Stop early, add multi-lap <span class="tag info">no effect</span></h3>
-          <p>We re-ran the strict recipe and stopped at 450k, near the peak; its best evaluation was 827. Then we added a <em>multi-lap</em> mode: after finishing a lap, the car gets +100 and keeps racing, so faster drivers score more.</p>
-          <div class="result">The multi-lap run's evaluation curve is <strong>identical, digit for digit</strong>, to the earlier strict run (same seed). The new feature changed nothing. 16% of episodes completed a lap, and every one simply ended there with no bonus (<a href="#bugs">bug 2</a>).</div>
-        </div>
-        <figure><img src="assets/gifs/multilap.gif" alt="Multi-lap run best checkpoint" loading="lazy"><figcaption>Multi-lap run best checkpoint: frame-for-frame the same drive as step 3</figcaption></figure>
-      </div>
-    </div>
-
-    <div class="step good">
-      <div class="card">
-        <p class="meta"><span>Oct 2026</span><a href="https://github.com/JCA374/neat-car-2/commit/9230991">9230991</a><a href="https://github.com/JCA374/neat-car-2/commit/d9a8b31">d9a8b31</a><a href="https://github.com/JCA374/neat-car-2/commit/438847b">438847b</a></p>
-        <h3>6 · Clean-up: fix the bugs, stabilise training</h3>
-        <p>On revisiting the project we found four bugs (<a href="#bugs">details</a>). The worst: <strong>the off-track penalty had never fired in any run</strong>. Every fix comes with tests that fail on the old code. We tidied the repo, then went after the collapse from step 4:</p>
-        <ul>
-          <li><strong>Linear learning-rate decay</strong> (<code>--lr-schedule linear</code>), so updates shrink as the policy matures.</li>
-          <li><strong>A KL early-stop</strong> (<code>--target-kl 0.02</code>), which ends an update once the policy has moved far enough.</li>
-          <li><strong>A penalty that works.</strong> The strict 15 / 0.99 setting is now real, so this is the first run where grass actually costs reward.</li>
-          <li><strong>2000-step episodes</strong> (<code>--max-episode-steps 2000</code>). A lap takes about 860 frames, so with the default limit of 1000 a second lap was nearly impossible and the multi-lap bonus could never pay twice.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="step" id="v2step">
-      <div class="card card-grid">
-        <div>
-          <p class="meta"><span>Oct 2026</span><span>run: <code>v2</code></span></p>
-          <h3>7 · Retrain with everything fixed <span class="tag bad">learned to park</span></h3>
-          <p>We retrained with an off-track penalty that actually applies, a working multi-lap mode, LR decay, KL early-stop and domain randomisation.</p>
-          <div class="kv"><span>offtrack_penalty 15</span><span>threshold 0.99</span><span>lr linear→0</span><span>target_kl 0.02</span><span>2000-step episodes</span></div>
-          <div class="result">For the first 200k steps the car kept leaving the road and the real penalty hammered it (evaluation scores down to −20,000). Then it found the safest answer: <strong>brake and stop</strong>. From 250k to 550k steps the evaluation score sat flat at about −180, which is just the time penalty. The best model averaged 43% brake and 1% gas and covered 17 of 271 tiles. A frame on grass (up to −14.85) now cost more than a whole road tile is worth (+10), so not moving was the rational choice. We stopped the run at 550k steps.</div>
-        </div>
-        <figure id="v2fig"><img src="assets/gifs/v2.gif" alt="v2 PPO agent barely moving" loading="lazy"><figcaption>v2 best checkpoint: drives a few tiles, then parks</figcaption></figure>
-      </div>
-    </div>
-
-    <div class="step" id="neatStep">
-      <div class="card card-grid">
-        <div>
-          <p class="meta"><span>Oct 2026</span><a href="https://github.com/JCA374/neat-car-2/commit/c6cd38a">c6cd38a</a></p>
-          <h3>8 · Back to NEAT <span class="tag info" id="neatTag">evolving</span></h3>
-          <p>We went back to the original idea of evolving the network itself, this time with the lessons from PPO. <a href="#neat">Details below</a>, and you can explore the evolved network on <a href="network.html">its own page</a>.</p>
-          <div class="kv"><span>pop 100</span><span>3 shared tracks / generation</span><span>fitness = raw game score</span><span>5 held-out validation tracks</span></div>
-          <div class="result" id="neatResult"><span class="pending">Evolution in progress.</span></div>
-        </div>
-        <figure id="neatFig" hidden><img src="assets/gifs/neat.gif" alt="Evolved NEAT network driving" loading="lazy"><figcaption>Best validated genome</figcaption></figure>
-      </div>
-    </div>
-
   </div>
 </section>
 
-<section id="neat">
-  <h2>Back to NEAT</h2>
-  <p>NEAT was the idea this project started with, and the PPO detour taught us what it had been missing. The new version keeps the same 40-number state, the same network outputs, and neat-python. What changed is <em>how genomes are judged</em>:</p>
-  <ul>
-    <li><strong>Same tracks for everyone.</strong> In each generation, all 100 genomes drive the same 3 tracks, with new tracks drawn every generation. Before, each genome drew its own random track, so a "winner" could just be lucky.</li>
-    <li><strong>Fitness is the game's own score.</strong> No hand-made speed bonus: tiles collected minus time. Driving on grass earns nothing, because it reaches no tiles.</li>
-    <li><strong>Held-out validation.</strong> Each generation's champion also drives 5 fixed tracks it never trains on. The saved "best genome" is the one with the best validation score, not the luckiest training score. The benchmark below uses yet another 5 tracks.</li>
-    <li><strong>Stop wasting time on stuck cars.</strong> An episode ends after 100 frames without reaching a new tile, and the rest of the time penalty is still charged, so stopping early never pays.</li>
-    <li><strong>12× faster simulation.</strong> CarRacing was drawing a 96×96 image every frame that nobody looked at, and the lidar tested points one at a time in Python. Skipping the drawing and vectorising the lidar took a step from ~10 ms to under 1 ms, with identical results (there's a test for that).</li>
-  </ul>
-
-  <div class="chart-card" id="neatCard" hidden>
-    <h3>Fitness per generation</h3>
-    <p class="small muted" style="margin:0">Best and mean training fitness (raw score on that generation's 3 tracks), plus the champion's score on the 5 held-out validation tracks.</p>
-    <div class="legend" id="neatLegend"></div>
-    <div class="chart-wrap"><canvas id="neatChart" role="img" aria-label="Line chart of NEAT fitness per generation"></canvas></div>
-    <p class="small muted" id="neatGrowth" style="margin:8px 0 0"></p>
-  </div>
-  <h3 style="margin-top:28px">What evolution found</h3>
-  <p>In 150 generations (5.2 hours on a laptop CPU, less than half the planned PPO run) NEAT produced our best driver yet. The best genome came from generation 127 and scores <strong>857</strong> on the validation tracks and <strong>831</strong> on the benchmark tracks it had never seen. The best PPO model scores 738 there. It finished 2 of the 5 benchmark tracks within 1000 frames, scored over 900 ("solved" territory) on both, and kept all four wheels on the road for <strong>every single frame</strong>. The best PPO models spent 19–24% of frames with a wheel on the grass.</p>
-  <p>The fitness never mentions grass. It only counts tiles and time. Staying on the road emerged because the road is where the tiles are. The network grew from a plain 40→3 wiring to 10 hidden nodes, while pruning connections from 120 down to 93. The traction input, which the old version never saw change, is now wired in.</p>
-  <h3 style="margin-top:28px">Run 2: two more bugs, and an honest null result</h3>
-  <p>Looking closer at the winner turned up two more problems:</p>
-  <ul>
-    <li><strong>The car could never release the brake.</strong> The network's outputs already pass through <code>tanh</code>, and the decoder applied <code>tanh</code> a second time. Gas was therefore capped at 0.88 and the brake never went below 0.12. The best genome braked at exactly 0.119 on every frame of every track. At that setting the car needs about 2.5× longer to reach speed. The car finished every benchmark track, but ran out of the 1000-frame budget on the three longest.</li>
-    <li><strong>Speciation never switched on.</strong> NEAT protects new structure by grouping similar networks into species. Our genomes were never far enough apart to split, so run 1 had a single species in 135 of its 150 generations. An automatic threshold now aims for about 6 species.</li>
-  </ul>
-  <p>Run 2 continued from run 1's generation 148 with both fixes for another 100 generations (3.3 hours). The population stayed diverse (a median of 7 species) and learned to use the new range: it reaches a top speed of 80 instead of 60, and controls its speed mostly with the throttle. But its best genome (generation 236, 17 hidden nodes) scores <strong>821</strong> on validation and <strong>810</strong> on the benchmark tracks, slightly <em>below</em> run 1's 857 and 831. More freedom and more diversity didn't produce a better driver in 100 generations. Both are kept, and you can compare them track by track on <a href="network.html#individuals">the network page</a>.</p>
-  <figure id="neatNetFig" hidden style="margin:18px 0 0">
-    <img src="assets/neat_network.png" alt="Topology of the best evolved network" style="width:100%;border-radius:10px;border:1px solid var(--border);background:#fff">
-    <figcaption class="small muted" id="neatNetCap" style="margin-top:6px">The best validated network.</figcaption>
-  </figure>
+<section>
+  <h2>Leaderboard</h2>
+  <p class="muted narrow">Ranked by most tracks finished, then mean lap time, then training time, then model size. So if two models drive equally fast, the cheaper and simpler one wins.</p>
+  <div class="card table-scroll"><table id="board"></table></div>
 </section>
 
-<section id="reward">
-  <h2>The reward math (as intended)</h2>
-  <p>CarRacing pays about <strong>+10</strong> for every new road tile (1000 split across ~100 tiles) and charges <strong>−0.1</strong> per frame. Our wrapper adds an off-track penalty each frame:</p>
-  <pre><code>penalty = offtrack_penalty × max(0, traction_threshold − traction)</code></pre>
-  <p>Take a corner that costs 10 frames of driving on grass (traction 0) but reaches the next tile sooner:</p>
-  <div class="table-scroll">
-  <table>
-    <thead><tr><th>Setting</th><th class="num">Penalty, 10 frames on grass</th><th class="num">vs. one tile (+10)</th><th>Grass stops paying below traction</th></tr></thead>
-    <tbody>
-      <tr><td>Baseline: 1.0 / 0.95</td><td class="num">−9.5</td><td class="num">still profitable</td><td>none: even full grass costs less than a tile</td></tr>
-      <tr><td>Moderate: 5.0 / 0.98</td><td class="num">−49</td><td class="num">5× the gain</td><td>~0.78</td></tr>
-      <tr><td><strong>Strict: 15 / 0.99</strong></td><td class="num"><strong>−148.5</strong></td><td class="num">15× the gain</td><td>~0.92</td></tr>
-    </tbody>
-  </table>
+<section>
+  <h2>How the comparison works</h2>
+  <div class="rules">
+    <div class="card" style="margin:0">
+      <h3>The benchmark</h3>
+      <ol class="small muted">
+        <li>Five fixed tracks (seeds 3, 11, 21, 34, 55) that no model trains or validates on.</li>
+        <li>The raw CarRacing car and reward: no extra penalties or bonuses, deterministic actions.</li>
+        <li>Up to 2000 frames (40 s). A run ends when the lap is complete. Leaving the map, or not finishing in time, is a DNF.</li>
+        <li><strong>Lap time</strong> = frames to complete the lap ÷ 50.</li>
+      </ol>
+    </div>
+    <div class="card" style="margin:0">
+      <h3>The training clock</h3>
+      <ol class="small muted">
+        <li>Wall-clock time on one laptop with no GPU, from the start of training until the selected model was saved, including validation and evaluation.</li>
+        <li>NEAT keeps the generation with the best score on 5 held-out validation tracks. PPO keeps its best evaluation checkpoint.</li>
+        <li>Size counts trainable numbers: NEAT counts its connections plus node biases, and PPO counts every weight in its policy and value networks.</li>
+      </ol>
+    </div>
   </div>
-  <p class="small muted" style="margin-top:10px">This analysis was sound, but until the clean-up every row behaved like "no penalty at all": the traction input was stuck at 1.0. v2 is the first run where the strict row really applies.</p>
+  <div class="card">
+    <h3>Add a step</h3>
+    <p class="small muted">Each step is one small file with the settings and the reason for the change. One command trains it, times it, benchmarks it and updates these pages.</p>
+<pre><code>cp experiments/neat/n01_lap_time.toml experiments/neat/n02_my_idea.toml   # edit id, parent, title, why, settings
+python scripts/run_step.py experiments/neat/n02_my_idea.toml               # train (timed) → benchmark → site data
+git add experiments outputs docs && git commit -m "NEAT n02: my idea"</code></pre>
+  </div>
+  <p class="small faint narrow">This project began in December 2025 as a bug-hunting story about PPO reward shaping. That write-up is in the git history (commit <code>cd099f3</code>). This page starts over from the two best models it produced: NEAT run 1 and the best PPO checkpoint.</p>
 </section>
 
-<section id="bugs">
-  <h2>Bugs we found while cleaning up</h2>
-
-  <div class="bug">
-    <h3>1. The off-track penalty never fired</h3>
-    <p>Traction was computed from a wheel attribute called <code>ground_traction</code>. Gymnasium's wheels don't have one, so the list was always empty and the fallback value, 1.0 ("all wheels on road"), was used every frame. The penalty <code>15 × max(0, 0.99 − 1.0)</code> is always zero. The agent's traction input was also a constant. Every run from December, "strict" included, trained with no penalty at all.</p>
-    <p class="small muted">Fix: a wheel is on the road exactly when it touches a road tile (<code>wheel.tiles</code>), the same test the physics engine uses for grass friction. A test drives onto the grass and checks that the penalty matches the formula exactly.</p>
-  </div>
-
-  <div class="bug">
-    <h3>2. Multi-lap never worked, and it hid out-of-bounds</h3>
-    <p>The wrapper waited for the game to say <code>terminated</code> before treating a lap as complete. But in gymnasium 0.29.1 a finished lap is reported as <code>truncated</code>, so real laps simply ended the episode. The one event that <em>did</em> trigger the branch was driving off the map: the wrapper cancelled the −100 termination, paid a +100 "lap bonus", and let the car keep going. Even if a lap had been caught, the game's <code>new_lap</code> flag and each tile's "visited" flag were never reset. That would have paid the bonus on every following frame and no tile rewards on lap two.</p>
-    <p class="small muted">Fix: detect laps from the game's own <code>new_lap</code> flag, reset it along with the tile flags, and leave all other endings alone. Five tests cover this; all five fail on the old code.</p>
-  </div>
-
-  <div class="bug">
-    <h3>3. Evaluation runs overwrote the training log</h3>
-    <p>The evaluation environment and training environment #0 both wrote to <code>monitor/0.monitor.csv</code>. Old logs contain garbled lines such as <code>r,l,t-45.98…</code> and <code>4967,799</code> where the two writers collided. Evaluation now logs to its own <code>eval_monitor/</code>, and episodes also record <code>laps_completed</code>.</p>
-  </div>
-
-  <div class="bug">
-    <h3>4. Flags that didn't do what the docs said</h3>
-    <p><code>--allow-multiple-laps</code> was always on: it was a <code>store_true</code> flag that defaulted to true. The documented <code>--no-allow-multiple-laps</code> didn't exist, and an internal helper defaulted to a different penalty (0.5 / 0.9) than everything else. Also, <code>play.py</code> always scored with the default penalty, so its rewards couldn't be compared with training. All of these are fixed.</p>
-  </div>
-</section>
-
-<section id="results">
-  <h2>Results</h2>
-
-  <div class="chart-card">
-    <h3>Training reward over time, December runs</h3>
-    <p class="small muted" style="margin:0">Rolling mean of 100 episodes. The penalty never fired in these runs, so this is effectively the raw game score with 1000-frame episodes.</p>
-    <div class="legend" id="curveLegend"></div>
-    <div class="chart-wrap"><canvas id="curveChart" role="img" aria-label="Line chart of training reward versus environment steps for each run"></canvas></div>
-    <details class="table-view"><summary>Show as table</summary><div class="table-scroll" id="runsTable"></div></details>
-  </div>
-
-  <div class="chart-card" id="v2Card" hidden>
-    <h3>v2 training reward</h3>
-    <p class="small muted" style="margin:0">Rolling mean of 100 episodes, on its own scale: v2 is the first run where grass really costs reward (up to −14.85 per frame), and its episodes are 2000 frames long. Its numbers can't be compared directly with the chart above; the benchmark below can.</p>
-    <div class="chart-wrap" style="height:260px"><canvas id="v2Chart" role="img" aria-label="Line chart of v2 training reward versus environment steps"></canvas></div>
-  </div>
-
-  <div class="chart-card">
-    <h3>Same tracks, same rules: raw CarRacing score</h3>
-    <p class="small muted" style="margin:0">Each model's checkpoint drives the same 5 tracks deterministically for up to 1000 frames. Scoring uses the game's own reward, with no shaping and no lap bonus, so every stage is judged the same way. 900+ counts as "solved" for CarRacing. "Off-track" counts frames with at least one wheel off the road, measured with the fixed traction sensor.</p>
-    <div class="chart-wrap" style="height:300px"><canvas id="benchChart" role="img" aria-label="Bar chart of mean raw score per model"></canvas></div>
-    <details class="table-view" open><summary>Show as table</summary><div class="table-scroll" id="benchTable"></div></details>
-  </div>
-
-  <div class="gif-row">
-    <figure><img src="assets/gifs/baseline.gif" alt="Baseline driving" loading="lazy"><figcaption>Baseline: fast, sloppy</figcaption></figure>
-    <figure><img src="assets/gifs/improved.gif" alt="Strict reward peak driving" loading="lazy"><figcaption>Strict reward at its peak</figcaption></figure>
-    <figure><img src="assets/gifs/collapsed.gif" alt="Collapsed policy driving" loading="lazy"><figcaption>Same run after the collapse</figcaption></figure>
-  </div>
-
-  <h3 style="margin-top:32px">What we learned</h3>
-  <ul>
-    <li><strong>Log every reward term separately.</strong> A penalty that is always zero looks exactly like a penalty the agent has learned to avoid, unless you plot it.</li>
-    <li><strong>Judge every candidate on the same tracks.</strong> Random tracks per genome made old NEAT scores partly luck. Shared tracks per generation plus held-out validation fixed that.</li>
-    <li><strong>Change one thing at a time.</strong> Penalty and entropy changed together, so we credited the wrong one for months.</li>
-    <li><strong>More steps can hurt.</strong> Keep the best checkpoint, watch KL and clip fraction, and decay the learning rate.</li>
-    <li><strong>A feature isn't done until a test proves it changes behaviour.</strong> Identical curves before and after "multi-lap" were the giveaway.</li>
-    <li><strong>Watch exploration.</strong> An entropy bonus that is too high can quietly beat the task reward. Action noise rising during training is the warning sign.</li>
-    <li><strong>A compact state works.</strong> 40 numbers and a small MLP learn to drive on a laptop CPU in a few hours.</li>
-  </ul>
-</section>
-
-<section id="reproduce">
-  <h2>Reproduce it</h2>
-<pre><code>python -m venv .venv &amp;&amp; source .venv/bin/activate
-pip install -r requirements.txt
-pytest tests/
-
-# the v2 recipe (~12 h on a 4-core CPU)
-python -m carracing_ppo.train --total-timesteps 4500000 --num-envs 4 \
-  --offtrack-penalty 15 --traction-threshold 0.99 --entropy-coef 0.005 \
-  --lr-schedule linear --target-kl 0.02 --max-episode-steps 2000 \
-  --domain-randomize --lap-completion-bonus 100 \
-  --checkpoint-dir outputs/checkpoints_v2 --log-dir outputs/logs_v2 --seed 42
-
-# watch it drive
-python -m carracing_ppo.play --model outputs/checkpoints_v2/best_model.zip --deterministic
-
-# rebuild this page's data and GIFs
-python scripts/build_site_data.py &amp;&amp; python scripts/benchmark.py</code></pre>
-
-  <h3 style="margin-top:28px">Next steps</h3>
-  <ul>
-    <li>Ablate entropy vs. penalty properly: same seed, one change per run.</li>
-    <li>A speed-dependent off-track penalty, so cutting a corner at high speed costs more than drifting wide at low speed.</li>
-    <li>Benchmark on more tracks (5 is a small sample) and report confidence intervals.</li>
-    <li>Try pixels plus the lidar state, now that the reward is trustworthy.</li>
-  </ul>
-</section>
-
-<footer>
-  Source: <a href="https://github.com/JCA374/neat-car-2">github.com/JCA374/neat-car-2</a>. Stable-Baselines3 PPO on Gymnasium CarRacing-v2. Numbers on this page are generated from the run logs by <code>scripts/build_site_data.py</code> and <code>scripts/benchmark.py</code>.
-</footer>
+<footer>Data: <code>scripts/run_step.py</code> trains and benchmarks each step, and <code>scripts/build_site.py</code> builds <code>docs/assets/data/</code>. Source: <a href="https://github.com/JCA374/neat-car-2">github.com/JCA374/neat-car-2</a>.</footer>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="assets/site.js"></script>
 <script>
 (function () {
-  // ---- theme toggle ------------------------------------------------------
-  var root = document.documentElement;
-  try { var saved = localStorage.getItem("theme"); if (saved) root.setAttribute("data-theme", saved); } catch (e) {}
-  document.getElementById("themeToggle").addEventListener("click", function () {
-    var dark = getComputedStyle(root).colorScheme.indexOf("dark") !== -1;
-    var next = dark ? "light" : "dark";
-    root.setAttribute("data-theme", next);
-    try { localStorage.setItem("theme", next); } catch (e) {}
-    drawAll();
-  });
+  "use strict";
+  var S = window.Site, B = null, chart = null;
 
-  function css(name) { return getComputedStyle(root).getPropertyValue(name).trim(); }
-  function fmt(n) { return n == null ? "–" : Number(n).toLocaleString("en-US", { maximumFractionDigits: 1 }); }
-  function kSteps(n) { return n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : Math.round(n / 1e3) + "k"; }
-
-  // Series shown on the curve chart: baseline, the strict-recipe long run, v2.
-  // (The short "strict" and "multilap" runs follow the long run's curve exactly.)
-  var CURVE_SERIES = [
-    { key: "baseline", label: "Baseline (entropy 0.015)", color: "--series-1" },
-    { key: "improved", label: "\"Strict\" run (entropy 0.005, constant LR)", color: "--series-2" }
-  ];
-  var BENCH_LABELS = {
-    baseline: "Baseline", improved: "Strict, peak", collapsed: "Strict, after collapse",
-    strict: "Strict, stopped early", multilap: "Multi-lap (buggy)", v2: "PPO v2 (parked)", neat: "NEAT run 1", neat2: "NEAT run 2"
-  };
-  var BENCH_ORDER = ["baseline", "improved", "collapsed", "strict", "multilap", "v2", "neat", "neat2"];
-
-  var runs = null, bench = null, neat = null, charts = [];
-
-  Promise.all([
-    fetch("assets/data/runs.json").then(function (r) { return r.json(); }),
-    fetch("assets/data/benchmark.json").then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-  ]).then(function (res) {
-    runs = res[0].runs; neat = res[0].neat; bench = res[1];
-    fillText(); drawAll();
-  });
-
-  function runByKey(k) { return runs.filter(function (r) { return r.key === k; })[0]; }
-
-  function fillText() {
-    var b = runByKey("baseline"), s = runByKey("strict");
-    if (b) document.getElementById("statBaseline").textContent = Math.round(b.mean_last400);
-    if (s) document.getElementById("statBest").textContent = Math.round(s.mean_last400);
-    if (bench) {
-      var best = null;
-      BENCH_ORDER.forEach(function (k) { var st = bench.stages[k]; if (st && (!best || st.mean > best.mean)) best = { k: k, mean: st.mean }; });
-      if (best) {
-        document.getElementById("statBench").textContent = Math.round(best.mean);
-        document.getElementById("statBenchLbl").textContent = "best raw CarRacing score on 5 fixed tracks: " + BENCH_LABELS[best.k];
-      }
-    }
-    var nb = bench && bench.stages.neat, nv = neat && neat.best_validation;
-    if (nv) {
-      var done = neat.generations >= 150;
-      document.getElementById("neatTag").textContent = done ? "done" : "gen " + neat.generations;
-      document.getElementById("neatResult").innerHTML =
-        "After <strong>" + neat.generations + "</strong> generations (" + fmt(neat.hours) + " h), the best genome (generation " + nv.generation +
-        ", " + nv.hidden_nodes + " hidden nodes, " + nv.connections + " connections) scores <strong>" + fmt(nv.score) +
-        "</strong> on the held-out validation tracks" + (nb ? ", and <strong>" + fmt(nb.mean) + "</strong> on the benchmark tracks." : ".") +
-        (done ? "" : ' <span class="pending">Still evolving; this card updates as it goes.</span>');
-    }
-    if (nb) {
-      document.getElementById("neatFig").hidden = false;
-      document.getElementById("heroGif").src = "assets/gifs/neat.gif";
-      if (neat.generations >= 150) {
-        document.getElementById("neatStep").className = "step good";
-        document.getElementById("neatTag").className = "tag good";
-      }
-    }
+  function duel() {
+    document.getElementById("duel").innerHTML = ["neat", "ppo"].map(function (m) {
+      var s = B.steps.filter(function (x) { return x.id === B.champions[m]; })[0];
+      if (!s) return '<div class="card champ" style="--model:' + S.modelColor(m) + '"><h3>' + S.modelName(m) + "</h3><p class='muted'>No results yet.</p></div>";
+      var rank = B.steps.indexOf(s) + 1;
+      return '<a class="card champ" style="--model:' + S.modelColor(m) + ';display:block;text-decoration:none;color:inherit" href="' + m + ".html#" + s.id + '">' +
+        '<img src="assets/gifs/' + s.id + '.gif" alt="' + S.modelName(m) + ' champion driving track 3">' +
+        '<h3><span style="color:' + S.modelColor(m) + '">' + S.modelName(m) + "</span> · " + S.esc(s.title) + "</h3>" +
+        '<p class="small faint" style="margin:0">' + S.short(s) + " · #" + rank + " overall</p>" +
+        '<div class="tiles">' +
+        '<div class="tile"><div class="num">' + S.lap(s.summary.lap_s) + '</div><div class="lbl">mean lap</div></div>' +
+        '<div class="tile"><div class="num">' + s.summary.finished + '/5</div><div class="lbl">tracks finished</div></div>' +
+        '<div class="tile"><div class="num">' + S.dur(s.train_seconds) + '</div><div class="lbl">training, no GPU</div></div>' +
+        '<div class="tile"><div class="num">' + S.fmt(s.size.params, 0) + '</div><div class="lbl">parameters · ' + S.esc(s.size.label) + "</div></div>" +
+        "</div></a>";
+    }).join("");
   }
 
-  function drawAll() {
-    if (!runs || !window.Chart) return;
-    charts.forEach(function (c) { c.destroy(); }); charts = [];
-    Chart.defaults.font.family = "Inter, system-ui, sans-serif";
-    Chart.defaults.color = css("--text-2");
-    drawCurves(); drawV2(); drawNeat(); drawBench(); drawTables();
+  function board() {
+    document.getElementById("board").innerHTML = "<thead><tr><th>#</th><th>Step</th><th class='num'>Finished</th><th class='num'>Mean lap</th>" +
+      B.seeds.map(function (s) { return "<th class='num'>T" + s + "</th>"; }).join("") +
+      "<th class='num'>Training</th><th class='num'>Params</th></tr></thead><tbody>" +
+      B.steps.map(function (s, i) {
+        return "<tr" + (i === 0 ? " class='top'" : "") + "><td>" + (i + 1) + "</td><td><i style='background:" + S.modelColor(s.model) + "'></i>" +
+          "<a href='" + s.model + ".html#" + s.id + "'>" + S.short(s) + "</a> <span class='muted'>" + S.esc(s.title) + "</span></td>" +
+          "<td class='num'>" + s.summary.finished + "/5</td><td class='num'>" + S.lap(s.summary.lap_s) + "</td>" +
+          s.tracks.map(function (t) { return "<td class='num" + (t.finished ? "" : " faint") + "'>" + (t.finished ? t.lap_s.toFixed(1) : "DNF") + "</td>"; }).join("") +
+          "<td class='num'>" + S.dur(s.train_seconds) + "</td><td class='num'>" + S.fmt(s.size.params, 0) + "</td></tr>";
+      }).join("") + "</tbody>";
   }
 
-  function axis(title) {
-    return {
-      grid: { color: css("--grid"), drawTicks: false }, border: { display: false },
-      ticks: { color: css("--text-3"), padding: 6 },
-      title: { display: !!title, text: title, color: css("--text-3") }
-    };
+  // Best trade-off: 5/5 finishers whose lap beats every cheaper-to-train 5/5 finisher.
+  function front() {
+    var full = B.steps.filter(function (s) { return s.summary.finished === 5; })
+      .sort(function (a, b) { return a.train_seconds - b.train_seconds; });
+    var best = Infinity, out = [];
+    full.forEach(function (s) { if (s.summary.lap_s < best) { best = s.summary.lap_s; out.push(s); } });
+    return out;
   }
 
-  function lineChart(canvas, series, yTitle) {
-    var datasets = series.map(function (s) {
-      return {
-        label: s.label,
-        data: s.run.curve.map(function (p) { return { x: p[0], y: p[1] }; }),
-        borderColor: css(s.color), backgroundColor: css(s.color),
-        borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, pointHoverBorderColor: css("--surface"), pointHoverBorderWidth: 2,
-        tension: 0.25
-      };
+  function scatter() {
+    if (chart) chart.destroy();
+    var pts = B.steps.filter(function (s) { return s.summary.lap_s != null; });
+    var f = front(), stepped = [];
+    f.forEach(function (s, i) {
+      if (i) stepped.push({ x: s.train_seconds / 60, y: f[i - 1].summary.lap_s });
+      stepped.push({ x: s.train_seconds / 60, y: s.summary.lap_s });
     });
-    var xs = axis("environment steps"); xs.type = "linear"; xs.ticks.callback = function (v) { return kSteps(v); };
-    charts.push(new Chart(canvas, {
-      type: "line",
-      data: { datasets: datasets },
+    if (f.length) stepped.push({ x: 1e5, y: f[f.length - 1].summary.lap_s });
+    var surface = S.css("--surface"), ax = S.chartTheme();
+    var labels = {
+      id: "labels",
+      afterDatasetsDraw: function (c) {
+        var ctx = c.ctx; ctx.save(); ctx.font = "600 12px Inter, system-ui, sans-serif"; ctx.fillStyle = S.css("--text-2");
+        c.getDatasetMeta(0).data.forEach(function (el, i) {
+          var s = pts[i], txt = S.short(s) + (s.summary.finished < 5 ? " (" + s.summary.finished + "/5)" : "");
+          ctx.fillText(txt, el.x + 10, el.y + 4);
+        });
+        ctx.restore();
+      }
+    };
+    chart = new Chart(document.getElementById("scatter"), {
+      type: "scatter",
+      data: { datasets: [{
+        data: pts.map(function (s) { return { x: s.train_seconds / 60, y: s.summary.lap_s }; }),
+        pointRadius: 7, pointHoverRadius: 9, pointBorderWidth: 2.5,
+        pointBackgroundColor: pts.map(function (s) { return s.summary.finished === 5 ? S.modelColor(s.model) : surface; }),
+        pointBorderColor: pts.map(function (s) { return S.modelColor(s.model); })
+      }, {
+        type: "line", data: stepped, borderColor: S.css("--text-3"), borderDash: [4, 3], borderWidth: 1.5, pointRadius: 0, tension: 0
+      }] },
+      plugins: [labels],
       options: {
         responsive: true, maintainAspectRatio: false, animation: false,
-        interaction: { mode: "nearest", axis: "x", intersect: false },
+        layout: { padding: { right: 60 } },
         plugins: {
           legend: { display: false },
-          tooltip: {
-            backgroundColor: css("--surface"), titleColor: css("--text"), bodyColor: css("--text-2"),
-            borderColor: css("--border"), borderWidth: 1, padding: 10, usePointStyle: true,
+          tooltip: Object.assign(S.tooltipTheme(), {
+            filter: function (it) { return it.datasetIndex === 0; },
             callbacks: {
-              title: function (items) { return kSteps(items[0].parsed.x) + " steps"; },
-              label: function (c) { return " " + c.dataset.label + ": " + fmt(c.parsed.y); }
-            }
-          }
-        },
-        scales: { x: xs, y: axis(yTitle) }
-      }
-    }));
-  }
-
-  function drawV2() {
-    var run = runByKey("v2");
-    document.getElementById("v2Card").hidden = !run;
-    if (run) lineChart(document.getElementById("v2Chart"), [{ label: "v2", color: "--series-3", run: run }], "avg. episode reward");
-  }
-
-  function drawNeat() {
-    document.getElementById("neatCard").hidden = !neat;
-    if (!neat) return;
-    var series = [
-      { label: "Validation (5 held-out tracks)", color: "--series-1", run: { curve: neat.validation || [] } },
-      { label: "Best of generation (training)", color: "--series-2", run: { curve: neat.best } },
-      { label: "Population mean (training)", color: "--series-3", run: { curve: neat.mean } }
-    ];
-    document.getElementById("neatLegend").innerHTML = series.map(function (s) {
-      return '<span><i style="background:' + css(s.color) + '"></i>' + s.label + "</span>";
-    }).join("");
-    lineChart(document.getElementById("neatChart"), series, "fitness (raw score)");
-    charts[charts.length - 1].options.scales.x.title.text = "generation";
-    charts[charts.length - 1].options.scales.x.ticks.callback = function (v) { return Number.isInteger(v) ? v : ""; };
-    charts[charts.length - 1].options.plugins.tooltip.callbacks.title = function (items) { return "Generation " + items[0].parsed.x; };
-    charts[charts.length - 1].update();
-    var h = neat.hidden_nodes, c = neat.connections;
-    if (h && h.length) {
-      document.getElementById("neatGrowth").textContent = "Network growth of each generation's champion: " + h[0][1] + " → " + h[h.length - 1][1] +
-        " hidden nodes, " + c[0][1] + " → " + c[c.length - 1][1] + " enabled connections.";
-    }
-    var nv = neat.best_validation;
-    if (nv && bench && bench.stages.neat) {
-      document.getElementById("neatNetFig").hidden = false;
-      document.getElementById("neatNetCap").textContent = "The best validated network (generation " + nv.generation + "): 40 inputs, " +
-        nv.hidden_nodes + " evolved hidden nodes, 3 outputs (steer, gas, brake).";
-    }
-  }
-
-  function drawCurves() {
-    var series = CURVE_SERIES.filter(function (s) { return runByKey(s.key); });
-    var legend = document.getElementById("curveLegend");
-    legend.innerHTML = series.map(function (s) {
-      return '<span><i style="background:' + css(s.color) + '"></i>' + s.label + "</span>";
-    }).join("");
-    lineChart(document.getElementById("curveChart"),
-      series.map(function (x) { return { label: x.label, color: x.color, run: runByKey(x.key) }; }),
-      "avg. episode reward");
-  }
-
-  function drawBench() {
-    var card = document.getElementById("benchChart").closest(".chart-card");
-    if (!bench) { card.hidden = true; return; }
-    var keys = BENCH_ORDER.filter(function (k) { return bench.stages[k]; });
-    var accent = css("--series-1"), muted = css("--text-3");
-    charts.push(new Chart(document.getElementById("benchChart"), {
-      type: "bar",
-      data: {
-        labels: keys.map(function (k) { return BENCH_LABELS[k]; }),
-        datasets: [{
-          data: keys.map(function (k) { return bench.stages[k].mean; }),
-          backgroundColor: keys.map(function (k) { return k === "collapsed" ? muted : accent; }),
-          borderRadius: 4, borderSkipped: "start", barPercentage: 0.6, categoryPercentage: 0.9
-        }]
-      },
-      options: {
-        indexAxis: "y", responsive: true, maintainAspectRatio: false, animation: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: css("--surface"), titleColor: css("--text"), bodyColor: css("--text-2"),
-            borderColor: css("--border"), borderWidth: 1, padding: 10,
-            callbacks: {
+              title: function (it) { return S.label(pts[it[0].dataIndex]); },
               label: function (c) {
-                var st = bench.stages[keys[c.dataIndex]];
-                return [" mean " + fmt(st.mean) + " ± " + fmt(st.std), " laps finished: " + st.laps + " / " + st.episodes.length];
+                var s = pts[c.dataIndex];
+                return [" mean lap " + S.lap(s.summary.lap_s) + " · " + s.summary.finished + "/5 finished",
+                  " trained " + S.dur(s.train_seconds) + " · " + S.fmt(s.size.params, 0) + " params"];
               }
             }
-          }
+          })
         },
-        scales: { x: axis("mean raw score"), y: (function () { var a = axis(); a.grid = { display: false }; a.ticks.color = css("--text-2"); return a; })() }
+        scales: {
+          x: Object.assign({}, ax, { type: "logarithmic", min: 5, max: Math.max(120, Math.max.apply(null, pts.map(function (s) { return s.train_seconds / 60; })) * 1.6),
+            ticks: { color: S.css("--text-3"), callback: function (v) { return [5, 10, 30, 60, 120, 240, 480, 960].indexOf(v) >= 0 ? (v < 60 ? v + " min" : v / 60 + " h") : ""; } },
+            title: { display: true, text: "training time to the selected model (log scale)", color: S.css("--text-3") } }),
+          y: Object.assign({}, ax, { title: { display: true, text: "mean lap time (s)", color: S.css("--text-3") },
+            suggestedMin: 12, suggestedMax: 26 })
+        }
       }
-    }));
+    });
   }
 
-  function drawTables() {
-    var rows = runs.map(function (r) {
-      return "<tr><td>" + r.label + "</td><td class='num'>" + kSteps(r.steps) + "</td><td class='num'>" + fmt(r.episodes) +
-        "</td><td class='num'>" + fmt(r.mean_last400) + "</td><td class='num'>" + fmt(r.eval_best) + "</td><td class='num'>" + fmt(r.lap_share) + "%</td></tr>";
-    }).join("");
-    document.getElementById("runsTable").innerHTML =
-      "<table><thead><tr><th>Run</th><th class='num'>Steps</th><th class='num'>Episodes</th><th class='num'>Last-400 avg</th><th class='num'>Best eval</th><th class='num'>Episodes w/ lap</th></tr></thead><tbody>" + rows + "</tbody></table>";
-    if (!bench) return;
-    var keys = BENCH_ORDER.filter(function (k) { return bench.stages[k]; });
-    document.getElementById("benchTable").innerHTML =
-      "<table><thead><tr><th>Model</th><th class='num'>Mean ± sd</th><th class='num'>Laps</th><th class='num'>Frames off-track</th></tr></thead><tbody>" +
-      keys.map(function (k) {
-        var st = bench.stages[k];
-        return "<tr><td>" + BENCH_LABELS[k] + "</td><td class='num'>" + fmt(st.mean) + " ± " + fmt(st.std) + "</td><td class='num'>" + st.laps + " / " + st.episodes.length +
-          "</td><td class='num'>" + fmt(st.offtrack_pct) + "%</td></tr>";
-      }).join("") + "</tbody></table>";
-  }
+  function render() { duel(); board(); scatter(); }
+  S.onTheme(function () { if (B) render(); });
+  S.json("assets/data/leaderboard.json").then(function (b) {
+    B = b;
+    document.getElementById("hw").textContent = "Every training time on this page: " + b.hardware.cpu + ", " + b.hardware.threads + " threads, no GPU.";
+    render();
+  });
 })();
 </script>
 </body>

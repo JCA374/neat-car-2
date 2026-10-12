@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from carracing_ppo.env import make_env
+from carracing.env import make_env
 
 HARD_RIGHT = np.array([1.0, 0.6, 0.0])
 

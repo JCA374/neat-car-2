@@ -1,0 +1,146 @@
+{
+ "id": "p00_baseline",
+ "model": "ppo",
+ "title": "Baseline: PPO, stopped at its peak",
+ "why": "Stable-Baselines3 PPO, two 256-unit layers, 4 parallel envs, stopped at 450k steps because longer runs\ncollapsed. It was trained while the traction input was stuck at 1.0, so the off-track penalty never fired\nand the network never learned what grass is.",
+ "parent": null,
+ "lidar_rays": 32,
+ "train": {
+  "total-timesteps": 450000,
+  "num-envs": 4,
+  "n-steps": 1024,
+  "batch-size": 256,
+  "entropy-coef": 0.005,
+  "offtrack-penalty": 15.0,
+  "traction-threshold": 0.99
+ },
+ "neat_config": {},
+ "imported": true,
+ "note": "Best evaluation at 400k steps. Off-track penalty inactive (traction bug).",
+ "hardware": {
+  "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+  "threads": 8,
+  "gpu": false
+ },
+ "commit": "3fd7033",
+ "trained_on": "2025-12-23",
+ "train_seconds": 3734.8,
+ "process_seconds": null,
+ "selected": {
+  "timestep": 400000
+ },
+ "size": {
+  "params": 153607,
+  "label": "256×256 MLP"
+ },
+ "summary": {
+  "finished": 1,
+  "lap_s": 18.14,
+  "score": 672.1,
+  "offtrack_pct": 38.8
+ },
+ "tracks": [
+  {
+   "seed": 3,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 796.3,
+   "offtrack_pct": 62.9,
+   "avg_speed": 50.5,
+   "reached_pct": 99.6,
+   "crashed": false
+  },
+  {
+   "seed": 11,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 776.8,
+   "offtrack_pct": 30.5,
+   "avg_speed": 52.7,
+   "reached_pct": 97.7,
+   "crashed": false
+  },
+  {
+   "seed": 21,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 270.4,
+   "offtrack_pct": 63.7,
+   "avg_speed": 41.2,
+   "reached_pct": 47.0,
+   "crashed": false
+  },
+  {
+   "seed": 34,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 607.5,
+   "offtrack_pct": 37.0,
+   "avg_speed": 59.0,
+   "reached_pct": 80.7,
+   "crashed": false
+  },
+  {
+   "seed": 55,
+   "finished": true,
+   "lap_s": 18.14,
+   "frames": 907,
+   "score": 909.3,
+   "offtrack_pct": 0.0,
+   "avg_speed": 57.8,
+   "reached_pct": 100.0,
+   "crashed": false
+  }
+ ],
+ "curve": [
+  {
+   "steps": 50000,
+   "t": 543.9,
+   "eval": 36.3
+  },
+  {
+   "steps": 100000,
+   "t": 1035.4,
+   "eval": 366.1
+  },
+  {
+   "steps": 150000,
+   "t": 1466.2,
+   "eval": 364.4
+  },
+  {
+   "steps": 200000,
+   "t": 1919.0,
+   "eval": 431.3
+  },
+  {
+   "steps": 250000,
+   "t": 2355.0,
+   "eval": 432.7
+  },
+  {
+   "steps": 300000,
+   "t": 2823.1,
+   "eval": 465.1
+  },
+  {
+   "steps": 350000,
+   "t": 3279.3,
+   "eval": 356.7
+  },
+  {
+   "steps": 400000,
+   "t": 3734.8,
+   "eval": 827.2
+  },
+  {
+   "steps": 450000,
+   "t": 4204.8,
+   "eval": 733.3
+  }
+ ]
+}

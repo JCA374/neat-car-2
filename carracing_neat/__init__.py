@@ -1,3 +1,1 @@
-"""Lightweight NEAT + CarRacing helper package."""
-
-__all__ = ["env_state", "eval", "train", "viz"]
+"""NEAT (neat-python) learner for CarRacing-v2 on the compact state vector."""

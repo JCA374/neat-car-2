@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import math
 import os
+import pickle
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple
 
 import neat
 import numpy as np
 
-from carracing_ppo.env import CarRacingStateWrapper, make_env
+from carracing.env import CarRacingStateWrapper, make_env
 
 # Cache one environment per OS process to avoid repeated construction overhead.
 _WORKER_ENVS: Dict[Tuple, CarRacingStateWrapper] = {}
@@ -33,6 +34,9 @@ class EvalSettings:
     patience: int = 100
     # Genomes evolved before Oct 12 2026 expect the old double-tanh decoding.
     legacy_decode: bool = False
+    lidar_rays: int = 32
+    # Reward per frame a lap finishes under 1000 frames (0 = raw score only).
+    lap_time_bonus: float = 0.0
     seeds: Sequence[int] = field(default_factory=lambda: [0])
 
 
@@ -56,7 +60,7 @@ def decode_action(output: Sequence[float], prev_action: np.ndarray, smoothing: f
 
 def _get_env(settings: EvalSettings, render_mode: Optional[str] = None) -> CarRacingStateWrapper:
     key = (os.getpid(), render_mode, settings.offtrack_penalty, settings.traction_threshold,
-           settings.domain_randomize, settings.max_steps)
+           settings.domain_randomize, settings.max_steps, settings.lidar_rays, settings.lap_time_bonus)
     env = _WORKER_ENVS.get(key)
     if env is None:
         env = make_env(
@@ -66,6 +70,8 @@ def _get_env(settings: EvalSettings, render_mode: Optional[str] = None) -> CarRa
             traction_threshold=settings.traction_threshold,
             allow_multiple_laps=False,
             max_episode_steps=settings.max_steps,
+            lidar_rays=settings.lidar_rays,
+            lap_time_bonus=settings.lap_time_bonus,
         )
         _WORKER_ENVS[key] = env
     return env
@@ -103,3 +109,15 @@ def evaluate_genome(genome, config: neat.Config, settings: EvalSettings) -> floa
     net = neat.nn.FeedForwardNetwork.create(genome, config)
     rewards = [run_episode(net, settings, seed)["reward"] for seed in settings.seeds]
     return float(np.mean(rewards))
+
+
+def load_config(config_path: str) -> neat.Config:
+    return neat.Config(
+        neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path
+    )
+
+
+def load_genome(path: str, config_path: str):
+    with open(path, "rb") as f:
+        genome = pickle.load(f)
+    return genome, load_config(config_path)

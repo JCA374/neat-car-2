@@ -1,13 +1,14 @@
 """
 Live summary of a NEAT run: per-generation scores, species and network size.
 
-    python scripts/neat_progress.py                      # outputs/neat_v2/logs, refresh every 20 s
-    python scripts/neat_progress.py --log-dir outputs/neat/logs --once
+    python scripts/neat_progress.py                      # newest NEAT step being trained, refresh every 20 s
+    python scripts/neat_progress.py --log-dir outputs/neat/n01_lap_time/logs --once
 """
 
 from __future__ import annotations
 
 import argparse
+import glob
 import os
 import time
 
@@ -50,11 +51,16 @@ def render(log_dir: str, rows: int) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--log-dir", default="outputs/neat_v2/logs")
+    parser.add_argument("--log-dir", default=None, help="Default: the most recently updated outputs/neat/*/logs.")
     parser.add_argument("--rows", type=int, default=25)
     parser.add_argument("--every", type=float, default=20.0, help="Refresh interval in seconds.")
     parser.add_argument("--once", action="store_true")
     args = parser.parse_args()
+    if args.log_dir is None:
+        logs = glob.glob("outputs/neat/*/logs/fitness.csv")
+        if not logs:
+            raise SystemExit("No outputs/neat/*/logs/fitness.csv yet.")
+        args.log_dir = os.path.dirname(max(logs, key=os.path.getmtime))
     while True:
         text = render(args.log_dir, args.rows)
         if args.once:

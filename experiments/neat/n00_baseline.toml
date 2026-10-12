@@ -1,0 +1,21 @@
+# Imported: NEAT run 1 (Oct 11-12 2026), trained before this ladder existed.
+id = "n00_baseline"
+model = "neat"
+title = "Baseline: NEAT run 1"
+why = """
+Population 100, every genome drives the same 3 random tracks per generation, fitness = raw game score,
+champion picked on 5 held-out tracks. Starts as a plain 40→3 network. Its output decoding applied tanh twice,
+so gas was capped at 0.88 and the brake never released below 0.12: a car with the handbrake on.
+"""
+legacy_decode = true
+
+[train]
+generations = 150
+tracks-per-generation = 3
+num-workers = 7
+
+[import]
+model = "checkpoints/best-genome-gen-127.pkl"
+commit = "c6cd38a"
+trained_on = "2026-10-11"
+note = "Selected at generation 127 by validation score."

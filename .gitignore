@@ -5,22 +5,22 @@
 __pycache__/
 *.pyc
 *.pyo
-
-# Outputs/checkpoints/logs/plots (but keep analysis/)
-# Ignore all checkpoint files in all checkpoint directories...
-outputs/checkpoints*/*
-# ...except best and latest models
-!outputs/checkpoints*/*best*.zip
-!outputs/checkpoints*/*latest*.zip
-
-# Ignore all log files in all log directories
-outputs/logs*/
-
-# Ignore plots and test artefacts
-outputs/plots/
-outputs/*_test/
-outputs/neat_smoke/
 .pytest_cache/
+
+# Outputs: outputs/<model>/<step>/ keeps only what the site and the ladder need
+# (selected model, result, benchmark drives, NEAT config). Checkpoints and logs stay local.
+outputs/*
+!outputs/neat/
+!outputs/ppo/
+outputs/neat/*/*
+outputs/ppo/*/*
+!outputs/*/*/model.pkl
+!outputs/*/*/model.zip
+!outputs/*/*/result.json
+!outputs/*/*/drives.json
+!outputs/*/*/lap.gif
+!outputs/neat/*/neat.cfg
+outputs/*/dev/
 
 # Editor/OS cruft
 .DS_Store
@@ -28,12 +28,3 @@ outputs/neat_smoke/
 .vscode/
 *.swp
 *.swo
-# NEAT: keep only the validated best genome and logs
-outputs/neat/checkpoints/*
-!outputs/neat/checkpoints/best-genome.pkl
-outputs/neat/plots/
-outputs/neat/logs/train.out
-outputs/neat_v2/checkpoints/*
-!outputs/neat_v2/checkpoints/best-genome.pkl
-outputs/neat_v2/plots/
-outputs/neat_v2/logs/train.out

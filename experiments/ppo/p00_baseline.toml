@@ -1,0 +1,25 @@
+# Imported: the best PPO run from Dec 2025 ("strict"), trained before this ladder existed.
+id = "p00_baseline"
+model = "ppo"
+title = "Baseline: PPO, stopped at its peak"
+why = """
+Stable-Baselines3 PPO, two 256-unit layers, 4 parallel envs, stopped at 450k steps because longer runs
+collapsed. It was trained while the traction input was stuck at 1.0, so the off-track penalty never fired
+and the network never learned what grass is.
+"""
+legacy_traction = true
+
+[train]
+total-timesteps = 450000
+num-envs = 4
+n-steps = 1024
+batch-size = 256
+entropy-coef = 0.005
+offtrack-penalty = 15.0
+traction-threshold = 0.99
+
+[import]
+model = "checkpoints/best_model.zip"
+commit = "3fd7033"
+trained_on = "2025-12-23"
+note = "Best evaluation at 400k steps. Off-track penalty inactive (traction bug)."

@@ -1,0 +1,24 @@
+id = "p01_lap_time"
+model = "ppo"
+parent = "p00_baseline"
+title = "Real traction + reward lap time"
+why = """
+The fixed traction input with a mild off-track penalty (the strict 15 × 0.99 recipe taught the car to park),
+learning-rate decay against the late collapse, and +1 reward per frame a lap finishes under 1000 frames.
+"""
+
+[train]
+total-timesteps = 1000000
+num-envs = 4
+n-steps = 1024
+batch-size = 256
+entropy-coef = 0.005
+offtrack-penalty = 5.0
+traction-threshold = 0.75
+lr-schedule = "linear"
+target-kl = 0.02
+lap-time-bonus = 1.0
+allow-multiple-laps = false
+max-episode-steps = 1500
+eval-frequency = 25000
+checkpoint-frequency = 100000

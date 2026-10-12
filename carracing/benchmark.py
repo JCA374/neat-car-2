@@ -1,0 +1,166 @@
+"""Benchmark a step's model on the five reserved tracks and record the drives.
+
+Every model drives the same tracks with the *raw* CarRacing-v2 reward (no
+off-track penalty, no bonuses), deterministically, for up to 2000 frames,
+stopping at the end of its first lap. The headline number is the lap time.
+"""
+
+from __future__ import annotations
+
+import math
+import os
+from typing import Dict, List, Optional
+
+import numpy as np
+
+from carracing.env import make_env
+from carracing.steps import FPS, Step
+
+SEEDS = [3, 11, 21, 34, 55]   # never used for training or validation
+GIF_SEED = SEEDS[0]
+MAX_FRAMES = 2000
+RECORD_EVERY = 2              # keep every 2nd frame in recordings (25 fps on the page)
+
+
+def _r(v: float, nd: int = 1) -> float:
+    return round(float(v), nd)
+
+
+class PPOPolicy:
+    def __init__(self, path: str, legacy_traction: bool = False) -> None:
+        from stable_baselines3 import PPO
+
+        self.model = PPO.load(path, device="cpu")
+        # Trained before the traction fix: these models only ever saw state[7] == 1.0.
+        self.legacy_traction = legacy_traction
+
+    def reset(self) -> None:
+        pass
+
+    def __call__(self, obs: np.ndarray) -> np.ndarray:
+        if self.legacy_traction:
+            obs = obs.copy()
+            obs[7] = 1.0
+        return self.model.predict(obs, deterministic=True)[0]
+
+    def size(self) -> Dict:
+        n = sum(p.numel() for p in self.model.policy.parameters())
+        arch = self.model.policy.net_arch
+        hidden = arch["pi"] if isinstance(arch, dict) else arch
+        return {"params": int(n), "label": f"{'×'.join(str(h) for h in hidden)} MLP"}
+
+
+class NEATPolicy:
+    def __init__(self, path: str, config_path: str, legacy_decode: bool = False) -> None:
+        import neat
+
+        from carracing_neat.eval import EvalSettings, decode_action, load_genome
+
+        self.genome, self.config = load_genome(path, config_path)
+        self.net = neat.nn.FeedForwardNetwork.create(self.genome, self.config)
+        self.decode = decode_action
+        self.legacy_decode = legacy_decode
+        self.smoothing = EvalSettings().action_smoothing
+        self.reset()
+
+    def reset(self) -> None:
+        self.prev = np.zeros(3, dtype=np.float32)
+
+    def __call__(self, obs: np.ndarray) -> np.ndarray:
+        self.prev = self.decode(self.net.activate(obs), self.prev, self.smoothing, self.legacy_decode)
+        return self.prev
+
+    def size(self) -> Dict:
+        outputs = set(self.config.genome_config.output_keys)
+        hidden = len(set(self.genome.nodes) - outputs)
+        conns = sum(1 for c in self.genome.connections.values() if c.enabled)
+        return {"params": conns + len(self.genome.nodes), "hidden": hidden, "connections": conns,
+                "label": f"{hidden} hidden, {conns} links"}
+
+
+def load_policy(step: Step, model_path: Optional[str] = None):
+    path = model_path or step.model_path
+    if step.model == "neat":
+        return NEATPolicy(path, os.path.join(step.out_dir, "neat.cfg"), step.legacy_decode)
+    return PPOPolicy(path, step.legacy_traction)
+
+
+def drive(policy, seed: int, lidar_rays: int = 32, gif: bool = False, activations: bool = False) -> Dict:
+    """One benchmark lap. Returns the result plus a recording for the race page."""
+    env = make_env(render_mode="rgb_array" if gif else None, offtrack_penalty=0.0, allow_multiple_laps=False,
+                   lap_completion_bonus=0.0, max_episode_steps=MAX_FRAMES, lidar_rays=lidar_rays)
+    obs, _ = env.reset(seed=seed)
+    policy.reset()
+    base = env.unwrapped
+    rec = {"x": [], "y": [], "a": [], "v": [], "tiles": [], "grass": []}
+    if activations:
+        node_keys = [k for k, *_ in policy.net.node_evals]
+        rec.update(inputs=[], nodes=[], actions=[])
+    frames: List[np.ndarray] = []
+    score, offtrack, finish, frame, info = 0.0, 0, None, 0, {}
+    for frame in range(1, MAX_FRAMES + 1):
+        action = policy(obs)
+        if (frame - 1) % RECORD_EVERY == 0:
+            hull = base.car.hull
+            rec["x"].append(_r(hull.position[0]))
+            rec["y"].append(_r(hull.position[1]))
+            rec["a"].append(_r(hull.angle, 3))
+            rec["v"].append(_r(math.hypot(*hull.linearVelocity)))
+            rec["tiles"].append(int(base.tile_visited_count))
+            rec["grass"].append(int(round((1 - float(obs[7])) * 4)))  # wheels on grass
+            if activations:
+                rec["inputs"].append([_r(v, 2) for v in obs])
+                rec["nodes"].append([_r(policy.net.values[k], 2) for k in node_keys])
+                rec["actions"].append([_r(v, 2) for v in action])
+        obs, reward, terminated, truncated, info = env.step(action)
+        score += float(reward)
+        offtrack += float(obs[7]) < 0.99
+        if gif:
+            frames.append(env.render())
+        if info.get("laps_completed", 0) >= 1:
+            finish = frame
+        if terminated or truncated:
+            break
+    tiles_total = len(base.track)
+    reached = int(base.tile_visited_count) if finish is None else tiles_total
+    env.close()
+    result = {
+        "seed": seed,
+        "finished": finish is not None,
+        "lap_s": _r(finish / FPS, 2) if finish else None,
+        "frames": frame,
+        "score": _r(score),
+        "offtrack_pct": _r(100 * offtrack / frame),
+        "avg_speed": _r(np.mean(rec["v"])),
+        "reached_pct": _r(100 * reached / tiles_total),
+        "crashed": bool(terminated) and finish is None,
+    }
+    if activations:
+        rec["node_keys"] = node_keys
+    return {"result": result, "recording": {"every": RECORD_EVERY, "finish": finish, **rec}, "frames": frames}
+
+
+def track_geometry(seed: int) -> Dict:
+    env = make_env(render_mode=None)
+    env.reset(seed=seed)
+    base = env.unwrapped
+    polys = [[_r(c) for xy in poly for c in xy] for poly, _color in base.road_poly]
+    xs = [v for p in polys for v in p[0::2]]
+    ys = [v for p in polys for v in p[1::2]]
+    data = {"seed": seed, "tiles": len(base.track), "polys": polys, "bounds": [min(xs), min(ys), max(xs), max(ys)],
+            "start": [_r(base.track[0][2]), _r(base.track[0][3])], "start_angle": _r(base.track[0][1], 3)}
+    env.close()
+    return data
+
+
+def save_gif(frames: List[np.ndarray], path: str, every: int = 3, width: int = 288) -> None:
+    import imageio.v2 as imageio
+    from PIL import Image
+
+    kept = []
+    for frame in frames[::every]:
+        img = Image.fromarray(frame)
+        height = int(img.height * width / img.width)
+        kept.append(np.asarray(img.resize((width, height), Image.BILINEAR)))
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    imageio.mimsave(path, kept, duration=1000 * every / FPS, loop=0)

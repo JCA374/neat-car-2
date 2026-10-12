@@ -6,7 +6,7 @@ import math
 
 import numpy as np
 
-from carracing_ppo.env import make_env
+from carracing.env import make_env
 
 
 def _point_in_poly(x, y, poly):

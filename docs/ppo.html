@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PPO Ladder</title>
+<meta name="description" content="PPO on CarRacing, step by step: what changed, the lap times and the training time on a CPU.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<main>
+<nav class="tabs" aria-label="Pages">
+  <a href="index.html">Overview</a>
+  <a href="neat.html"><i style="background:var(--neat)"></i>NEAT</a>
+  <a href="ppo.html" class="active" aria-current="page"><i style="background:var(--ppo)"></i>PPO</a>
+  <a href="race.html">Race</a>
+  <button class="theme-toggle" id="themeToggle" type="button">◐ Theme</button>
+</nav>
+
+<header class="narrow">
+  <p class="eyebrow">Proximal Policy Optimization · Stable-Baselines3</p>
+  <h1>PPO: one network, trained by trial and error</h1>
+  <p class="muted">PPO keeps one fixed-shape neural network (two hidden layers) and nudges its weights after every batch of driving, so actions that led to more reward become more likely. Four copies of the game run in parallel on the CPU. Unlike NEAT, PPO learns from every frame of reward, so how the reward is shaped matters a lot.</p>
+  <p class="small muted">Each card is one step. The numbers come from the same five benchmark tracks as every other model, with deltas against the step it builds on.</p>
+</header>
+
+<section>
+  <h2>The ladder</h2>
+  <ol class="ladder" id="ladder"></ol>
+</section>
+
+<section>
+  <h2>Learning against the clock</h2>
+  <p class="muted narrow">Mean evaluation reward during training, plotted against hours of wall-clock training time. Evaluation uses each step's own training reward, so the curves show <em>when</em> each run peaked, not which step drives better. The benchmark above answers that. The ring marks the checkpoint each step kept.</p>
+  <div class="card">
+    <div class="chart-wrap"><canvas id="curve" role="img" aria-label="Evaluation reward against training hours for each PPO step"></canvas></div>
+    <div class="legend" id="curveLegend"></div>
+  </div>
+</section>
+
+<footer>Code: <code>carracing_ppo/train.py</code>. Steps: <code>experiments/ppo/*.toml</code>. <a href="index.html">← Overview</a></footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="assets/site.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.Site, B = null, CURVES = {}, chart = null;
+
+  function curve() {
+    if (chart) chart.destroy();
+    var steps = B.steps.filter(function (s) { return s.model === "ppo" && CURVES[s.id]; }).sort(function (a, b) { return a.id < b.id ? -1 : 1; });
+    var ax = S.chartTheme();
+    chart = new Chart(document.getElementById("curve"), {
+      type: "line",
+      data: { datasets: steps.map(function (s) {
+        var col = S.stepColor(s.id, B.steps), sel = s.selected.timestep;
+        return { label: S.label(s), data: CURVES[s.id].curve.map(function (p) { return { x: p.t / 3600, y: p.eval, steps: p.steps }; }),
+          borderColor: col, backgroundColor: col, borderWidth: 2, tension: 0,
+          pointRadius: CURVES[s.id].curve.map(function (p) { return p.steps === sel ? 6 : 0; }),
+          pointBackgroundColor: S.css("--surface"), pointBorderWidth: 2.5, pointHoverRadius: 5 };
+      }) },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        interaction: { mode: "nearest", intersect: false },
+        plugins: { legend: { display: false }, tooltip: Object.assign(S.tooltipTheme(), { callbacks: {
+          title: function (it) { return it[0].dataset.label; },
+          label: function (c) { return " " + S.dur(c.parsed.x * 3600) + " · " + S.fmt(c.raw.steps / 1000, 0) + "k steps · eval " + S.fmt(c.parsed.y, 0); }
+        } }) },
+        scales: {
+          x: Object.assign({}, ax, { type: "linear", min: 0, title: { display: true, text: "training time (hours)", color: S.css("--text-3") } }),
+          y: Object.assign({}, ax, { title: { display: true, text: "mean evaluation reward", color: S.css("--text-3") } })
+        }
+      }
+    });
+    document.getElementById("curveLegend").innerHTML = steps.map(function (s) {
+      return '<span><i class="swatch-line" style="background:' + S.stepColor(s.id, B.steps) + '"></i>' + S.esc(S.label(s)) + "</span>";
+    }).join("");
+  }
+
+  function render() {
+    S.ladder(document.getElementById("ladder"), "ppo", B, B.pending.filter(function (p) { return p.model === "ppo"; }));
+    curve();
+    if (location.hash) { var t = document.querySelector(location.hash); if (t) t.scrollIntoView(); }
+  }
+  S.onTheme(function () { if (B) render(); });
+  S.json("assets/data/leaderboard.json").then(function (b) {
+    B = b;
+    var ids = b.steps.filter(function (s) { return s.model === "ppo"; }).map(function (s) { return s.id; });
+    return Promise.all(ids.map(function (id) { return S.json("assets/data/steps/" + id + ".json").then(function (d) { CURVES[id] = d; }); }));
+  }).then(render);
+})();
+</script>
+</body>
+</html>

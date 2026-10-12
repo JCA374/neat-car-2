@@ -17,7 +17,7 @@ import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 
-from carracing_ppo.env import make_env
+from carracing.env import make_env
 from carracing_ppo import train as train_mod
 
 

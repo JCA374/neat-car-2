@@ -11,7 +11,7 @@ from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback,
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
-from carracing_ppo.env import make_env
+from carracing.env import make_env
 
 
 def _parse_hidden_sizes(sizes: str) -> List[int]:
@@ -93,13 +93,20 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         default=None,
         help="Override CarRacing's 1000-step limit (a lap takes ~850 steps).",
     )
+    parser.add_argument("--lidar-rays", type=int, default=32, help="Lidar distances in the state (8 + this inputs).")
+    parser.add_argument(
+        "--lap-time-bonus",
+        type=float,
+        default=0.0,
+        help="Reward per frame a lap finishes under 1000 frames (0 = off).",
+    )
     parser.add_argument("--seed", type=int, default=0, help="Seed for reproducibility.")
     parser.add_argument(
         "--checkpoint-dir",
-        default="outputs/checkpoints",
+        default="outputs/ppo/dev/checkpoints",
         help="Directory for best/latest checkpoints.",
     )
-    parser.add_argument("--log-dir", default="outputs/logs", help="Directory for monitor/tensorboard logs.")
+    parser.add_argument("--log-dir", default="outputs/ppo/dev/logs", help="Directory for monitor/tensorboard logs.")
     parser.add_argument(
         "--eval-frequency",
         type=int,
@@ -142,6 +149,8 @@ def _env_kwargs(args: argparse.Namespace) -> dict:
         "allow_multiple_laps": args.allow_multiple_laps,
         "lap_completion_bonus": args.lap_completion_bonus,
         "max_episode_steps": args.max_episode_steps,
+        "lidar_rays": args.lidar_rays,
+        "lap_time_bonus": args.lap_time_bonus,
     }
 
 

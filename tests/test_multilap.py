@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from carracing_ppo.env import make_env
+from carracing.env import make_env
 
 COAST = np.array([0.0, 0.0, 0.0])
 GAS = np.array([0.0, 0.5, 0.0])

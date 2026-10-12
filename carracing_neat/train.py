@@ -15,11 +15,11 @@ from typing import List, Optional, Tuple
 import neat
 import numpy as np
 
-from carracing_neat.eval import EvalSettings, evaluate_genome, run_episode
-from carracing_ppo.env import make_env
+from carracing_neat.eval import EvalSettings, evaluate_genome, load_config, run_episode
+from carracing.env import make_env
 
 # Held-out tracks for picking the best genome. Kept apart from the
-# scripts/benchmark.py tracks so the page's benchmark stays unseen.
+# carracing/benchmark.py tracks so the page's benchmark stays unseen.
 VALIDATION_SEEDS = [101, 202, 303, 404, 505]
 RESERVED_SEEDS = set(VALIDATION_SEEDS) | {3, 11, 21, 34, 55}
 
@@ -102,7 +102,8 @@ def _latest_checkpoint(path: str) -> Optional[str]:
 
 
 class CSVReporter(neat.reporting.BaseReporter):
-    """Writes per-generation fitness stats to CSV for later plotting."""
+    """Per-generation fitness stats. ``time_s`` is training wall-clock so far,
+    carried over across resumes (see carracing.steps.neat_train_seconds)."""
 
     def __init__(self, csv_path: str) -> None:
         self.csv_path = csv_path
@@ -112,7 +113,12 @@ class CSVReporter(neat.reporting.BaseReporter):
         if not os.path.exists(csv_path):
             with open(csv_path, "w", encoding="utf-8") as f:
                 f.write("generation,best_fitness,mean_fitness,stdev,time_s\n")
-        self.start_time = time.time()
+        offset = 0.0
+        with open(csv_path, encoding="utf-8") as f:
+            rows = [line for line in f.readlines()[1:] if line.strip()]
+        if rows:
+            offset = float(rows[-1].split(",")[4])
+        self.start_time = time.time() - offset
         self.generation = 0
 
     def start_generation(self, generation):
@@ -220,77 +226,10 @@ def _apply_speciation_settings(config: neat.Config, config_path: str) -> None:
     speciation/stagnation/reproduction settings from the config file in place,
     because the live species set, stagnation and reproduction objects hold
     references to these exact config objects."""
-    fresh = neat.Config(
-        neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path
-    )
+    fresh = load_config(config_path)
     for section in ("species_set_config", "stagnation_config", "reproduction_config"):
         getattr(config, section).__dict__.update(getattr(fresh, section).__dict__)
 
-
-class GenomeStatsReporter(neat.reporting.BaseReporter):
-    """Log node and enabled-connection counts of the best genome per generation."""
-
-    def __init__(self, csv_path: str) -> None:
-        self.csv_path = csv_path
-        dir_path = os.path.dirname(csv_path)
-        if dir_path:
-            os.makedirs(dir_path, exist_ok=True)
-        if not os.path.exists(csv_path):
-            with open(csv_path, "w", encoding="utf-8") as f:
-                f.write("generation,nodes,enabled_connections\n")
-        self.generation = 0
-
-    def start_generation(self, generation):
-        self.generation = generation
-
-    def post_evaluate(self, config, population, species, best_genome):
-        if best_genome is None:
-            return
-        enabled_conns = [
-            cg for cg in best_genome.connections.values() if cg.enabled
-        ]
-        input_keys = set(config.genome_config.input_keys)
-        output_keys = set(config.genome_config.output_keys)
-        hidden_keys = set(best_genome.nodes.keys()) - input_keys - output_keys
-        node_count = len(input_keys) + len(output_keys) + len(hidden_keys)
-        with open(self.csv_path, "a", encoding="utf-8") as f:
-            f.write(f"{self.generation},{node_count},{len(enabled_conns)}\n")
-
-
-class VisualizationReporter(neat.reporting.BaseReporter):
-    """Generate fitness and network plots after each generation."""
-
-    def __init__(self, fitness_log: str, fitness_plot: str, checkpoint_dir: str, config_path: str, networks_dir: str) -> None:
-        self.fitness_log = fitness_log
-        self.fitness_plot = fitness_plot
-        self.checkpoint_dir = checkpoint_dir
-        self.config_path = config_path
-        self.networks_dir = networks_dir
-        self.generation = 0
-        os.makedirs(os.path.dirname(fitness_plot), exist_ok=True)
-        os.makedirs(networks_dir, exist_ok=True)
-
-    def start_generation(self, generation):
-        self.generation = generation
-
-    def post_evaluate(self, config, population, species, best_genome):
-        try:
-            # Import viz functions here to avoid circular imports
-            from carracing_neat.viz import plot_fitness, plot_network
-
-            # Generate fitness plot
-            if os.path.exists(self.fitness_log):
-                plot_fitness(self.fitness_log, self.fitness_plot)
-
-            # Generate network plot for this generation's best genome
-            if best_genome is not None and best_genome.fitness is not None:
-                network_path = os.path.join(self.networks_dir, f"network_gen_{self.generation}.png")
-                if not os.path.exists(network_path):
-                    title = f"Generation {self.generation} - Best Fitness: {best_genome.fitness:.2f}"
-                    plot_network(best_genome, config, network_path, title=title)
-        except Exception as e:
-            # Don't crash training if visualization fails
-            print(f"Warning: Visualization failed for generation {self.generation}: {e}")
 
 
 def _build_population(config_path: str, checkpoint: Optional[str]) -> neat.Population:
@@ -298,25 +237,18 @@ def _build_population(config_path: str, checkpoint: Optional[str]) -> neat.Popul
         print(f"Restoring from checkpoint: {checkpoint}")
         pop = neat.Checkpointer.restore_checkpoint(checkpoint)
     else:
-        config = neat.Config(
-            neat.DefaultGenome,
-            neat.DefaultReproduction,
-            neat.DefaultSpeciesSet,
-            neat.DefaultStagnation,
-            config_path,
-        )
-        pop = neat.Population(config)
+        pop = neat.Population(load_config(config_path))
     return pop
 
 
-def _validate_state_size(config: neat.Config) -> None:
-    env = make_env(render_mode=None)
+def _validate_state_size(config: neat.Config, lidar_rays: int) -> None:
+    env = make_env(render_mode=None, lidar_rays=lidar_rays)
     state, _ = env.reset(seed=0)
     env.close()
     if len(state) != config.genome_config.num_inputs:
         raise ValueError(
             f"Config expects {config.genome_config.num_inputs} inputs, "
-            f"but environment produced {len(state)}."
+            f"but environment produced {len(state)} (8 + --lidar-rays)."
         )
 
 
@@ -358,17 +290,19 @@ def parse_args(argv=None):
     parser.add_argument("--traction-threshold", type=float, default=0.95, help="Traction below which the penalty applies.")
     parser.add_argument("--action-smoothing", type=float, default=0.1, help="Blend factor for previous action [0, 0.95].")
     parser.add_argument("--domain-randomize", action="store_true", help="Enable Gymnasium domain randomization.")
+    parser.add_argument("--lidar-rays", type=int, default=32, help="Lidar inputs (config num_inputs must be 8 + this).")
+    parser.add_argument("--lap-time-bonus", type=float, default=0.0,
+                        help="Fitness per frame a lap finishes under 1000 frames (0 = raw score).")
     parser.add_argument("--legacy-decode", action="store_true",
                         help="Old double-tanh output decoding (only to reproduce runs before Oct 12 2026).")
     parser.add_argument("--target-species", type=int, default=6,
                         help="Adjust compatibility_threshold each generation toward this many species (0 = fixed).")
     parser.add_argument("--threshold-step", type=float, default=0.1, help="Threshold change per generation.")
     parser.add_argument("--validate-every", type=int, default=1, help="Validate the champion every N generations.")
-    parser.add_argument("--checkpoint-dir", default="outputs/neat/checkpoints", help="Checkpoints and best genomes.")
-    parser.add_argument("--log-dir", default="outputs/neat/logs", help="fitness.csv, genome_stats.csv, validation.csv.")
+    parser.add_argument("--checkpoint-dir", default="outputs/neat/dev/checkpoints", help="Checkpoints and best genomes.")
+    parser.add_argument("--log-dir", default="outputs/neat/dev/logs", help="fitness.csv, validation.csv, species.csv.")
     parser.add_argument("--checkpoint-interval", type=int, default=5, help="Checkpoint every N generations.")
     parser.add_argument("--resume", default="auto", help='Checkpoint path, "auto" (newest in checkpoint-dir) or "none".')
-    parser.add_argument("--auto-visualize", action="store_true", help="Write fitness and network plots each generation.")
     return parser.parse_args(argv)
 
 
@@ -377,7 +311,6 @@ def main(argv=None):
     os.makedirs(args.checkpoint_dir, exist_ok=True)
     os.makedirs(args.log_dir, exist_ok=True)
     fitness_log = os.path.join(args.log_dir, "fitness.csv")
-    genome_log = os.path.join(args.log_dir, "genome_stats.csv")
     validation_log = os.path.join(args.log_dir, "validation.csv")
     species_log = os.path.join(args.log_dir, "species.csv")
 
@@ -388,14 +321,14 @@ def main(argv=None):
     elif args.resume and args.resume != "none":
         resume_ckpt = args.resume
     if resume_ckpt is None:
-        _reset_logs([fitness_log, genome_log, validation_log, species_log])
+        _reset_logs([fitness_log, validation_log, species_log])
 
     pop = _build_population(args.config, resume_ckpt)
     if resume_ckpt is not None:
-        _drop_rows_from([fitness_log, genome_log, validation_log, species_log], pop.generation)
+        _drop_rows_from([fitness_log, validation_log, species_log], pop.generation)
         _apply_speciation_settings(pop.config, args.config)
     config = pop.config
-    _validate_state_size(config)
+    _validate_state_size(config, args.lidar_rays)
 
     settings = EvalSettings(
         max_steps=args.max_steps,
@@ -405,6 +338,8 @@ def main(argv=None):
         domain_randomize=args.domain_randomize,
         patience=args.patience,
         legacy_decode=args.legacy_decode,
+        lidar_rays=args.lidar_rays,
+        lap_time_bonus=args.lap_time_bonus,
     )
     evaluator = SharedTrackEvaluator(pop, settings, args.num_workers, args.tracks_per_generation, args.seed)
 
@@ -412,7 +347,6 @@ def main(argv=None):
         neat.StdOutReporter(show_species_detail=False),
         neat.StatisticsReporter(),
         CSVReporter(fitness_log),
-        GenomeStatsReporter(genome_log),
         neat.Checkpointer(
             generation_interval=args.checkpoint_interval,
             filename_prefix=os.path.join(args.checkpoint_dir, "neat-checkpoint-"),
@@ -421,17 +355,6 @@ def main(argv=None):
     ]
     if args.target_species > 0:
         reporters.append(SpeciesTargetReporter(args.target_species, args.threshold_step, species_log))
-    if args.auto_visualize:
-        plots = os.path.join(os.path.dirname(args.log_dir.rstrip("/")) or ".", "plots")
-        reporters.append(
-            VisualizationReporter(
-                fitness_log=fitness_log,
-                fitness_plot=os.path.join(plots, "fitness.png"),
-                checkpoint_dir=args.checkpoint_dir,
-                config_path=args.config,
-                networks_dir=os.path.join(plots, "networks"),
-            )
-        )
     for rep in reporters:
         pop.add_reporter(rep)
 
