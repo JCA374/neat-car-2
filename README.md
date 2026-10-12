@@ -25,7 +25,7 @@ A step is one TOML file: `experiments/<model>/<id>.toml`. It holds the title, *w
 ```bash
 cp experiments/neat/n01_lap_time.toml experiments/neat/n02_my_idea.toml   # edit id/parent/title/why/settings
 python scripts/run_step.py experiments/neat/n02_my_idea.toml               # train (timed), benchmark, update site data
-python scripts/neat_progress.py                                            # (other terminal) live NEAT progress
+python scripts/progress.py                                                 # (other terminal) live training progress
 python -m carracing.play n02_my_idea --seed 3                               # watch it drive
 ```
 
@@ -54,6 +54,13 @@ lap-time-bonus = 1.0
 
 `python scripts/run_step.py <toml> --benchmark-only` re-scores a step without training it.
 
+To train several steps one after another (every step without a result yet, in id order), even after the terminal closes:
+
+```bash
+nohup python scripts/run_queue.py > outputs/queue.log 2>&1 &
+python scripts/progress.py        # queue status, progress bar, ETA, best so far
+```
+
 ## The benchmark and the ranking
 
 - Five reserved tracks (seeds 3, 11, 21, 34, 55). No step trains or validates on them.
@@ -68,7 +75,7 @@ carracing_neat/    NEAT training (train.py), genome evaluation (eval.py), networ
 carracing_ppo/     PPO training (train.py)
 experiments/       one TOML per step, per model
 outputs/           one folder per step
-scripts/           run_step.py, build_site.py, neat_progress.py
+scripts/           run_step.py, run_queue.py, progress.py, build_site.py
 docs/              the project page (index, neat, ppo, race + assets/)
 neat_config/       base NEAT config
 tests/             pytest

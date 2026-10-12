@@ -16,7 +16,8 @@ NEAT vs PPO on Gymnasium's `CarRacing-v2`, learned from a compact state vector (
 python scripts/run_step.py experiments/neat/n01_lap_time.toml     # train (timed) → select → benchmark → build_site
 python scripts/run_step.py experiments/ppo/p00_baseline.toml --benchmark-only
 python scripts/build_site.py                                      # rebuild docs/assets/data from outputs/*/*/result.json
-python scripts/neat_progress.py                                   # live view of the newest NEAT run
+nohup python scripts/run_queue.py > outputs/queue.log 2>&1 &        # train all untrained steps in sequence
+python scripts/progress.py                                        # live progress: queue + current NEAT/PPO step
 python -m carracing.play n00_baseline --seed 3                    # watch a step drive
 pytest tests/
 ```
