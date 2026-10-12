@@ -1,0 +1,28 @@
+id = "p02_forward_rays"
+model = "ppo"
+parent = "p01_lap_time"
+title = "16 forward rays instead of 32 all around"
+why = """
+Same sensor change as NEAT n02. In p00 the 9 rays within ±45° of the nose carried 48% of the policy's lidar
+sensitivity, and the 15 backward rays still carried 32%: likely noise it reacts to. 16 rays over ±120° remove the
+backward rays and the blind spot on the left, and simulate about 25% faster, so the same number of steps trains
+in less time. Everything else as p01.
+"""
+lidar_rays = 16
+lidar_fov = 240
+
+[train]
+total-timesteps = 1000000
+num-envs = 4
+n-steps = 1024
+batch-size = 256
+entropy-coef = 0.005
+offtrack-penalty = 5.0
+traction-threshold = 0.75
+lr-schedule = "linear"
+target-kl = 0.02
+lap-time-bonus = 1.0
+allow-multiple-laps = false
+max-episode-steps = 1500
+eval-frequency = 25000
+checkpoint-frequency = 100000
