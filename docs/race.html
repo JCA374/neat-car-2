@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ghost Race</title>
+<meta name="description" content="Race the NEAT and PPO drivers against each other on the same CarRacing tracks.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #fcfcfb; --surface: #ffffff; --surface-2: #f4f3f0; --border: #e4e2dc;
+  --text: #0b0b0b; --text-2: #52514e; --text-3: #7a7974; --accent: #2a78d6;
+  --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a; --c4: #eda100; --c5: #e87ba4; --c6: #008300; --c7: #4a3aa7; --c8: #e34948;
+  --grass: #cfe6c4; --road: #8d8c88; --good: #1d7a3a; --gold: #b07800;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #141413; --surface: #1a1a19; --surface-2: #232321; --border: #34332f;
+    --text: #ffffff; --text-2: #c3c2b7; --text-3: #8f8e86; --accent: #3987e5;
+    --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #008300; --c7: #9085e9; --c8: #e66767;
+    --grass: #24331f; --road: #5c5b57; --good: #4cb36b; --gold: #e0a53a;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141413; --surface: #1a1a19; --surface-2: #232321; --border: #34332f;
+  --text: #ffffff; --text-2: #c3c2b7; --text-3: #8f8e86; --accent: #3987e5;
+  --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #008300; --c7: #9085e9; --c8: #e66767;
+  --grass: #24331f; --road: #5c5b57; --good: #4cb36b; --gold: #e0a53a;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1180px; margin: 0 auto; padding: 0 16px 80px; }
+h1 { font-size: clamp(1.9rem, 5vw, 2.6rem); line-height: 1.2; margin: 0 0 10px; letter-spacing: -0.01em; }
+h2 { font-size: 1.35rem; margin: 40px 0 8px; }
+h3 { font-size: 1rem; margin: 0 0 6px; }
+p { margin: 0 0 12px; }
+a { color: var(--accent); }
+.muted { color: var(--text-2); }
+.small { font-size: 0.86rem; }
+.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.76rem; color: var(--text-3); font-weight: 600; margin: 0 0 6px; }
+.narrow { max-width: 760px; }
+
+.tabs { display: flex; gap: 4px; padding: 14px 0 0; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
+.tabs a { text-decoration: none; color: var(--text-2); padding: 8px 14px; border-radius: 8px 8px 0 0; font-weight: 500; font-size: 0.95rem; border: 1px solid transparent; border-bottom: none; margin-bottom: -1px; }
+.tabs a:hover { color: var(--text); }
+.tabs a.active { color: var(--text); background: var(--bg); border-color: var(--border); }
+.theme-toggle { margin-left: auto; align-self: center; background: var(--surface); color: var(--text-2); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 0.8rem; cursor: pointer; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin: 16px 0; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 10px; font-size: 0.88rem; color: var(--text-2); }
+.row > .lbl { min-width: 56px; font-weight: 600; color: var(--text-3); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.pill { font: inherit; font-size: 0.85rem; background: var(--surface); color: var(--text-2); border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+.pill.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.pill i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+.chip { font: inherit; font-size: 0.85rem; background: var(--surface); color: var(--text-3); border: 1.5px dashed var(--border); border-radius: 999px; padding: 4px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+.chip i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; opacity: 0.35; }
+.chip.on { color: var(--text); border-style: solid; border-color: var(--text-3); }
+.chip.on i { opacity: 1; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 0.85rem; background: var(--surface); color: var(--text-2); border: none; padding: 5px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button.on { background: var(--text); color: var(--bg); }
+.btn { font: inherit; font-size: 0.9rem; font-weight: 600; background: var(--text); color: var(--bg); border: none; border-radius: 8px; padding: 7px 16px; cursor: pointer; }
+.btn.ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border); font-weight: 500; }
+
+.arena { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; align-items: start; }
+.arena canvas { width: 100%; aspect-ratio: 1 / 1; display: block; border-radius: 10px; background: var(--grass); }
+.clock { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.clock .t { font-family: "JetBrains Mono", monospace; font-size: 1.6rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.clock .of { color: var(--text-3); font-size: 0.85rem; }
+.timebar { height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden; margin-bottom: 12px; }
+.timebar b { display: block; height: 100%; background: var(--text-3); width: 0; }
+.board { list-style: none; margin: 0; padding: 0; }
+.board li { display: grid; grid-template-columns: 22px 12px 1fr auto; gap: 4px 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+.board li:last-child { border-bottom: none; }
+.board .pos { font-weight: 700; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.board .dot { width: 12px; height: 12px; border-radius: 50%; }
+.board .name { font-weight: 600; }
+.board .stat { font-size: 0.8rem; color: var(--text-2); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.board .prog { grid-column: 3 / 5; height: 5px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.board .prog b { display: block; height: 100%; border-radius: 3px; }
+.board .flag { color: var(--good); font-weight: 600; }
+.board .warn { color: var(--text-3); }
+.scrub { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.scrub input { flex: 1; accent-color: var(--accent); }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); }
+th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-3); font-weight: 600; }
+td.num, th.num { text-align: right; }
+td i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+.table-scroll { overflow-x: auto; }
+.medal { font-weight: 700; }
+footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-3); }
+@media (max-width: 900px) { .arena { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+<nav class="tabs" aria-label="Pages">
+  <a href="index.html">The story</a>
+  <a href="network.html">The network</a>
+  <a href="race.html" class="active" aria-current="page">Race</a>
+  <button class="theme-toggle" id="themeToggle" type="button">◐ Theme</button>
+</nav>
+
+<header class="narrow">
+  <p class="eyebrow">Ghost race · same track, same 20 seconds</p>
+  <h1>Race the drivers</h1>
+  <p class="muted">Pick a track and a few drivers from the project's history, NEAT and PPO, and press Start. CarRacing simulates one car at a time, so this is a ghost race: each driver's real drive on that track is replayed side by side in sync. The cars pass through each other, and nobody can block anybody. These are the exact drives behind the benchmark scores. A race lasts 1000 frames (20 seconds), and finishing a lap ends a driver's run.</p>
+</header>
+
+<div class="card">
+  <div class="row"><span class="lbl">Track</span><span id="trackPills" style="display:contents"></span></div>
+  <div class="row"><span class="lbl">Drivers</span><span id="racerChips" style="display:contents"></span></div>
+  <div class="row" style="margin:6px 0 0">
+    <button class="btn" id="startBtn" type="button">▶ Start race</button>
+    <button class="btn ghost" id="resetBtn" type="button">⟲ Restart</button>
+    <div class="seg" id="speedSeg" role="group" aria-label="Speed"><button type="button" data-s="0.5">½×</button><button type="button" class="on" data-s="1">1×</button><button type="button" data-s="2">2×</button><button type="button" data-s="4">4×</button></div>
+    <div class="seg" id="camSeg" role="group" aria-label="Camera"><button type="button" class="on" data-c="whole">Whole track</button><button type="button" data-c="leader">Follow leader</button></div>
+  </div>
+</div>
+
+<div class="arena">
+  <div class="card" style="margin-top:0;padding:10px"><canvas id="raceCanvas" width="900" height="900" role="img" aria-label="Race track with the selected drivers"></canvas></div>
+  <div class="card" style="margin-top:0">
+    <div class="clock"><span class="t" id="clock">0:00.00</span><span class="of">of 0:20.00</span></div>
+    <div class="timebar"><b id="timebar"></b></div>
+    <ol class="board" id="board"></ol>
+    <div class="scrub"><span class="small muted">Scrub</span><input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Race time"></div>
+  </div>
+</div>
+
+<section>
+  <h2 id="resultsTitle">Result</h2>
+  <div class="card table-scroll"><table id="results"></table></div>
+</section>
+
+<section>
+  <h2>Championship: all five tracks</h2>
+  <p class="small muted narrow">The selected drivers raced on every track and scored F1-style points per finishing position (25, 18, 15, 12, 10, 8, 6, 4). A finished lap beats any unfinished run, and faster laps rank higher. Otherwise drivers are ranked by how much of the track they reached in 20 seconds.</p>
+  <div class="card table-scroll"><table id="champ"></table></div>
+</section>
+
+<footer>Data: <code>scripts/export_race_data.py</code> records every driver on the five benchmark tracks (the same drives as <code>scripts/benchmark.py</code>). <a href="index.html">The story</a> · <a href="network.html">The network</a></footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  try { var saved = localStorage.getItem("theme"); if (saved) root.setAttribute("data-theme", saved); } catch (e) {}
+  function css(n) { return getComputedStyle(root).getPropertyValue(n).trim(); }
+  var COLORS = ["--c1", "--c2", "--c3", "--c4", "--c5", "--c6", "--c7", "--c8"];
+  var POINTS = [25, 18, 15, 12, 10, 8, 6, 4];
+  var D = null, T = null;
+  var S = { track: 0, sel: {}, frame: 0, playing: false, speed: 1, cam: "whole", last: 0 };
+
+  function color(id) { var i = D.racers.findIndex(function (r) { return r.id === id; }); return css(COLORS[i % COLORS.length]); }
+  function racer(id) { return D.racers.filter(function (r) { return r.id === id; })[0]; }
+  function selected() { return D.racers.filter(function (r) { return S.sel[r.id]; }).map(function (r) { return r.id; }); }
+  function fmtTime(frames) { var s = frames / D.fps, m = Math.floor(s / 60); return m + ":" + (s - m * 60).toFixed(2).padStart(5, "0"); }
+
+  // Interpolated state of one racer at (possibly fractional) game frame f.
+  function at(run, f) {
+    var n = run.x.length, i = f / D.every, i0 = Math.min(n - 1, Math.floor(i)), i1 = Math.min(n - 1, i0 + 1), t = Math.min(1, i - i0);
+    if (i >= n - 1) { i0 = i1 = n - 1; t = 0; }
+    var da = run.a[i1] - run.a[i0]; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
+    var done = run.finish != null && f >= run.finish;
+    return {
+      x: run.x[i0] + (run.x[i1] - run.x[i0]) * t, y: run.y[i0] + (run.y[i1] - run.y[i0]) * t, a: run.a[i0] + da * t,
+      v: done ? 0 : run.v[i0], tiles: done ? run.final_tiles : run.tiles[i0], grass: run.grass[i0], done: done
+    };
+  }
+  // Ranking: finished laps by time, then most tiles reached, then score.
+  function standings(f, trackObj) {
+    trackObj = trackObj || T;
+    return selected().map(function (id) {
+      var run = trackObj.runs[id], s = at(run, f);
+      return { id: id, run: run, s: s };
+    }).sort(function (a, b) {
+      var fa = a.s.done ? a.run.finish : Infinity, fb = b.s.done ? b.run.finish : Infinity;
+      if (fa !== fb) return fa - fb;
+      if (b.s.tiles !== a.s.tiles) return b.s.tiles - a.s.tiles;
+      return b.run.score - a.run.score;
+    });
+  }
+
+  // ------------------------------------------------------------- drawing
+  function draw() {
+    var cv = document.getElementById("raceCanvas"), ctx = cv.getContext("2d"), W = cv.width, H = cv.height;
+    var b = T.bounds, cx, cy, scale, f = S.frame;
+    var board = standings(f);
+    if (S.cam === "leader" && board.length) {
+      var lead = board[0].s; cx = lead.x; cy = lead.y; scale = W / 230;
+    } else {
+      cx = (b[0] + b[2]) / 2; cy = (b[1] + b[3]) / 2; scale = Math.min(W / (b[2] - b[0]), H / (b[3] - b[1])) * 0.9;
+    }
+    function P(x, y) { return [W / 2 + (x - cx) * scale, H / 2 - (y - cy) * scale]; }
+    ctx.fillStyle = css("--grass"); ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = css("--road");
+    T.polys.forEach(function (p) {
+      ctx.beginPath();
+      for (var i = 0; i < p.length; i += 2) { var q = P(p[i], p[i + 1]); if (i) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); }
+      ctx.closePath(); ctx.fill();
+    });
+    // start/finish line across the road
+    var st = P(T.start[0], T.start[1]), ang = T.start_angle;
+    ctx.save(); ctx.translate(st[0], st[1]); ctx.rotate(-ang);
+    var half = 7 * scale, sq = Math.max(2, half / 4);
+    for (var k = -4; k < 4; k++) for (var j = 0; j < 2; j++) {
+      ctx.fillStyle = (k + j) % 2 ? "#ffffff" : "#111111"; ctx.fillRect(k * sq, (j - 1) * sq, sq, sq);
+    }
+    ctx.restore();
+    // trails then cars (leader drawn last)
+    var order = board.slice().reverse();
+    order.forEach(function (e) {
+      var run = e.run, end = Math.min(run.x.length - 1, Math.floor(f / D.every)), start = Math.max(0, end - 40);
+      ctx.strokeStyle = color(e.id); ctx.lineWidth = 3; ctx.globalAlpha = 0.45; ctx.lineJoin = "round";
+      ctx.beginPath();
+      for (var i = start; i <= end; i++) { var q = P(run.x[i], run.y[i]); if (i > start) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); }
+      var cur = P(e.s.x, e.s.y); ctx.lineTo(cur[0], cur[1]); ctx.stroke(); ctx.globalAlpha = 1;
+    });
+    var placed = [];
+    order.forEach(function (e) {
+      var c = P(e.s.x, e.s.y), a = e.s.a, size = Math.max(9, 5 * scale);
+      // car arrow: nose along local +y; screen y is flipped
+      var fx = -Math.sin(a), fy = Math.cos(a), rx = Math.cos(a), ry = Math.sin(a);
+      var shape = [[0, 1], [0.55, -0.7], [0, -0.35], [-0.55, -0.7]].map(function (p) {
+        return [c[0] + (rx * p[0] + fx * p[1]) * size, c[1] - (ry * p[0] + fy * p[1]) * size];
+      });
+      ctx.fillStyle = color(e.id); ctx.strokeStyle = css("--surface"); ctx.lineWidth = 2;
+      ctx.beginPath(); shape.forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); ctx.closePath(); ctx.fill(); ctx.stroke();
+      // name tag, nudged down until it doesn't overlap an earlier tag
+      ctx.font = "600 15px Inter, system-ui, sans-serif";
+      var label = racer(e.id).label + (e.s.done ? " 🏁" : ""), w = ctx.measureText(label).width + 12, h = 22;
+      var lx = c[0] + 12, ly = c[1] - 30;
+      for (var tries = 0; tries < 8; tries++) {
+        var hit = placed.some(function (p) { return lx < p[0] + p[2] && lx + w > p[0] && ly < p[1] + p[3] && ly + h > p[1]; });
+        if (!hit) break; ly += h + 2;
+      }
+      placed.push([lx, ly, w, h]);
+      ctx.fillStyle = css("--surface"); ctx.globalAlpha = 0.92;
+      ctx.beginPath(); ctx.roundRect(lx, ly, w, h, 6); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = color(e.id); ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = css("--text"); ctx.fillText(label, lx + 6, ly + 16);
+    });
+    drawBoard(board);
+  }
+
+  function drawBoard(board) {
+    var f = S.frame;
+    document.getElementById("clock").textContent = fmtTime(Math.min(f, 1000));
+    document.getElementById("timebar").style.width = (f / 10) + "%";
+    document.getElementById("scrub").value = Math.round(f);
+    document.getElementById("board").innerHTML = board.map(function (e, i) {
+      var pct = 100 * e.s.tiles / T.tiles, st;
+      if (e.s.done) st = '<span class="flag">🏁 ' + fmtTime(e.run.finish) + "</span>";
+      else if (f > 0 && e.s.v < 2) st = '<span class="warn">stopped</span>';
+      else if (e.s.grass >= 2) st = '<span class="warn">on grass · ' + Math.round(e.s.v) + "</span>";
+      else st = Math.round(e.s.v) + " speed";
+      return "<li><span class=\"pos\">" + (i + 1) + "</span><span class=\"dot\" style=\"background:" + color(e.id) + "\"></span>" +
+        "<span class=\"name\">" + racer(e.id).label + "</span><span class=\"stat\">" + Math.round(pct) + "% · " + st + "</span>" +
+        "<span class=\"prog\"><b style=\"width:" + pct + "%;background:" + color(e.id) + "\"></b></span></li>";
+    }).join("") || '<li><span></span><span></span><span class="muted">Pick at least one driver</span></li>';
+  }
+
+  // ------------------------------------------------------------- results
+  function resultRows(trackObj) {
+    return standings(1000, trackObj).map(function (e, i) {
+      return { id: e.id, pos: i + 1, run: e.run, reached: 100 * e.run.final_tiles / trackObj.tiles };
+    });
+  }
+  function drawResults() {
+    var rows = resultRows(T);
+    document.getElementById("resultsTitle").textContent = "Result on track " + T.seed + " (" + T.tiles + " tiles)";
+    document.getElementById("results").innerHTML = "<thead><tr><th>Pos</th><th>Driver</th><th class='num'>Lap time</th><th class='num'>Track reached</th><th class='num'>Score</th><th>What it is</th></tr></thead><tbody>" +
+      rows.map(function (r) {
+        return "<tr><td class='medal'>" + r.pos + "</td><td><i style='background:" + color(r.id) + "'></i>" + racer(r.id).label + "</td>" +
+          "<td class='num'>" + (r.run.finish ? fmtTime(r.run.finish) : "–") + "</td><td class='num'>" + r.reached.toFixed(0) + "%</td>" +
+          "<td class='num'>" + r.run.score.toFixed(1) + "</td><td class='muted'>" + racer(r.id).desc + "</td></tr>";
+      }).join("") + "</tbody>";
+    var ids = selected(), pts = {}, wins = {}, laps = {};
+    ids.forEach(function (id) { pts[id] = 0; wins[id] = 0; laps[id] = 0; });
+    var cols = D.tracks.map(function (t) {
+      var res = resultRows(t), byId = {};
+      res.forEach(function (r) { byId[r.id] = r; pts[r.id] += POINTS[r.pos - 1] || 0; if (r.pos === 1) wins[r.id]++; if (r.run.finish) laps[r.id]++; });
+      return { seed: t.seed, byId: byId };
+    });
+    var order = ids.slice().sort(function (a, b) { return pts[b] - pts[a] || wins[b] - wins[a]; });
+    document.getElementById("champ").innerHTML = "<thead><tr><th>Pos</th><th>Driver</th>" + cols.map(function (c) { return "<th class='num'>Track " + c.seed + "</th>"; }).join("") +
+      "<th class='num'>Wins</th><th class='num'>Laps</th><th class='num'>Points</th></tr></thead><tbody>" +
+      order.map(function (id, i) {
+        return "<tr><td class='medal'>" + (i + 1) + "</td><td><i style='background:" + color(id) + "'></i>" + racer(id).label + "</td>" +
+          cols.map(function (c) { var r = c.byId[id]; return "<td class='num'>P" + r.pos + (r.run.finish ? " 🏁" : "") + "</td>"; }).join("") +
+          "<td class='num'>" + wins[id] + "</td><td class='num'>" + laps[id] + "</td><td class='num'><b>" + pts[id] + "</b></td></tr>";
+      }).join("") + "</tbody>";
+  }
+
+  // ------------------------------------------------------------- loop & UI
+  function tick(ts) {
+    if (!S.playing) return;
+    var dt = S.last ? ts - S.last : 0; S.last = ts;
+    S.frame = Math.min(1000, S.frame + dt / 1000 * D.fps * S.speed);
+    var allDone = selected().every(function (id) { var r = T.runs[id]; return (r.finish != null && S.frame >= r.finish) || S.frame >= r.steps; });
+    draw();
+    if (S.frame >= 1000 || allDone) { S.playing = false; setStartLabel(); return; }
+    requestAnimationFrame(tick);
+  }
+  function setStartLabel() { document.getElementById("startBtn").textContent = S.playing ? "❚❚ Pause" : (S.frame > 0 && S.frame < 1000 ? "▶ Resume" : "▶ Start race"); }
+  function setTrack(i) {
+    S.track = i; T = D.tracks[i]; S.frame = 0; S.playing = false; setStartLabel();
+    [].forEach.call(document.querySelectorAll("#trackPills .pill"), function (p, j) { p.className = "pill" + (j === i ? " on" : ""); });
+    draw(); drawResults();
+  }
+  function setup() {
+    var tp = document.getElementById("trackPills");
+    D.tracks.forEach(function (t, i) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "pill"; b.textContent = "Track " + t.seed + " · " + t.tiles + " tiles";
+      b.onclick = function () { setTrack(i); }; tp.appendChild(b);
+    });
+    var rc = document.getElementById("racerChips");
+    D.racers.forEach(function (r, i) {
+      var b = document.createElement("button"); b.type = "button"; b.title = r.desc;
+      b.innerHTML = '<i style="background:' + css(COLORS[i % COLORS.length]) + '"></i>' + r.label;
+      b.className = "chip" + (S.sel[r.id] ? " on" : "");
+      b.onclick = function () { S.sel[r.id] = !S.sel[r.id]; b.className = "chip" + (S.sel[r.id] ? " on" : ""); draw(); drawResults(); };
+      rc.appendChild(b);
+    });
+    document.getElementById("startBtn").onclick = function () {
+      if (S.frame >= 1000 || (!S.playing && selected().every(function (id) { var r = T.runs[id]; return (r.finish != null && S.frame >= r.finish) || S.frame >= r.steps; }))) S.frame = 0;
+      S.playing = !S.playing; S.last = 0; setStartLabel(); if (S.playing) requestAnimationFrame(tick);
+    };
+    document.getElementById("resetBtn").onclick = function () { S.frame = 0; S.playing = false; setStartLabel(); draw(); };
+    document.getElementById("scrub").oninput = function (e) { S.frame = Number(e.target.value); draw(); setStartLabel(); };
+    [].forEach.call(document.querySelectorAll("#speedSeg button"), function (b) {
+      b.onclick = function () { S.speed = Number(b.dataset.s); [].forEach.call(b.parentNode.children, function (c) { c.className = c === b ? "on" : ""; }); };
+    });
+    [].forEach.call(document.querySelectorAll("#camSeg button"), function (b) {
+      b.onclick = function () { S.cam = b.dataset.c; [].forEach.call(b.parentNode.children, function (c) { c.className = c === b ? "on" : ""; }); draw(); };
+    });
+  }
+  document.getElementById("themeToggle").addEventListener("click", function () {
+    var dark = getComputedStyle(root).colorScheme.indexOf("dark") !== -1, next = dark ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("theme", next); } catch (e) {}
+    if (D) { document.getElementById("racerChips").innerHTML = ""; document.getElementById("trackPills").innerHTML = ""; setup(); setTrack(S.track); }
+  });
+
+  fetch("assets/data/race.json").then(function (r) { return r.json(); }).then(function (d) {
+    D = d;
+    var q = new URLSearchParams(location.search);
+    var pick = (q.get("drivers") || "neat,neat2,ppo_strict,ppo_baseline").split(",");
+    D.racers.forEach(function (r) { S.sel[r.id] = pick.indexOf(r.id) !== -1; });
+    var ti = D.tracks.findIndex(function (t) { return String(t.seed) === q.get("track"); });
+    setup(); setTrack(ti >= 0 ? ti : 0);
+    if (q.has("t")) { S.frame = Math.max(0, Math.min(1000, Number(q.get("t")) * D.fps)); draw(); setStartLabel(); }
+  });
+})();
+</script>
+</body>
+</html>
