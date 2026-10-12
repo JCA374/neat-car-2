@@ -332,6 +332,9 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border
     <div class="chart-wrap"><canvas id="neatChart" role="img" aria-label="Line chart of NEAT fitness per generation"></canvas></div>
     <p class="small muted" id="neatGrowth" style="margin:8px 0 0"></p>
   </div>
+  <h3 style="margin-top:28px">What evolution found</h3>
+  <p>In 150 generations (5.2 hours on a laptop CPU, less than half the planned PPO run) NEAT produced our best driver yet. The best genome came from generation 127 and scores <strong>857</strong> on the validation tracks and <strong>831</strong> on the benchmark tracks it had never seen. The best PPO model scores 738 there. It finished 2 of the 5 benchmark tracks within 1000 frames, scored over 900 ("solved" territory) on both, and kept all four wheels on the road for <strong>every single frame</strong>. The best PPO models spent 19–24% of frames with a wheel on the grass.</p>
+  <p>The fitness never mentions grass. It only counts tiles and time. Staying on the road emerged because the road is where the tiles are. The network grew from a plain 40→3 wiring to 10 hidden nodes, while pruning connections from 120 down to 93. The traction input, which the old version never saw change, is now wired in.</p>
   <figure id="neatNetFig" hidden style="margin:18px 0 0">
     <img src="assets/neat_network.png" alt="Topology of the best evolved network" style="width:100%;border-radius:10px;border:1px solid var(--border);background:#fff">
     <figcaption class="small muted" id="neatNetCap" style="margin-top:6px">The best validated network.</figcaption>
@@ -508,7 +511,7 @@ python scripts/build_site_data.py &amp;&amp; python scripts/benchmark.py</code><
       BENCH_ORDER.forEach(function (k) { var st = bench.stages[k]; if (st && (!best || st.mean > best.mean)) best = { k: k, mean: st.mean }; });
       if (best) {
         document.getElementById("statBench").textContent = Math.round(best.mean);
-        document.getElementById("statBenchLbl").textContent = "best raw CarRacing score on 5 fixed tracks (" + BENCH_LABELS[best.k] + ")";
+        document.getElementById("statBenchLbl").textContent = "best raw CarRacing score on 5 fixed tracks: " + BENCH_LABELS[best.k];
       }
     }
     var nb = bench && bench.stages.neat, nv = neat && neat.best_validation;

@@ -32,3 +32,4 @@ outputs/neat_smoke/
 outputs/neat/checkpoints/*
 !outputs/neat/checkpoints/best-genome.pkl
 outputs/neat/plots/
+outputs/neat/logs/train.out

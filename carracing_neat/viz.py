@@ -19,28 +19,7 @@ import numpy as np  # noqa: E402
 import neat  # noqa: E402
 
 
-# Dummy classes for unpickling checkpoints that were saved with reporter instances
-class _DummyReporter:
-    """Placeholder for unpickling checkpoints with reporter instances."""
-    def __init__(self, *args, **kwargs):
-        pass
 
-
-# Register dummy classes so pickle can find them
-class CSVReporter(_DummyReporter):
-    pass
-
-
-class BestGenomeSaver(_DummyReporter):
-    pass
-
-
-class GenomeStatsReporter(_DummyReporter):
-    pass
-
-
-# Make these available in the module for unpickling
-sys.modules['carracing_neat.train'] = sys.modules[__name__]
 
 
 def _read_log(csv_path: str) -> Tuple[List[int], List[float], List[float], List[float]]:
@@ -106,7 +85,7 @@ def _layered_positions(genome: neat.DefaultGenome, config: neat.Config):
 
     # Place inputs at x=0 with fixed y positions
     input_ys = np.linspace(1.5, -1.5, num=len(inputs)) if len(inputs) > 1 else [0]
-    for i, node in enumerate(sorted(inputs)):
+    for i, node in enumerate(sorted(inputs, reverse=True)):
         pos[node] = (input_x, input_ys[i])
 
     # Place outputs at x=4.0 with fixed y positions
@@ -173,14 +152,17 @@ def plot_network(genome: neat.DefaultGenome, config: neat.Config, output_path: s
         ax.text(x, y, str(n), ha="center", va="center", color="white", fontsize=8, fontweight='bold', zorder=4)
 
     # Add labels for inputs and outputs with fixed positions
+    # Must match CarRacingStateWrapper: 8 dynamics values, then lidar rays spread
+    # over -162°..+162° around the heading.
+    lidar_deg = np.degrees(np.linspace(-0.9 * np.pi, 0.9 * np.pi, len(inputs) - 8))
     input_labels = [
-        "Speed (norm)", "Vx (local)", "Vy (local)", "cos(θ)", "sin(θ)",
+        "Speed", "Vx (local)", "Vy (local)", "cos(θ)", "sin(θ)",
         "ω (ang.vel)", "Steer (cur)", "Traction"
-    ] + [f"L{i} (lidar)" for i in range(12)]  # 8 dynamics + 12 lidar
+    ] + [f"lidar {d:+.0f}°" for d in lidar_deg]
 
     output_labels = ["Steer (out)", "Gas (out)", "Brake (out)"]
 
-    for i, node in enumerate(sorted(inputs)):
+    for i, node in enumerate(sorted(inputs, reverse=True)):
         x, y = pos[node]
         label = input_labels[i] if i < len(input_labels) else f"In{i}"
         ax.text(x - 0.35, y, label, ha="right", va="center", fontsize=6.5, style='italic')

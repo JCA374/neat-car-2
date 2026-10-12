@@ -116,6 +116,7 @@ def main() -> None:
     parser.add_argument("--out", default="docs/assets/data/benchmark.json")
     parser.add_argument("--gif-dir", default="docs/assets/gifs")
     parser.add_argument("--gif-steps", type=int, default=600, help="Frames of the episode to keep in the GIF.")
+    parser.add_argument("--gif-skip", type=int, default=60, help="Skip the start-of-episode zoom-in frames.")
     args = parser.parse_args()
 
     results = {}
@@ -135,7 +136,7 @@ def main() -> None:
             episodes.append(ep)
             print(stage, ep, flush=True)
             if frames:
-                _save_gif(frames[: args.gif_steps], os.path.join(args.gif_dir, f"{stage}.gif"), every=3, width=288)
+                _save_gif(frames[args.gif_skip : args.gif_skip + args.gif_steps], os.path.join(args.gif_dir, f"{stage}.gif"), every=3, width=288)
         scores = [e["score"] for e in episodes]
         results[stage] = {
             "model": path,

@@ -270,6 +270,50 @@
      "offtrack_pct": 0.0
     }
    ]
+  },
+  "neat": {
+   "model": "outputs/neat/checkpoints/best-genome.pkl",
+   "mean": 831.4,
+   "std": 77.9,
+   "laps": 2,
+   "offtrack_pct": 0.0,
+   "episodes": [
+    {
+     "seed": 3,
+     "score": 908.5,
+     "steps": 915,
+     "lap": 1,
+     "offtrack_pct": 0.0
+    },
+    {
+     "seed": 11,
+     "score": 907.2,
+     "steps": 928,
+     "lap": 1,
+     "offtrack_pct": 0.0
+    },
+    {
+     "seed": 21,
+     "score": 698.8,
+     "steps": 1000,
+     "lap": 0,
+     "offtrack_pct": 0.0
+    },
+    {
+     "seed": 34,
+     "score": 800.6,
+     "steps": 1000,
+     "lap": 0,
+     "offtrack_pct": 0.0
+    },
+    {
+     "seed": 55,
+     "score": 842.1,
+     "steps": 1000,
+     "lap": 0,
+     "offtrack_pct": 0.0
+    }
+   ]
   }
  }
 }
