@@ -1,0 +1,17 @@
+id = "n02_forward_rays"
+model = "neat"
+parent = "n01_lap_time"
+title = "16 forward rays instead of 32 all around"
+why = """
+The original lidar fans 32 rays over 324° centred on the car's right side: 13 point backwards and there is a
+36° blind gap on the left. In n00 the forward rays (about ±45°) carried most of the signal, and the side and
+back rays barely changed. Here: 16 rays over ±120° around the nose. Half the inputs, no blind spot, and a
+smaller network to evolve. Everything else as n01.
+"""
+lidar_rays = 16
+lidar_fov = 240
+
+[train]
+generations = 100
+tracks-per-generation = 3
+lap-time-bonus = 1.0

@@ -85,3 +85,20 @@ def test_lidar_rays_sets_state_size():
     env = make_env(seed=0, lidar_rays=16)
     state, _ = env.reset(seed=0)
     assert state.shape == (24,) and env.observation_space.shape == (24,)
+
+
+def test_forward_lidar_fan_is_centred_on_the_nose():
+    import math
+
+    from carracing.env import lidar_angles
+
+    legacy = lidar_angles(32)
+    assert math.isclose(legacy[0], -0.9 * math.pi) and math.isclose(legacy[-1], 0.9 * math.pi)
+    fan = lidar_angles(17, fov=240)
+    assert math.isclose(fan[8], math.pi / 2)  # middle ray along local +y = the nose
+    assert math.isclose(fan[-1] - fan[0], math.radians(240))
+    env = make_env(seed=0, lidar_rays=16, lidar_fov=240)
+    state, _ = env.reset(seed=0)
+    assert state.shape == (24,)
+    # On the start straight the forward rays see far more road than the side rays.
+    assert state[8 + 7] > state[8]

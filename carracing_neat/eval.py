@@ -35,6 +35,7 @@ class EvalSettings:
     # Genomes evolved before Oct 12 2026 expect the old double-tanh decoding.
     legacy_decode: bool = False
     lidar_rays: int = 32
+    lidar_fov: Optional[float] = None
     # Reward per frame a lap finishes under 1000 frames (0 = raw score only).
     lap_time_bonus: float = 0.0
     seeds: Sequence[int] = field(default_factory=lambda: [0])
@@ -60,7 +61,7 @@ def decode_action(output: Sequence[float], prev_action: np.ndarray, smoothing: f
 
 def _get_env(settings: EvalSettings, render_mode: Optional[str] = None) -> CarRacingStateWrapper:
     key = (os.getpid(), render_mode, settings.offtrack_penalty, settings.traction_threshold,
-           settings.domain_randomize, settings.max_steps, settings.lidar_rays, settings.lap_time_bonus)
+           settings.domain_randomize, settings.max_steps, settings.lidar_rays, settings.lap_time_bonus, settings.lidar_fov)
     env = _WORKER_ENVS.get(key)
     if env is None:
         env = make_env(
@@ -71,6 +72,7 @@ def _get_env(settings: EvalSettings, render_mode: Optional[str] = None) -> CarRa
             allow_multiple_laps=False,
             max_episode_steps=settings.max_steps,
             lidar_rays=settings.lidar_rays,
+            lidar_fov=settings.lidar_fov,
             lap_time_bonus=settings.lap_time_bonus,
         )
         _WORKER_ENVS[key] = env

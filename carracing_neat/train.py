@@ -291,6 +291,8 @@ def parse_args(argv=None):
     parser.add_argument("--action-smoothing", type=float, default=0.1, help="Blend factor for previous action [0, 0.95].")
     parser.add_argument("--domain-randomize", action="store_true", help="Enable Gymnasium domain randomization.")
     parser.add_argument("--lidar-rays", type=int, default=32, help="Lidar inputs (config num_inputs must be 8 + this).")
+    parser.add_argument("--lidar-fov", type=float, default=None,
+                        help="Forward lidar fan in degrees (default: original 324-degree layout).")
     parser.add_argument("--lap-time-bonus", type=float, default=0.0,
                         help="Fitness per frame a lap finishes under 1000 frames (0 = raw score).")
     parser.add_argument("--legacy-decode", action="store_true",
@@ -339,6 +341,7 @@ def main(argv=None):
         patience=args.patience,
         legacy_decode=args.legacy_decode,
         lidar_rays=args.lidar_rays,
+        lidar_fov=args.lidar_fov,
         lap_time_bonus=args.lap_time_bonus,
     )
     evaluator = SharedTrackEvaluator(pop, settings, args.num_workers, args.tracks_per_generation, args.seed)

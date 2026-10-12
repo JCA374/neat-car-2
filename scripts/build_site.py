@@ -26,7 +26,7 @@ from carracing.benchmark import SEEDS, track_geometry  # noqa: E402
 from carracing.steps import FPS, MODELS, all_steps, hardware, rank_key  # noqa: E402
 
 OUT = "docs/assets/data"
-HEADLINE = ("id", "model", "title", "why", "parent", "lidar_rays", "train", "neat_config", "imported", "note",
+HEADLINE = ("id", "model", "title", "why", "parent", "lidar_rays", "lidar_fov", "train", "neat_config", "imported", "note",
             "hardware", "commit", "trained_on", "train_seconds", "selected", "size", "summary", "tracks")
 POSITION_KEYS = ("every", "finish", "x", "y", "a", "v", "tiles", "grass")
 

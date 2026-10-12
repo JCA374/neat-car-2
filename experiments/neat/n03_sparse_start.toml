@@ -1,0 +1,19 @@
+id = "n03_sparse_start"
+model = "neat"
+parent = "n02_forward_rays"
+title = "Start unconnected: evolve which inputs to use"
+why = """
+Every earlier NEAT run started with all inputs wired to all outputs, and evolution never fully cut a single ray.
+Here every network starts with no connections at all, and only gains them by mutation, so inputs that don't
+help are simply never wired in. The NEAT page then shows which rays evolution chose. Everything else as n02.
+"""
+lidar_rays = 16
+lidar_fov = 240
+
+[train]
+generations = 100
+tracks-per-generation = 3
+lap-time-bonus = 1.0
+
+[neat_config]
+"DefaultGenome.initial_connection" = "unconnected"

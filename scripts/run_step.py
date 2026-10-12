@@ -69,6 +69,8 @@ def train(step: Step) -> float:
     os.makedirs(logs, exist_ok=True)
     flags = train_flags(step.train) + ["--checkpoint-dir", ckpt, "--log-dir", logs,
                                        "--lidar-rays", str(step.lidar_rays)]
+    if step.lidar_fov is not None:
+        flags += ["--lidar-fov", str(step.lidar_fov)]
     if step.model == "neat":
         cmd = [sys.executable, "-m", "carracing_neat.train", "--config", os.path.join(step.out_dir, "neat.cfg")]
     else:
@@ -142,7 +144,7 @@ def neat_curves(step: Step) -> dict:
                      **genome_graph(genome, config)})
     gens.sort(key=lambda g: g["gen"])
     _, config = load_genome(step.model_path, cfg_path)
-    return {"curve": curve, "generations": gens, "inputs": input_spec(config), "outputs": output_spec(config)}
+    return {"curve": curve, "generations": gens, "inputs": input_spec(config, step.lidar_fov), "outputs": output_spec(config)}
 
 
 def ppo_curves(step: Step) -> dict:
@@ -157,7 +159,8 @@ def benchmark(step: Step) -> tuple:
     policy = load_policy(step)
     tracks, drives = [], {}
     for seed in SEEDS:
-        out = drive(policy, seed, step.lidar_rays, gif=seed == GIF_SEED, activations=step.model == "neat")
+        out = drive(policy, seed, step.lidar_rays, gif=seed == GIF_SEED, activations=step.model == "neat",
+                    lidar_fov=step.lidar_fov)
         tracks.append(out["result"])
         drives[str(seed)] = out["recording"]
         res = out["result"]
@@ -195,7 +198,7 @@ def main() -> None:
     previous = json.load(open(result_path)) if os.path.exists(result_path) else {}
     result = {
         "id": step.id, "model": step.model, "title": step.title, "why": step.why, "parent": step.parent,
-        "lidar_rays": step.lidar_rays, "train": step.train, "neat_config": step.neat_config,
+        "lidar_rays": step.lidar_rays, "lidar_fov": step.lidar_fov, "train": step.train, "neat_config": step.neat_config,
         "imported": bool(step.imported), "note": step.imported.get("note", ""),
         "hardware": step.imported.get("hardware") or previous.get("hardware") or hardware(),
         "commit": step.imported.get("commit") or (git_commit() if process_seconds else previous.get("commit", git_commit())),

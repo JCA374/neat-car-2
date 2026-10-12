@@ -95,6 +95,12 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     )
     parser.add_argument("--lidar-rays", type=int, default=32, help="Lidar distances in the state (8 + this inputs).")
     parser.add_argument(
+        "--lidar-fov",
+        type=float,
+        default=None,
+        help="Forward lidar fan in degrees (default: original 324-degree layout).",
+    )
+    parser.add_argument(
         "--lap-time-bonus",
         type=float,
         default=0.0,
@@ -150,6 +156,7 @@ def _env_kwargs(args: argparse.Namespace) -> dict:
         "lap_completion_bonus": args.lap_completion_bonus,
         "max_episode_steps": args.max_episode_steps,
         "lidar_rays": args.lidar_rays,
+        "lidar_fov": args.lidar_fov,
         "lap_time_bonus": args.lap_time_bonus,
     }
 

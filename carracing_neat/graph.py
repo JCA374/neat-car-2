@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import math
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import neat
 import numpy as np
+
+from carracing.env import lidar_angles
 
 DYNAMICS = ["Speed", "Vx (sideways)", "Vy (forward)", "cos(heading)", "sin(heading)", "Spin rate", "Steering", "Traction"]
 OUTPUTS = ["Steer", "Gas", "Brake"]
@@ -16,9 +17,9 @@ def _r(v: float, nd: int = 2) -> float:
     return round(float(v), nd)
 
 
-def input_spec(config: neat.Config) -> List[dict]:
+def input_spec(config: neat.Config, lidar_fov: Optional[float] = None) -> List[dict]:
     n_lidar = config.genome_config.num_inputs - len(DYNAMICS)
-    angles = np.degrees(np.linspace(-0.9 * math.pi, 0.9 * math.pi, n_lidar))
+    angles = np.degrees(lidar_angles(n_lidar, lidar_fov))
     spec = [{"key": -(i + 1), "label": name, "group": "dynamics"} for i, name in enumerate(DYNAMICS)]
     for j, deg in enumerate(angles):
         # The wrapper measures ray angles from the car's local +x axis (its right

@@ -21,6 +21,20 @@ except Exception as exc:  # pragma: no cover - handled at runtime by the user
     ) from exc
 
 
+def lidar_angles(rays: int, fov: Optional[float] = None) -> np.ndarray:
+    """Ray angles in radians, relative to the car's local +x axis (its right side).
+
+    The nose points along local +y (+pi/2). ``fov=None`` is the original layout:
+    rays spread over 324 degrees centred on the right side, so many point backwards
+    and a 36 degree blind gap sits on the left. With ``fov`` (degrees) the fan is
+    centred on the nose and spans +-fov/2.
+    """
+    if fov is None:
+        return np.linspace(-0.9 * math.pi, 0.9 * math.pi, rays)
+    half = math.radians(fov) / 2
+    return math.pi / 2 + np.linspace(-half, half, rays)
+
+
 class CarRacingStateWrapper(gym.Wrapper):
     """
     Wraps CarRacing to emit a fixed-length, low-dimensional state vector.
@@ -35,6 +49,7 @@ class CarRacingStateWrapper(gym.Wrapper):
         self,
         env: gym.Env,
         lidar_rays: int = 32,
+        lidar_fov: Optional[float] = None,
         lidar_max_dist: float = 45.0,
         lidar_step: float = 3.0,
         offtrack_penalty: float = 1.0,
@@ -55,7 +70,7 @@ class CarRacingStateWrapper(gym.Wrapper):
         self.lap_time_bonus = lap_time_bonus
         self.lap_time_budget = lap_time_budget
 
-        self.lidar_angles = np.linspace(-0.9 * math.pi, 0.9 * math.pi, lidar_rays)
+        self.lidar_angles = lidar_angles(lidar_rays, lidar_fov)
         self.base_feature_count = 8
         self.state_size = self.base_feature_count + lidar_rays
 
@@ -306,6 +321,7 @@ def make_env(
     max_episode_steps: Optional[int] = None,
     lidar_rays: int = 32,
     lap_time_bonus: float = 0.0,
+    lidar_fov: Optional[float] = None,
     **kwargs,
 ) -> CarRacingStateWrapper:
     """
@@ -334,6 +350,8 @@ def make_env(
         lap needs a longer limit or a faster driver).
     lidar_rays: int
         Lidar distances in the state (state size = 8 + lidar_rays).
+    lidar_fov: Optional[float]
+        None = original 324-degree layout; degrees = forward fan of +-fov/2 around the nose.
     lap_time_bonus: float
         Reward per frame a finished lap comes in under 1000 frames (0 = off).
     kwargs:
@@ -363,5 +381,6 @@ def make_env(
         allow_multiple_laps=allow_multiple_laps,
         lap_completion_bonus=lap_completion_bonus,
         lidar_rays=lidar_rays,
+        lidar_fov=lidar_fov,
         lap_time_bonus=lap_time_bonus,
     )

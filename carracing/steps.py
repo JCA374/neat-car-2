@@ -27,6 +27,7 @@ class Step:
     why: str = ""
     parent: Optional[str] = None
     lidar_rays: int = 32
+    lidar_fov: Optional[float] = None  # None = original 324-degree layout
     # Compatibility with models trained before Oct 12 2026 (n00/p00 only).
     legacy_decode: bool = False
     legacy_traction: bool = False
@@ -56,6 +57,7 @@ def load_step(path: str) -> Step:
     return Step(
         id=raw["id"], model=model, title=raw["title"], why=raw.get("why", "").strip(),
         parent=raw.get("parent"), lidar_rays=int(raw.get("lidar_rays", 32)),
+        lidar_fov=float(raw["lidar_fov"]) if "lidar_fov" in raw else None,
         legacy_decode=bool(raw.get("legacy_decode", False)),
         legacy_traction=bool(raw.get("legacy_traction", False)),
         train=dict(raw.get("train", {})), neat_config=dict(raw.get("neat_config", {})),

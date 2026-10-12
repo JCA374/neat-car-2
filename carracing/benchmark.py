@@ -85,10 +85,12 @@ def load_policy(step: Step, model_path: Optional[str] = None):
     return PPOPolicy(path, step.legacy_traction)
 
 
-def drive(policy, seed: int, lidar_rays: int = 32, gif: bool = False, activations: bool = False) -> Dict:
+def drive(policy, seed: int, lidar_rays: int = 32, gif: bool = False, activations: bool = False,
+          lidar_fov: Optional[float] = None) -> Dict:
     """One benchmark lap. Returns the result plus a recording for the race page."""
     env = make_env(render_mode="rgb_array" if gif else None, offtrack_penalty=0.0, allow_multiple_laps=False,
-                   lap_completion_bonus=0.0, max_episode_steps=MAX_FRAMES, lidar_rays=lidar_rays)
+                   lap_completion_bonus=0.0, max_episode_steps=MAX_FRAMES, lidar_rays=lidar_rays,
+                   lidar_fov=lidar_fov)
     obs, _ = env.reset(seed=seed)
     policy.reset()
     base = env.unwrapped
