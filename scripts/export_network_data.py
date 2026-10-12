@@ -4,9 +4,11 @@ Export NEAT networks and recorded drives for docs/network.html.
 Writes docs/assets/data/network.json with
   - every generation's champion genome per run (nodes, enabled connections,
     layer for layout, which hidden nodes actually reach an output),
-  - a few milestone individuals driving the same track, recorded frame by
-    frame (position, heading, speed, tiles, all node activations, actions),
-  - that track's road polygons.
+  - a few milestone individuals and their score on each display track,
+and docs/assets/data/tracks/<seed>.json per display track with its road
+polygons and every milestone individual's drive, recorded frame by frame
+(position, heading, speed, tiles, all node activations, actions). The page
+loads a track file only when that track is picked.
 
     python scripts/export_network_data.py
 """
@@ -30,7 +32,8 @@ from carracing_neat.play import load_genome
 from carracing_ppo.env import make_env
 
 CONFIG = "neat_config/neat.cfg"
-TRACK_SEED = 3  # same track as the page's GIFs
+# The benchmark tracks: never used for training or validation. Track 3 is the GIF track.
+TRACK_SEEDS = [3, 11, 21, 34, 55]
 RUNS = [
     # key, label, checkpoint dir, log dir, legacy decoding (genomes before Oct 12 2026)
     ("run1", "Run 1: capped gas/brake, single species", "outputs/neat/checkpoints", "outputs/neat/logs", True),
@@ -91,11 +94,11 @@ def champions(ckpt_dir: str) -> Dict[int, str]:
     return dict(sorted(found.items()))
 
 
-def record(genome, config, legacy: bool, every: int = 2, max_steps: int = 1000) -> dict:
-    """Drive TRACK_SEED and record what the car does and what every node computes."""
+def record(genome, config, legacy: bool, seed: int, every: int = 2, max_steps: int = 1000) -> dict:
+    """Drive one track and record what the car does and what every node computes."""
     net = neat.nn.FeedForwardNetwork.create(genome, config)
     env = make_env(render_mode=None, offtrack_penalty=0.0, allow_multiple_laps=False, max_episode_steps=max_steps)
-    state, _ = env.reset(seed=TRACK_SEED)
+    state, _ = env.reset(seed=seed)
     prev = np.zeros(3, dtype=np.float32)
     eval_keys = [n for n, *_ in net.node_evals]
     frames = {"x": [], "y": [], "a": [], "v": [], "tiles": [], "inputs": [], "nodes": [], "actions": []}
@@ -128,16 +131,17 @@ def record(genome, config, legacy: bool, every: int = 2, max_steps: int = 1000) 
     }
 
 
-def track_geometry() -> dict:
+def track_geometry(seed: int) -> dict:
     env = make_env(render_mode=None)
-    env.reset(seed=TRACK_SEED)
+    env.reset(seed=seed)
     base = env.unwrapped
     polys = [[r(c, 1) for xy in poly for c in xy] for poly, _color in base.road_poly]
     start = base.track[0]
+    tiles = len(base.track)
     env.close()
     xs = [v for p in polys for v in p[0::2]]
     ys = [v for p in polys for v in p[1::2]]
-    return {"seed": TRACK_SEED, "polys": polys, "bounds": [min(xs), min(ys), max(xs), max(ys)],
+    return {"seed": seed, "tiles": tiles, "polys": polys, "bounds": [min(xs), min(ys), max(xs), max(ys)],
             "start": [r(start[2], 1), r(start[3], 1)]}
 
 
@@ -155,13 +159,16 @@ def pick_milestones(log_dir: str, thresholds=(300, 600)) -> List[int]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", default="docs/assets/data/network.json")
+    parser.add_argument("--track-dir", default="docs/assets/data/tracks")
     args = parser.parse_args()
 
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
                          neat.DefaultStagnation, CONFIG)
     data = {"inputs": input_spec(config),
             "outputs": [{"key": k, "label": OUTPUTS[k]} for k in config.genome_config.output_keys],
-            "track": track_geometry(), "runs": [], "individuals": []}
+            "tracks": [], "runs": [], "individuals": []}
+    track_files = {seed: {**track_geometry(seed), "recordings": {}} for seed in TRACK_SEEDS}
+    data["tracks"] = [{"seed": seed, "tiles": t["tiles"]} for seed, t in track_files.items()]
 
     for key, label, ckpt_dir, log_dir, legacy in RUNS:
         champs = champions(ckpt_dir)
@@ -183,13 +190,25 @@ def main() -> None:
             milestones = milestones[-1:]
         for gen in milestones:
             genome, _ = load_genome(champs[gen], CONFIG)
-            rec = record(genome, config, legacy)
+            ind_id = f"{key}-gen{gen}"
+            summary = {}
+            for seed in TRACK_SEEDS:
+                rec = record(genome, config, legacy, seed)
+                track_files[seed]["recordings"][ind_id] = rec
+                summary[str(seed)] = {k: rec[k] for k in ("score", "steps", "laps", "tiles_total", "offtrack_pct", "avg_speed")}
+                summary[str(seed)]["reached_pct"] = r(100 * rec["tiles"][-1] / rec["tiles_total"], 1)
             data["individuals"].append({
-                "id": f"{key}-gen{gen}", "run": key, "gen": gen, "genome_id": genome.key,
-                "validation": r(val.get(gen), 1), "graph": genome_graph(genome, config), **rec})
-            print(f"{key} gen {gen}: score {rec['score']} on track {TRACK_SEED}, {rec['steps']} frames, "
-                  f"laps {rec['laps']}, off-track {rec['offtrack_pct']}%")
+                "id": ind_id, "run": key, "gen": gen, "genome_id": genome.key,
+                "validation": r(val.get(gen), 1), "graph": genome_graph(genome, config), "tracks": summary})
+            print(f"{key} gen {gen}: " + ", ".join(f"track {k} {v['score']}{' lap' if v['laps'] else ''}"
+                                                  for k, v in summary.items()))
 
+    os.makedirs(args.track_dir, exist_ok=True)
+    for seed, payload in track_files.items():
+        path = os.path.join(args.track_dir, f"{seed}.json")
+        with open(path, "w") as fh:
+            json.dump(payload, fh, separators=(",", ":"))
+        print(f"Wrote {path} ({os.path.getsize(path) / 1e6:.2f} MB)")
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w") as fh:
         json.dump(data, fh, separators=(",", ":"), ensure_ascii=False)

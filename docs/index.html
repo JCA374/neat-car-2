@@ -343,6 +343,13 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border
   <h3 style="margin-top:28px">What evolution found</h3>
   <p>In 150 generations (5.2 hours on a laptop CPU, less than half the planned PPO run) NEAT produced our best driver yet. The best genome came from generation 127 and scores <strong>857</strong> on the validation tracks and <strong>831</strong> on the benchmark tracks it had never seen. The best PPO model scores 738 there. It finished 2 of the 5 benchmark tracks within 1000 frames, scored over 900 ("solved" territory) on both, and kept all four wheels on the road for <strong>every single frame</strong>. The best PPO models spent 19–24% of frames with a wheel on the grass.</p>
   <p>The fitness never mentions grass. It only counts tiles and time. Staying on the road emerged because the road is where the tiles are. The network grew from a plain 40→3 wiring to 10 hidden nodes, while pruning connections from 120 down to 93. The traction input, which the old version never saw change, is now wired in.</p>
+  <h3 style="margin-top:28px">Run 2: two more bugs, and an honest null result</h3>
+  <p>Looking closer at the winner turned up two more problems:</p>
+  <ul>
+    <li><strong>The car could never release the brake.</strong> The network's outputs already pass through <code>tanh</code>, and the decoder applied <code>tanh</code> a second time. Gas was therefore capped at 0.88 and the brake never went below 0.12. The best genome braked at exactly 0.119 on every frame of every track. At that setting the car needs about 2.5× longer to reach speed. The car finished every benchmark track, but ran out of the 1000-frame budget on the three longest.</li>
+    <li><strong>Speciation never switched on.</strong> NEAT protects new structure by grouping similar networks into species. Our genomes were never far enough apart to split, so run 1 had a single species in 135 of its 150 generations. An automatic threshold now aims for about 6 species.</li>
+  </ul>
+  <p>Run 2 continued from run 1's generation 148 with both fixes for another 100 generations (3.3 hours). The population stayed diverse (a median of 7 species) and learned to use the new range: it reaches a top speed of 80 instead of 60, and controls its speed mostly with the throttle. But its best genome (generation 236, 17 hidden nodes) scores <strong>821</strong> on validation and <strong>810</strong> on the benchmark tracks, slightly <em>below</em> run 1's 857 and 831. More freedom and more diversity didn't produce a better driver in 100 generations. Both are kept, and you can compare them track by track on <a href="network.html#individuals">the network page</a>.</p>
   <figure id="neatNetFig" hidden style="margin:18px 0 0">
     <img src="assets/neat_network.png" alt="Topology of the best evolved network" style="width:100%;border-radius:10px;border:1px solid var(--border);background:#fff">
     <figcaption class="small muted" id="neatNetCap" style="margin-top:6px">The best validated network.</figcaption>
@@ -494,9 +501,9 @@ python scripts/build_site_data.py &amp;&amp; python scripts/benchmark.py</code><
   ];
   var BENCH_LABELS = {
     baseline: "Baseline", improved: "Strict, peak", collapsed: "Strict, after collapse",
-    strict: "Strict, stopped early", multilap: "Multi-lap (buggy)", v2: "PPO v2 (parked)", neat: "NEAT (2026)"
+    strict: "Strict, stopped early", multilap: "Multi-lap (buggy)", v2: "PPO v2 (parked)", neat: "NEAT run 1", neat2: "NEAT run 2"
   };
-  var BENCH_ORDER = ["baseline", "improved", "collapsed", "strict", "multilap", "v2", "neat"];
+  var BENCH_ORDER = ["baseline", "improved", "collapsed", "strict", "multilap", "v2", "neat", "neat2"];
 
   var runs = null, bench = null, neat = null, charts = [];
 

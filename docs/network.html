@@ -119,6 +119,17 @@ input[type=range] { accent-color: var(--accent); }
 .ind dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
 .ind p { font-size: 0.84rem; color: var(--text-2); }
 
+.trackpick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 0.88rem; color: var(--text-2); }
+table.grid { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 0.86rem; font-variant-numeric: tabular-nums; }
+table.grid th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); font-weight: 600; padding: 4px 6px; text-align: center; }
+table.grid th.row { text-align: left; text-transform: none; letter-spacing: 0; font-size: 0.86rem; color: var(--text); white-space: nowrap; }
+table.grid th.row i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+table.grid td { text-align: center; padding: 7px 4px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; }
+table.grid td:hover { border-color: var(--text-3); }
+table.grid td.sel { border-color: var(--text); }
+table.grid td small { display: block; font-size: 0.7rem; opacity: 0.85; }
+table.grid td.mean { cursor: default; font-weight: 600; background: none !important; }
+.grid-scroll { overflow-x: auto; }
 footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-3); }
 @media (max-width: 860px) {
   .explorer, .watch, .overlay-grid { grid-template-columns: 1fr; }
@@ -175,6 +186,7 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border
   <h2>2 · Watch it think</h2>
   <p class="muted narrow">A recorded drive on one track, frame by frame. On the left is what the car does, including the orange lidar rays it actually senses. On the right is the network at that same moment: each node is coloured by its value, and each connection is drawn by how much signal it carries right now (input × weight).</p>
   <div class="card">
+    <div class="trackpick" id="trackPick2" role="group" aria-label="Track"></div>
     <div class="controls" id="indPills" role="group" aria-label="Individual"></div>
     <div class="watch">
       <div>
@@ -210,8 +222,14 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border
 
 <section id="individuals">
   <h2>3 · How the drivers evolved</h2>
-  <p class="muted narrow">Champions from milestone generations, all driving the same track (track 3, also used for the GIFs on the story page). Generation 0 is a random network. The others are the first champions to pass 300 and 600 on the validation tracks, and the best of each run. Click <em>Watch</em> on any card to replay it above.</p>
+  <p class="muted narrow">Champions from milestone generations. Generation 0 is a random network. The others are the first champions to pass 300 and 600 on the validation tracks, and the best of each run. All five drive the same five benchmark tracks. None of these tracks was used for training or for picking the best genomes, so every drive is on an unseen course. Click a cell in the grid, or <em>Watch</em> on a card, to replay that drive above.</p>
   <div class="card">
+    <h3>Every driver on every track</h3>
+    <p class="small muted" style="margin:0 0 8px">Raw CarRacing score in 1000 frames (darker = higher). ✓ marks a finished lap. 900+ counts as "solved".</p>
+    <div class="grid-scroll"><table class="grid" id="scoreGrid"></table></div>
+  </div>
+  <div class="card">
+    <div class="trackpick" id="trackPick3" role="group" aria-label="Track"></div>
     <div class="overlay-grid">
       <div><canvas id="overlayCanvas" width="720" height="720" role="img" aria-label="Paths of each milestone driver on the same track"></canvas>
         <div class="legend" id="overlayLegend"></div></div>
@@ -256,7 +274,7 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border
   }
   function hideTip() { tip.style.display = "none"; }
 
-  var DATA = null;
+  var DATA = null, META = null, TRACK_CACHE = {}, CUR_TRACK = null;
   var IND_COLORS = ["--s1", "--s2", "--s3", "--s4", "--s5"];
 
   // ------------------------------------------------------------------ layout
@@ -531,6 +549,65 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border
   // ---------------------------------------------------------------- watch
   var W8 = { ind: 0, f: 0, playing: false, speed: 1, mode: "follow", net: null, last: 0, acc: 0 };
   function indLabel(ind) { return (ind.run === "run2" ? "Run 2 · gen " : "Gen ") + ind.gen; }
+
+  // Track files hold the road and every individual's recorded drive; merge the
+  // chosen track's recordings into the individuals the rest of the page uses.
+  function setTrack(seed, then) {
+    function apply(t) {
+      CUR_TRACK = seed;
+      DATA.track = t;
+      DATA.individuals = META.map(function (m) { return Object.assign({}, m, t.recordings[m.id]); });
+      ["trackPick2", "trackPick3"].forEach(function (id) {
+        [].forEach.call(document.getElementById(id).querySelectorAll("button"), function (b) {
+          b.className = "pill" + (Number(b.dataset.seed) === seed ? " on" : "");
+        });
+      });
+      setInd(Math.min(W8.ind, DATA.individuals.length - 1));
+      setupIndividuals(); drawGrid();
+      if (then) then();
+    }
+    if (TRACK_CACHE[seed]) return apply(TRACK_CACHE[seed]);
+    fetch("assets/data/tracks/" + seed + ".json").then(function (r) { return r.json(); }).then(function (t) { TRACK_CACHE[seed] = t; apply(t); });
+  }
+  function setupTrackPickers() {
+    ["trackPick2", "trackPick3"].forEach(function (id) {
+      var box = document.getElementById(id);
+      box.innerHTML = "<span>Track</span>";
+      DATA.tracks.forEach(function (t) {
+        var b = document.createElement("button"); b.type = "button"; b.className = "pill"; b.dataset.seed = t.seed;
+        b.textContent = t.seed + " · " + t.tiles + " tiles";
+        b.onclick = function () { W8.playing = false; document.getElementById("wPlay").textContent = "▶"; setTrack(t.seed); };
+        box.appendChild(b);
+      });
+    });
+  }
+  function drawGrid() {
+    var seeds = DATA.tracks.map(function (t) { return t.seed; });
+    var shade = css("--pos");
+    var h = "<thead><tr><th></th>" + seeds.map(function (s) { return "<th>Track " + s + "</th>"; }).join("") + "<th>Mean</th></tr></thead><tbody>";
+    META.forEach(function (m, i) {
+      var scores = seeds.map(function (s) { return m.tracks[String(s)].score; });
+      h += '<tr><th class="row"><i style="background:' + css(IND_COLORS[i % IND_COLORS.length]) + '"></i>' + indLabel(m) + "</th>";
+      seeds.forEach(function (s) {
+        var t = m.tracks[String(s)], v = Math.max(0, Math.min(1, t.score / 950));
+        var bg = "color-mix(in srgb, " + shade + " " + Math.round(v * 70) + "%, transparent)";
+        var sel = s === CUR_TRACK && i === W8.ind ? " sel" : "";
+        h += '<td class="cell' + sel + '" data-seed="' + s + '" data-i="' + i + '" style="background:' + bg + ';color:' + (v > 0.65 ? "#fff" : "inherit") + '" title="' +
+          indLabel(m) + " on track " + s + ": " + t.score + ", " + t.reached_pct + '% of the track">' +
+          Math.round(t.score) + (t.laps ? " ✓" : "") + "<small>" + Math.round(t.reached_pct) + "%</small></td>";
+      });
+      var mean = scores.reduce(function (a, b) { return a + b; }, 0) / scores.length;
+      h += '<td class="mean">' + Math.round(mean) + "</td></tr>";
+    });
+    document.getElementById("scoreGrid").innerHTML = h + "</tbody>";
+    [].forEach.call(document.querySelectorAll("#scoreGrid td.cell"), function (td) {
+      td.onclick = function () {
+        var i = Number(td.dataset.i), seed = Number(td.dataset.seed);
+        W8.ind = i;
+        setTrack(seed, function () { setInd(i); drawGrid(); document.getElementById("watch").scrollIntoView({ behavior: "smooth" }); });
+      };
+    });
+  }
   function setInd(i) {
     W8.ind = i; W8.f = 0;
     var ind = DATA.individuals[i];
@@ -538,6 +615,7 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border
     var slider = document.getElementById("wSlider"); slider.max = ind.x.length - 1; slider.value = 0;
     W8.net = drawNetwork(document.getElementById("watchSvg"), ind.graph, {});
     renderFrame();
+    if (META && document.getElementById("scoreGrid").innerHTML) drawGrid();
   }
   function renderFrame() {
     var ind = DATA.individuals[W8.ind], f = W8.f;
@@ -595,9 +673,7 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border
     [].forEach.call(document.querySelectorAll("#viewSeg button"), function (b) {
       b.onclick = function () { W8.mode = b.dataset.v; [].forEach.call(b.parentNode.children, function (c) { c.className = c === b ? "on" : ""; }); renderFrame(); };
     });
-    var best = DATA.individuals.length - 1;
-    DATA.individuals.forEach(function (ind, i) { if (ind.score > DATA.individuals[best].score) best = i; });
-    setInd(best); W8.f = Math.min(150, DATA.individuals[best].x.length - 1); renderFrame();
+    W8.ind = META.length - 1;
   }
 
   // ---------------------------------------------------------- individuals
@@ -607,9 +683,20 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border
     "run1-gen0": "A random network. It creeps forward (never faster than 13), brakes 40% of the time, and comes to a stop for good after 22 tiles.",
     "run1-gen5": "Already stays on the road for the whole drive, but slowly: heavy braking keeps it at about 29 on average, and it reaches 64% of the track in 1000 frames.",
     "run1-gen25": "As fast as the later champions for 650 frames. Then, at the tight corner, it brakes almost to a standstill and crawls for the rest of the time. Its end dot marks the spot.",
-    "run1-gen127": "Run 1's best. Fast and smooth, never on the grass, and laps the track in 915 frames, all with gas capped at 0.88 and the brake stuck at 0.12 or more.",
-    "run2": "The first runs with the full gas and brake range. Its top speed rises from 60 to 80, and it controls speed with the throttle instead of the brake (41% gas and 5% brake on average, versus 85% and 12%)."
+    "run1-gen127": "Run 1's best. Fast and smooth, never on the grass, and laps the track in 915 frames, all with gas capped at 0.88 and the brake stuck at 0.12 or more."
   };
+  function noteFor(ind, inds) {
+    if (ind.run === "run2") {
+      var ref = inds.filter(function (o) { return o.run === "run1"; }).slice(-1)[0];
+      if (!ref) return "";
+      function stats(o) { var g = 0, b = 0; o.actions.forEach(function (a) { g += a[1]; b += a[2]; }); return { top: Math.max.apply(null, o.v), gas: g / o.actions.length, brake: b / o.actions.length }; }
+      var a = stats(ind), r1 = stats(ref);
+      return "Evolved with the full gas and brake range. On this track its top speed is " + Math.round(a.top) + " (run 1's best: " + Math.round(r1.top) +
+        "), with " + Math.round(100 * a.gas) + "% gas and " + Math.round(100 * a.brake) + "% brake on average (run 1's best: " + Math.round(100 * r1.gas) + "% and " + Math.round(100 * r1.brake) + "%, the brake never below 12%).";
+    }
+    return CUR_TRACK === 3 && NOTES[ind.id] ? "<b>On track 3:</b> " + NOTES[ind.id] : "";
+  }
+
   function setupIndividuals() {
     var inds = DATA.individuals;
     var t = drawTrack(document.getElementById("overlayCanvas"), { mode: "whole" },
@@ -654,7 +741,7 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border
         "<dt>Average speed</dt><dd>" + fmt(ind.avg_speed, 0) + "</dd>" +
         "<dt>Hidden nodes</dt><dd>" + hidden + "</dd>" +
         "<dt>Connections</dt><dd>" + ind.graph.conns.length + "</dd></dl>" +
-        ((NOTES[ind.id] || NOTES[ind.run]) ? "<p>" + (NOTES[ind.id] || NOTES[ind.run]) + "</p>" : "") +
+        (noteFor(ind, inds) ? "<p>" + noteFor(ind, inds) + "</p>" : "") +
         '<button class="btn" type="button" data-i="' + i + '">Watch ↑</button></div>';
     }).join("");
     [].forEach.call(document.querySelectorAll("#indCards button"), function (b) {
@@ -662,7 +749,7 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border
     });
   }
 
-  function drawAll() { renderExplorer(); renderFrame(); setupIndividuals(); }
+  function drawAll() { renderExplorer(); renderFrame(); setupIndividuals(); drawGrid(); }
   document.getElementById("themeToggle").addEventListener("click", function () {
     var dark = getComputedStyle(root).colorScheme.indexOf("dark") !== -1, next = dark ? "light" : "dark";
     root.setAttribute("data-theme", next);
@@ -673,7 +760,13 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border
   fetch("assets/data/network.json").then(function (r) { return r.json(); }).then(function (d) {
     DATA = d;
     LIDAR_REL = DATA.inputs.filter(function (n) { return n.group === "lidar"; }).map(function (n) { return n.angle * Math.PI / 180; });
-    setupExplorer(); setupWatch(); setupIndividuals();
+    META = DATA.individuals;
+    setupExplorer(); setupWatch(); setupTrackPickers();
+    var q = new URLSearchParams(location.search);
+    var seed = Number(q.get("track")), drv = Number(q.get("driver"));
+    if (!DATA.tracks.some(function (t) { return t.seed === seed; })) seed = DATA.tracks[0].seed;
+    if (q.has("driver") && drv >= 0 && drv < META.length) W8.ind = drv;
+    setTrack(seed, function () { W8.f = Math.min(150, DATA.individuals[W8.ind].x.length - 1); renderFrame(); });
   });
 })();
 </script>
