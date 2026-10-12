@@ -24,6 +24,7 @@
    "why": "Population 100, every genome drives the same 3 random tracks per generation, fitness = raw game score,\nchampion picked on 5 held-out tracks. Starts as a plain 40→3 network. Its output decoding applied tanh twice,\nso gas was capped at 0.88 and the brake never released below 0.12: a car with the handbrake on.",
    "parent": null,
    "lidar_rays": 32,
+   "lidar_fov": null,
    "train": {
     "generations": 150,
     "tracks-per-generation": 3,
@@ -120,6 +121,7 @@
    "why": "Stable-Baselines3 PPO, two 256-unit layers, 4 parallel envs, stopped at 450k steps because longer runs\ncollapsed. It was trained while the traction input was stuck at 1.0, so the off-track penalty never fired\nand the network never learned what grass is.",
    "parent": null,
    "lidar_rays": 32,
+   "lidar_fov": null,
    "train": {
     "total-timesteps": 450000,
     "num-envs": 4,
@@ -220,10 +222,28 @@
    "why": "Same recipe as the baseline, but with the corrected output decoding (full gas, brake can release),\nspeciation on, and +1 fitness per frame a lap finishes under 1000 frames, so faster laps clearly win.\nFresh start, so the training time is honest."
   },
   {
+   "id": "n02_forward_rays",
+   "model": "neat",
+   "title": "16 forward rays instead of 32 all around",
+   "why": "The original lidar fans 32 rays over 324° centred on the car's right side: 13 point backwards and there is a\n36° blind gap on the left. In n00 the forward rays (about ±45°) carried most of the signal, and the side and\nback rays barely changed. Here: 16 rays over ±120° around the nose. Half the inputs, no blind spot, and a\nsmaller network to evolve. Everything else as n01."
+  },
+  {
+   "id": "n03_sparse_start",
+   "model": "neat",
+   "title": "Start unconnected: evolve which inputs to use",
+   "why": "Every earlier NEAT run started with all inputs wired to all outputs, and evolution never fully cut a single ray.\nHere every network starts with no connections at all, and only gains them by mutation, so inputs that don't\nhelp are simply never wired in. The NEAT page then shows which rays evolution chose. Everything else as n02."
+  },
+  {
    "id": "p01_lap_time",
    "model": "ppo",
    "title": "Real traction + reward lap time",
    "why": "The fixed traction input with a mild off-track penalty (the strict 15 × 0.99 recipe taught the car to park),\nlearning-rate decay against the late collapse, and +1 reward per frame a lap finishes under 1000 frames."
+  },
+  {
+   "id": "p02_forward_rays",
+   "model": "ppo",
+   "title": "16 forward rays instead of 32 all around",
+   "why": "Same sensor change as NEAT n02. In p00 the 9 rays within ±45° of the nose carried 48% of the policy's lidar\nsensitivity, and the 15 backward rays still carried 32%: likely noise it reacts to. 16 rays over ±120° remove the\nbackward rays and the blind spot on the left, and simulate about 25% faster, so the same number of steps trains\nin less time. Everything else as p01."
   }
  ]
 }
