@@ -16,6 +16,7 @@
   <a href="neat.html"><i style="background:var(--neat)"></i>NEAT</a>
   <a href="ppo.html"><i style="background:var(--ppo)"></i>PPO</a>
   <a href="race.html">Race</a>
+  <a href="championship.html">🏆 Championship</a>
   <button class="theme-toggle" id="themeToggle" type="button">◐ Theme</button>
 </nav>
 
@@ -29,6 +30,12 @@
 <section>
   <h2>Current champions</h2>
   <div class="duel" id="duel"></div>
+</section>
+
+<section>
+  <h2>Key findings</h2>
+  <p class="muted narrow">What the two ladders have shown so far, one change at a time. Each lesson links to the steps that prove it. The three best ideas are now racing each other in the <a href="championship.html">🏆 Championship</a>.</p>
+  <div class="findings" id="findings"></div>
 </section>
 
 <section>
@@ -192,6 +199,14 @@ git add experiments outputs docs && git commit -m "NEAT n02: my idea"</code></pr
     });
   }
 
+  function findings(list) {
+    document.getElementById("findings").innerHTML = list.map(function (f, i) {
+      return '<div class="card finding"><p class="num">LESSON ' + (i + 1) + "</p><h3>" + S.esc(f.title) + '</h3><p class="small muted" style="margin:0">' +
+        S.esc(f.text) + '</p><div class="links">' + f.steps.map(function (id) {
+          return '<a href="' + (id.charAt(0) === "p" ? "ppo" : "neat") + ".html#" + id + '">' + S.esc(id.split("_")[0].toUpperCase()) + "</a>";
+        }).join("") + "</div></div>";
+    }).join("");
+  }
   function render() { duel(); board(); scatter(); }
   S.onTheme(function () { if (B) render(); });
   S.json("assets/data/leaderboard.json").then(function (b) {
@@ -199,6 +214,7 @@ git add experiments outputs docs && git commit -m "NEAT n02: my idea"</code></pr
     document.getElementById("hw").textContent = "Every training time on this page: " + b.hardware.cpu + ", " + b.hardware.threads + " threads, no GPU.";
     render();
   });
+  S.json("assets/data/findings.json").then(findings);
 })();
 </script>
 </body>

@@ -13,10 +13,109 @@
   "gpu": false
  },
  "champions": {
-  "neat": "n00_baseline",
+  "neat": "n05_more_generations",
   "ppo": "p00_baseline"
  },
  "steps": [
+  {
+   "id": "n05_more_generations",
+   "model": "neat",
+   "title": "200 generations instead of 100",
+   "why": "n04's best network came from generation 98 of 100, so evolution was probably still improving when it stopped.\nSame recipe as n04 with twice the generations, from a fresh start so the training time stays honest. Shows how\nmuch faster the car gets for the extra training time.",
+   "outcome": "",
+   "parent": "n04_long_episodes",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "generations": 200,
+    "tracks-per-generation": 3,
+    "lap-time-bonus": 1.0,
+    "max-steps": 2000
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "8458f59",
+   "trained_on": "2026-10-13",
+   "train_seconds": 8819.4,
+   "selected": {
+    "generation": 117
+   },
+   "size": {
+    "params": 84,
+    "hidden": 7,
+    "connections": 74,
+    "label": "7 hidden, 74 links"
+   },
+   "summary": {
+    "finished": 5,
+    "lap_s": 20.37,
+    "score": 898.1,
+    "offtrack_pct": 2.5
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 17.32,
+     "frames": 866,
+     "score": 913.4,
+     "offtrack_pct": 0.0,
+     "avg_speed": 53.4,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 20.2,
+     "frames": 1010,
+     "score": 899.0,
+     "offtrack_pct": 6.0,
+     "avg_speed": 52.5,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": true,
+     "lap_s": 23.16,
+     "frames": 1158,
+     "score": 884.2,
+     "offtrack_pct": 2.8,
+     "avg_speed": 50.3,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": true,
+     "lap_s": 20.84,
+     "frames": 1042,
+     "score": 895.8,
+     "offtrack_pct": 3.6,
+     "avg_speed": 53.2,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": true,
+     "lap_s": 20.34,
+     "frames": 1017,
+     "score": 898.3,
+     "offtrack_pct": 0.0,
+     "avg_speed": 52.1,
+     "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
   {
    "id": "n00_baseline",
    "model": "neat",
@@ -725,6 +824,109 @@
    ]
   },
   {
+   "id": "p04_back_to_p00",
+   "model": "ppo",
+   "title": "Back to p00's recipe, plus forward rays and the stuck rule",
+   "why": "p01-p03 never learned to drive, and each one changed several settings at once compared with p00, the only PPO run\nthat learned. Here p00's recipe is restored as it was: constant learning rate, no KL early stop, 1000-frame\nepisodes, no lap-time bonus, no grass penalty. Only three things differ from p00: the 16 forward rays, the stuck\nrule from p03, and the real traction input (p00 only ever saw 1.0). If this learns, the lap-time bonus comes back\nas its own step.",
+   "outcome": "",
+   "parent": "p00_baseline",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "total-timesteps": 600000,
+    "num-envs": 4,
+    "n-steps": 1024,
+    "batch-size": 256,
+    "entropy-coef": 0.005,
+    "offtrack-penalty": 0.0,
+    "stuck-patience": 100,
+    "allow-multiple-laps": false,
+    "eval-frequency": 25000,
+    "checkpoint-frequency": 100000
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "8458f59",
+   "trained_on": "2026-10-13",
+   "train_seconds": 369.9,
+   "selected": {
+    "timestep": 375000
+   },
+   "size": {
+    "params": 145415,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 0,
+    "lap_s": null,
+    "score": 236.8,
+    "offtrack_pct": 75.3
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": false,
+     "lap_s": null,
+     "frames": 1830,
+     "score": 285.4,
+     "offtrack_pct": 65.2,
+     "avg_speed": 52.0,
+     "reached_pct": 56.8,
+     "crashed": true
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -14.7,
+     "offtrack_pct": 93.1,
+     "avg_speed": 18.3,
+     "reached_pct": 18.5,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 146.2,
+     "offtrack_pct": 83.5,
+     "avg_speed": 26.5,
+     "reached_pct": 34.6,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 529.8,
+     "offtrack_pct": 74.0,
+     "avg_speed": 34.8,
+     "reached_pct": 73.0,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 237.3,
+     "offtrack_pct": 60.5,
+     "avg_speed": 32.8,
+     "reached_pct": 43.7,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "p01_lap_time",
    "model": "ppo",
    "title": "Real traction + reward lap time",
@@ -934,16 +1136,40 @@
  ],
  "pending": [
   {
-   "id": "n05_more_generations",
+   "id": "neat16",
    "model": "neat",
-   "title": "200 generations instead of 100",
-   "why": "n04's best network came from generation 98 of 100, so evolution was probably still improving when it stopped.\nSame recipe as n04 with twice the generations, from a fresh start so the training time stays honest. Shows how\nmuch faster the car gets for the extra training time."
+   "title": "NEAT 16: the proven recipe",
+   "why": "The best NEAT recipe from the ladder (n05): 16 rays facing forward over ±120°, 2000-frame training episodes,\n+1 fitness per frame a lap beats 1000 frames, population 100. Trained from scratch for up to 8 hours, stopping\nearly if the validation lap time has not improved for 2 hours."
   },
   {
-   "id": "p04_back_to_p00",
+   "id": "neat32",
+   "model": "neat",
+   "title": "NEAT 32: twice the rays",
+   "why": "Same as NEAT 16 but with 32 forward rays over the same ±120°: twice the detail ahead, but twice the inputs to evolve\nand a slower simulation. Do more rays make a faster car, or only a slower-to-train one?"
+  },
+  {
+   "id": "neatsmart",
+   "model": "neat",
+   "title": "NEAT Smart: every lesson at once",
+   "why": "NEAT 16 plus three lessons from the ladder. (1) No compass inputs: cos/sin(heading) are useless on random tracks,\nand in n00 evolution had already cut cos(heading) off. (2) Five tracks per generation instead of three, so a network\ncan't win by drawing easy tracks. (3) A stronger lap-time bonus (2 per frame) to push harder for speed."
+  },
+  {
+   "id": "p05_control",
    "model": "ppo",
-   "title": "Back to p00's recipe, plus forward rays and the stuck rule",
-   "why": "p01-p03 never learned to drive, and each one changed several settings at once compared with p00, the only PPO run\nthat learned. Here p00's recipe is restored as it was: constant learning rate, no KL early stop, 1000-frame\nepisodes, no lap-time bonus, no grass penalty. Only three things differ from p00: the 16 forward rays, the stuck\nrule from p03, and the real traction input (p00 only ever saw 1.0). If this learns, the lap-time bonus comes back\nas its own step."
+   "title": "Control: p00's recipe, only the real traction input",
+   "why": "First of three short checks to find what broke PPO. This is p00's recipe exactly (32 original rays, no stuck rule,\nno grass penalty, 1000-frame episodes, constant learning rate). The only difference from p00 is that the traction\ninput now works, which can't be undone. If this learns, the traction fix is not the problem."
+  },
+  {
+   "id": "p06_rays_only",
+   "model": "ppo",
+   "title": "Check: control + 16 forward rays",
+   "why": "Second check: the control recipe with only the 16 forward rays added. If p05 learns and this doesn't, the ray\nchange is what hurts PPO."
+  },
+  {
+   "id": "p07_stuck_only",
+   "model": "ppo",
+   "title": "Check: control + stuck rule",
+   "why": "Third check: the control recipe with only the stuck rule added (end the episode after 100 frames without a new\ntile). If p05 learns and this doesn't, cutting episodes short is what hurts PPO: the car gets little practice\nrecovering from the grass."
   }
  ]
 }

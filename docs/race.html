@@ -8,30 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/site.css">
-<style>
-.arena { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; align-items: start; }
-.arena canvas { width: 100%; aspect-ratio: 1 / 1; display: block; border-radius: 10px; background: var(--grass); }
-.clock { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
-.clock .t { font-family: "JetBrains Mono", monospace; font-size: 1.6rem; font-weight: 500; font-variant-numeric: tabular-nums; }
-.clock .of { color: var(--text-3); font-size: 0.85rem; }
-.timebar { height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden; margin-bottom: 12px; }
-.timebar b { display: block; height: 100%; background: var(--text-3); width: 0; }
-.board { list-style: none; margin: 0; padding: 0; }
-.board li { display: grid; grid-template-columns: 22px 12px 1fr auto; gap: 4px 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
-.board li:last-child { border-bottom: none; }
-.board .pos { font-weight: 700; color: var(--text-3); font-variant-numeric: tabular-nums; }
-.board .dot { width: 12px; height: 12px; border-radius: 50%; }
-.board .name { font-weight: 600; }
-.board .stat { font-size: 0.8rem; color: var(--text-2); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.board .prog { grid-column: 3 / 5; height: 5px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
-.board .prog b { display: block; height: 100%; border-radius: 3px; }
-.board .flag { color: var(--good); font-weight: 600; }
-.board .warn { color: var(--text-3); }
-.scrub { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-.scrub input { flex: 1; }
-.medal { font-weight: 700; }
-@media (max-width: 900px) { .arena { grid-template-columns: 1fr; } }
-</style>
 </head>
 <body>
 <main>
@@ -40,6 +16,7 @@
   <a href="neat.html"><i style="background:var(--neat)"></i>NEAT</a>
   <a href="ppo.html"><i style="background:var(--ppo)"></i>PPO</a>
   <a href="race.html" class="active" aria-current="page">Race</a>
+  <a href="championship.html">🏆 Championship</a>
   <button class="theme-toggle" id="themeToggle" type="button">◐ Theme</button>
 </nav>
 
@@ -53,20 +30,20 @@
   <div class="row"><span class="lbl">Track</span><span id="trackPills" style="display:contents"></span></div>
   <div class="row"><span class="lbl">Drivers</span><span id="racerChips" style="display:contents"></span></div>
   <div class="row" style="margin:6px 0 0">
-    <button class="btn" id="startBtn" type="button">▶ Start race</button>
-    <button class="btn ghost" id="resetBtn" type="button">⟲ Restart</button>
-    <div class="seg" id="speedSeg" role="group" aria-label="Speed"><button type="button" data-s="0.5">½×</button><button type="button" class="on" data-s="1">1×</button><button type="button" data-s="2">2×</button><button type="button" data-s="4">4×</button></div>
-    <div class="seg" id="camSeg" role="group" aria-label="Camera"><button type="button" class="on" data-c="whole">Whole track</button><button type="button" data-c="leader">Follow leader</button></div>
+    <button class="btn" id="raceStart" type="button">▶ Start race</button>
+    <button class="btn ghost" id="raceReset" type="button">⟲ Restart</button>
+    <div class="seg" id="raceSpeed" role="group" aria-label="Speed"><button type="button" data-s="0.5">½×</button><button type="button" class="on" data-s="1">1×</button><button type="button" data-s="2">2×</button><button type="button" data-s="4">4×</button></div>
+    <div class="seg" id="raceCam" role="group" aria-label="Camera"><button type="button" class="on" data-c="whole">Whole track</button><button type="button" data-c="leader">Follow leader</button></div>
   </div>
 </div>
 
 <div class="arena">
   <div class="card" style="margin-top:0;padding:10px"><canvas id="raceCanvas" width="900" height="900" role="img" aria-label="Race track with the selected drivers"></canvas></div>
   <div class="card" style="margin-top:0">
-    <div class="clock"><span class="t" id="clock">0:00.00</span><span class="of" id="clockOf"></span></div>
-    <div class="timebar"><b id="timebar"></b></div>
-    <ol class="board" id="board"></ol>
-    <div class="scrub"><span class="small muted">Scrub</span><input type="range" id="scrub" min="0" max="2000" value="0" aria-label="Race time"></div>
+    <div class="clock"><span class="t" id="raceClock">0:00.00</span><span class="of" id="raceClockOf"></span></div>
+    <div class="timebar"><b id="raceTimebar"></b></div>
+    <ol class="board" id="raceBoard"></ol>
+    <div class="scrub"><span class="small muted">Scrub</span><input type="range" id="raceScrub" min="0" max="2000" value="0" aria-label="Race time"></div>
   </div>
 </div>
 
@@ -86,119 +63,23 @@
 </main>
 
 <script src="assets/site.js"></script>
+<script src="assets/race-player.js"></script>
 <script>
 (function () {
   "use strict";
-  var Site = window.Site, css = Site.css;
+  var Site = window.Site;
   var POINTS = [25, 18, 15, 12, 10, 8, 6, 4];
-  var B = null, TRACKS = null, DRIVES = {}, T = null;
-  var S = { track: 0, sel: {}, frame: 0, playing: false, speed: 1, cam: "whole", last: 0 };
+  var B = null, TRACKS = null, DRIVES = {}, T = null, sel = {}, player = null;
 
   function step(id) { return B.steps.filter(function (s) { return s.id === id; })[0]; }
-  function color(id) { return Site.stepColor(id, B.steps); }
+  function color(id) { return Site.stepColor(id); }
+  function name(id) { var s = step(id); return Site.modelName(s.model) + " " + Site.short(s); }
   function racers() { return B.steps.slice().sort(function (a, b) { return a.id < b.id ? -1 : 1; }); }
-  function selected() { return racers().filter(function (r) { return S.sel[r.id]; }).map(function (r) { return r.id; }); }
-  function fmtTime(frames) { return Site.clock(frames, B.fps); }
+  function selected() { return racers().filter(function (r) { return sel[r.id]; }).map(function (r) { return r.id; }); }
   function result(id, seed) { return step(id).tracks.filter(function (t) { return t.seed === seed; })[0]; }
-  function run(id, trackObj) { return DRIVES[id][String((trackObj || T).seed)]; }
-  function endFrame(id, trackObj) { return result(id, (trackObj || T).seed).frames; }
-  // Tiles a driver never touched on this track (a lap needs every tile).
-  function missed(id, trackObj) { var r = run(id, trackObj); return (trackObj || T).tiles - r.tiles[r.tiles.length - 1]; }
-  function dnfText(id, trackObj) {
-    var m = missed(id, trackObj);
-    return m <= 3 ? "DNF · missed " + m + " tile" + (m === 1 ? "" : "s") : "DNF";
-  }
-  // Coverage without rounding a near-miss up to 100%.
-  function covered(pct) { return pct >= 99.5 && pct < 100 ? pct.toFixed(1) + "%" : Math.round(pct) + "%"; }
-  function raceLength() { return Math.max.apply(null, [1].concat(selected().map(function (id) { return endFrame(id); }))); }
 
-  // Interpolated state of one racer at (possibly fractional) game frame f.
-  function at(id, f, trackObj) {
-    var r = run(id, trackObj), n = r.x.length, i = f / r.every, i0 = Math.min(n - 1, Math.floor(i)), i1 = Math.min(n - 1, i0 + 1), t = Math.min(1, i - i0);
-    if (i >= n - 1) { i0 = i1 = n - 1; t = 0; }
-    var da = r.a[i1] - r.a[i0]; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
-    var done = r.finish != null && f >= r.finish, tiles = (trackObj || T).tiles;
-    return { x: r.x[i0] + (r.x[i1] - r.x[i0]) * t, y: r.y[i0] + (r.y[i1] - r.y[i0]) * t, a: r.a[i0] + da * t,
-      v: done ? 0 : r.v[i0], tiles: done ? tiles : r.tiles[i0], grass: r.grass[i0], done: done, finish: r.finish };
-  }
-  // Ranking: finished laps by time, then most tiles reached.
-  function standings(f, trackObj) {
-    return selected().map(function (id) { return { id: id, s: at(id, f, trackObj) }; }).sort(function (a, b) {
-      var fa = a.s.done ? a.s.finish : Infinity, fb = b.s.done ? b.s.finish : Infinity;
-      if (fa !== fb) return fa - fb;
-      return b.s.tiles - a.s.tiles;
-    });
-  }
-
-  function draw() {
-    var cv = document.getElementById("raceCanvas"), ctx = cv.getContext("2d"), W = cv.width, H = cv.height;
-    var b = T.bounds, cx, cy, scale, f = S.frame, board = standings(f);
-    if (S.cam === "leader" && board.length) { cx = board[0].s.x; cy = board[0].s.y; scale = W / 230; }
-    else { cx = (b[0] + b[2]) / 2; cy = (b[1] + b[3]) / 2; scale = Math.min(W / (b[2] - b[0]), H / (b[3] - b[1])) * 0.9; }
-    function P(x, y) { return [W / 2 + (x - cx) * scale, H / 2 - (y - cy) * scale]; }
-    ctx.fillStyle = css("--grass"); ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = css("--road");
-    T.polys.forEach(function (p) {
-      ctx.beginPath();
-      for (var i = 0; i < p.length; i += 2) { var q = P(p[i], p[i + 1]); if (i) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); }
-      ctx.closePath(); ctx.fill();
-    });
-    var st = P(T.start[0], T.start[1]);
-    ctx.save(); ctx.translate(st[0], st[1]); ctx.rotate(-T.start_angle);
-    var sq = Math.max(2, 7 * scale / 4);
-    for (var k = -4; k < 4; k++) for (var j = 0; j < 2; j++) { ctx.fillStyle = (k + j) % 2 ? "#ffffff" : "#111111"; ctx.fillRect(k * sq, (j - 1) * sq, sq, sq); }
-    ctx.restore();
-    var order = board.slice().reverse();
-    order.forEach(function (e) {
-      var r = run(e.id), end = Math.min(r.x.length - 1, Math.floor(f / r.every)), start = Math.max(0, end - 40);
-      ctx.strokeStyle = color(e.id); ctx.lineWidth = 3; ctx.globalAlpha = 0.45; ctx.lineJoin = "round";
-      ctx.beginPath();
-      for (var i = start; i <= end; i++) { var q = P(r.x[i], r.y[i]); if (i > start) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); }
-      var c = P(e.s.x, e.s.y); ctx.lineTo(c[0], c[1]); ctx.stroke(); ctx.globalAlpha = 1;
-    });
-    var placed = [];
-    order.forEach(function (e) {
-      var c = P(e.s.x, e.s.y), a = e.s.a, size = Math.max(9, 5 * scale);
-      var fx = -Math.sin(a), fy = Math.cos(a), rx = Math.cos(a), ry = Math.sin(a);
-      var shape = [[0, 1], [0.55, -0.7], [0, -0.35], [-0.55, -0.7]].map(function (p) { return [c[0] + (rx * p[0] + fx * p[1]) * size, c[1] - (ry * p[0] + fy * p[1]) * size]; });
-      ctx.fillStyle = color(e.id); ctx.strokeStyle = css("--surface"); ctx.lineWidth = 2;
-      ctx.beginPath(); shape.forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.font = "600 15px Inter, system-ui, sans-serif";
-      var s = step(e.id), label = Site.modelName(s.model) + " " + Site.short(s) + (e.s.done ? " 🏁" : ""), w = ctx.measureText(label).width + 12, h = 22;
-      var lx = c[0] + 12, ly = c[1] - 30;
-      for (var tries = 0; tries < 8; tries++) {
-        if (!placed.some(function (p) { return lx < p[0] + p[2] && lx + w > p[0] && ly < p[1] + p[3] && ly + h > p[1]; })) break;
-        ly += h + 2;
-      }
-      placed.push([lx, ly, w, h]);
-      ctx.fillStyle = css("--surface"); ctx.globalAlpha = 0.92; ctx.beginPath(); ctx.roundRect(lx, ly, w, h, 6); ctx.fill(); ctx.globalAlpha = 1;
-      ctx.strokeStyle = color(e.id); ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = css("--text"); ctx.fillText(label, lx + 6, ly + 16);
-    });
-    drawBoard(board);
-  }
-
-  function drawBoard(board) {
-    var f = S.frame, len = raceLength();
-    document.getElementById("clock").textContent = fmtTime(f);
-    document.getElementById("clockOf").textContent = "of " + fmtTime(len);
-    document.getElementById("timebar").style.width = (100 * f / len) + "%";
-    var scrub = document.getElementById("scrub"); scrub.max = len; scrub.value = Math.round(f);
-    document.getElementById("board").innerHTML = board.map(function (e, i) {
-      var pct = 100 * e.s.tiles / T.tiles, st, s = step(e.id);
-      if (e.s.done) st = '<span class="flag">🏁 ' + fmtTime(e.s.finish) + "</span>";
-      else if (f >= endFrame(e.id)) st = '<span class="warn">' + dnfText(e.id) + "</span>";
-      else if (f > 0 && e.s.v < 2) st = '<span class="warn">stopped</span>';
-      else if (e.s.grass >= 2) st = '<span class="warn">on grass · ' + Math.round(e.s.v) + "</span>";
-      else st = Math.round(e.s.v) + " speed";
-      return '<li><span class="pos">' + (i + 1) + '</span><span class="dot" style="background:' + color(e.id) + '"></span>' +
-        '<span class="name">' + Site.modelName(s.model) + " " + Site.short(s) + '</span><span class="stat">' + Math.round(pct) + "% · " + st + "</span>" +
-        '<span class="prog"><b style="width:' + pct + "%;background:" + color(e.id) + '"></b></span></li>';
-    }).join("") || '<li><span></span><span></span><span class="muted">Pick at least one driver</span></li>';
-  }
-
-  function resultRows(trackObj) {
-    return standings(2000, trackObj).map(function (e, i) { return { id: e.id, pos: i + 1, s: e.s, res: result(e.id, trackObj.seed) }; });
+  function resultRows(track) {
+    return player.standings(2000, track).map(function (e, i) { return { id: e.id, pos: i + 1, res: result(e.id, track.seed) }; });
   }
   function drawResults() {
     var rows = resultRows(T);
@@ -206,9 +87,9 @@
     document.getElementById("results").innerHTML = "<thead><tr><th>Pos</th><th>Driver</th><th class='num'>Lap time</th><th class='num'>Track covered</th><th class='num'>On grass</th><th class='num'>Training</th></tr></thead><tbody>" +
       rows.map(function (r) {
         var s = step(r.id);
-        return "<tr><td class='medal'>" + r.pos + "</td><td><i style='background:" + color(r.id) + "'></i>" + Site.modelName(s.model) + " " + Site.short(s) +
+        return "<tr><td class='medal'>" + r.pos + "</td><td><i style='background:" + color(r.id) + "'></i>" + name(r.id) +
           " <span class='muted'>" + Site.esc(s.title) + "</span></td>" +
-          "<td class='num'>" + (r.res.finished ? Site.lap(r.res.lap_s) : dnfText(r.id, T)) + "</td><td class='num'>" + covered(r.res.reached_pct) + "</td>" +
+          "<td class='num'>" + (r.res.finished ? Site.lap(r.res.lap_s) : player.dnfText(r.id, T)) + "</td><td class='num'>" + player.covered(r.res.reached_pct) + "</td>" +
           "<td class='num'>" + Math.round(r.res.offtrack_pct) + "%</td><td class='num'>" + Site.dur(s.train_seconds) + "</td></tr>";
       }).join("") + "</tbody>";
     var ids = selected(), pts = {}, wins = {}, laps = {};
@@ -222,68 +103,50 @@
     document.getElementById("champ").innerHTML = "<thead><tr><th>Pos</th><th>Driver</th>" + cols.map(function (c) { return "<th class='num'>Track " + c.seed + "</th>"; }).join("") +
       "<th class='num'>Wins</th><th class='num'>Laps</th><th class='num'>Points</th></tr></thead><tbody>" +
       order.map(function (id, i) {
-        var s = step(id);
-        return "<tr><td class='medal'>" + (i + 1) + "</td><td><i style='background:" + color(id) + "'></i>" + Site.modelName(s.model) + " " + Site.short(s) + "</td>" +
+        return "<tr><td class='medal'>" + (i + 1) + "</td><td><i style='background:" + color(id) + "'></i>" + name(id) + "</td>" +
           cols.map(function (c) { var r = c.byId[id]; return "<td class='num'>P" + r.pos + (r.res.finished ? " 🏁" : "") + "</td>"; }).join("") +
           "<td class='num'>" + wins[id] + "</td><td class='num'>" + laps[id] + "</td><td class='num'><b>" + pts[id] + "</b></td></tr>";
       }).join("") + "</tbody>";
   }
 
-  function finishedAll() { return S.frame >= raceLength(); }
-  function tick(ts) {
-    if (!S.playing) return;
-    var dt = S.last ? ts - S.last : 0; S.last = ts;
-    S.frame = Math.min(raceLength(), S.frame + dt / 1000 * B.fps * S.speed);
-    draw();
-    if (finishedAll()) { S.playing = false; setStartLabel(); return; }
-    requestAnimationFrame(tick);
-  }
-  function setStartLabel() { document.getElementById("startBtn").textContent = S.playing ? "❚❚ Pause" : (S.frame > 0 && !finishedAll() ? "▶ Resume" : "▶ Start race"); }
   function setTrack(i) {
-    S.track = i; T = TRACKS[i]; S.frame = 0; S.playing = false; setStartLabel();
+    T = TRACKS[i];
     [].forEach.call(document.querySelectorAll("#trackPills .pill"), function (p, j) { p.className = "pill" + (j === i ? " on" : ""); });
-    draw(); drawResults();
+    player.setTrack(T); drawResults();
   }
   function setup() {
     var tp = document.getElementById("trackPills"); tp.innerHTML = "";
     TRACKS.forEach(function (t, i) {
-      var b = document.createElement("button"); b.type = "button"; b.className = "pill"; b.textContent = "Track " + t.seed + " · " + t.tiles + " tiles";
+      var b = document.createElement("button"); b.type = "button"; b.className = "pill" + (t === T ? " on" : ""); b.textContent = "Track " + t.seed + " · " + t.tiles + " tiles";
       b.onclick = function () { setTrack(i); }; tp.appendChild(b);
     });
     var rc = document.getElementById("racerChips"); rc.innerHTML = "";
     racers().forEach(function (r) {
       var b = document.createElement("button"); b.type = "button"; b.title = r.title;
-      b.innerHTML = '<i style="background:' + color(r.id) + '"></i>' + Site.modelName(r.model) + " " + Site.short(r) + ' <span class="faint">' + Site.esc(r.title) + "</span>";
-      b.className = "chip" + (S.sel[r.id] ? " on" : "");
-      b.onclick = function () { S.sel[r.id] = !S.sel[r.id]; b.className = "chip" + (S.sel[r.id] ? " on" : ""); S.frame = Math.min(S.frame, raceLength()); draw(); drawResults(); setStartLabel(); };
+      b.innerHTML = '<i style="background:' + color(r.id) + '"></i>' + name(r.id) + ' <span class="faint">' + Site.esc(r.title) + "</span>";
+      b.className = "chip" + (sel[r.id] ? " on" : "");
+      b.onclick = function () { sel[r.id] = !sel[r.id]; b.className = "chip" + (sel[r.id] ? " on" : ""); player.setRacers(selected()); drawResults(); };
       rc.appendChild(b);
     });
   }
-  function wire() {
-    document.getElementById("startBtn").onclick = function () {
-      if (!S.playing && finishedAll()) S.frame = 0;
-      S.playing = !S.playing; S.last = 0; setStartLabel(); if (S.playing) requestAnimationFrame(tick);
-    };
-    document.getElementById("resetBtn").onclick = function () { S.frame = 0; S.playing = false; setStartLabel(); draw(); };
-    document.getElementById("scrub").oninput = function (e) { S.frame = Number(e.target.value); draw(); setStartLabel(); };
-    [].forEach.call(document.querySelectorAll("#speedSeg button"), function (b) {
-      b.onclick = function () { S.speed = Number(b.dataset.s); [].forEach.call(b.parentNode.children, function (c) { c.className = c === b ? "on" : ""; }); };
-    });
-    [].forEach.call(document.querySelectorAll("#camSeg button"), function (b) {
-      b.onclick = function () { S.cam = b.dataset.c; [].forEach.call(b.parentNode.children, function (c) { c.className = c === b ? "on" : ""; }); draw(); };
-    });
-  }
-  Site.onTheme(function () { if (B) { setup(); setTrack(S.track); } });
+  Site.onTheme(function () { if (B) { setup(); player.redraw(); drawResults(); } });
 
   Promise.all([Site.json("assets/data/leaderboard.json"), Site.json("assets/data/tracks.json")]).then(function (r) {
     B = r[0]; TRACKS = r[1];
     return Promise.all(B.steps.map(function (s) { return Site.json("assets/data/drives/" + s.id + ".json").then(function (d) { DRIVES[s.id] = d; }); }));
   }).then(function () {
+    player = RacePlayer({
+      prefix: "race", fps: B.fps,
+      racer: function (id) { return { label: name(id), color: color(id) }; },
+      run: function (id, seed) { return DRIVES[id][String(seed)]; },
+      result: result
+    });
     var q = new URLSearchParams(location.search);
     var pick = q.get("drivers") ? q.get("drivers").split(",") : [B.champions.neat, B.champions.ppo];
-    B.steps.forEach(function (s) { S.sel[s.id] = pick.indexOf(s.id) !== -1; });
+    B.steps.forEach(function (s) { sel[s.id] = pick.indexOf(s.id) !== -1; });
     var ti = TRACKS.findIndex(function (t) { return String(t.seed) === q.get("track"); });
-    setup(); wire(); setTrack(ti >= 0 ? ti : 0);
+    T = TRACKS[ti >= 0 ? ti : 0];
+    setup(); player.setRacers(selected()); setTrack(ti >= 0 ? ti : 0);
   });
 })();
 </script>

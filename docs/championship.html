@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Championship</title>
+<meta name="description" content="Three NEAT cars against three PPO cars: who finishes with the least training, and who sets the fastest lap within 8 hours of training.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+.titles { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.title-card { position: relative; overflow: hidden; }
+.title-card .trophy { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.title-card h3 { font-size: 1.3rem; margin: 4px 0 2px; display: flex; align-items: center; gap: 8px; }
+.title-card .big { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; margin-top: 10px; }
+.title-card img { width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block; aspect-ratio: 3 / 2; object-fit: cover; background: var(--surface-2); margin-top: 12px; }
+.title-card .empty { aspect-ratio: 3 / 2; border-radius: 8px; border: 1.5px dashed var(--border); display: grid; place-items: center; margin-top: 12px; color: var(--text-3); text-align: center; padding: 16px; }
+.cat-switch { margin-bottom: 4px; }
+.pit { list-style: none; margin: 12px 0 0; padding: 12px 0 0; border-top: 1px dashed var(--border); font-size: 0.84rem; color: var(--text-2); }
+.pit li { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+.pit .why { color: var(--text-3); }
+.cars { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-top: 12px; }
+.car { border-top: 4px solid var(--car); margin: 0; display: flex; flex-direction: column; }
+.car h3 { display: flex; align-items: center; gap: 8px; }
+.car .badge { margin-left: auto; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; color: var(--text-3); }
+.car .badge.raced { color: var(--good); }
+.car .lineage { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 0; align-items: center; font-size: 0.76rem; color: var(--text-3); }
+.car .lineage a { font-family: "JetBrains Mono", monospace; font-size: 0.74rem; padding: 1px 6px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); text-decoration: none; color: var(--text-2); }
+.car .tiles { grid-template-columns: 1fr 1fr; margin-top: 12px; }
+.cell-fin { font-variant-numeric: tabular-nums; }
+.cell-dnf { color: var(--text-3); }
+td.p1 { font-weight: 700; }
+@media (max-width: 860px) { .titles { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+<nav class="tabs" aria-label="Pages">
+  <a href="index.html">Overview</a>
+  <a href="neat.html"><i style="background:var(--neat)"></i>NEAT</a>
+  <a href="ppo.html"><i style="background:var(--ppo)"></i>PPO</a>
+  <a href="race.html">Race</a>
+  <a href="championship.html" class="active" aria-current="page">🏆 Championship</a>
+  <button class="theme-toggle" id="themeToggle" type="button">◐ Theme</button>
+</nav>
+
+<header class="narrow">
+  <p class="eyebrow">Three NEAT cars vs three PPO cars · two titles</p>
+  <h1>The Championship</h1>
+  <p class="lede">Each car is a training recipe built from what the ladders taught us, trained once from scratch on the same laptop, for at most <span id="budget">8</span> hours. Then they race on five tracks that none of them has ever seen.</p>
+  <div class="rules" style="margin-top:18px">
+    <div class="card" style="margin:0"><h3>⏱ Quickest to finish</h3><p class="small muted" style="margin:0">The checkpoint that first finished all five validation tracks during training. On each race track, the car that finishes with the <strong>least training time</strong> wins.</p></div>
+    <div class="card" style="margin:0"><h3>🏁 Fastest lap</h3><p class="small muted" style="margin:0">The checkpoint with the fastest validation laps within the 8-hour budget. On each race track, the <strong>fastest lap</strong> wins.</p></div>
+  </div>
+  <p class="small faint" style="margin-top:10px">Points per track: 25, 18, 15, 12, 10, 8. A DNF scores nothing. Both checkpoints are chosen on separate validation tracks, so the race tracks stay unseen.</p>
+</header>
+
+<section>
+  <h2>Title leaders</h2>
+  <div class="titles" id="titles"></div>
+</section>
+
+<section id="raceSection">
+  <h2>Race</h2>
+  <div class="card">
+    <div class="row cat-switch"><span class="lbl">Title</span><div class="seg" id="catSeg" role="group" aria-label="Category"><button type="button" data-c="fast" class="on">🏁 Fastest lap</button><button type="button" data-c="finish">⏱ Quickest to finish</button></div></div>
+    <div class="row"><span class="lbl">Track</span><span id="trackPills" style="display:contents"></span></div>
+    <div class="row" style="margin:6px 0 0">
+      <button class="btn" id="champStart" type="button">▶ Start race</button>
+      <button class="btn ghost" id="champReset" type="button">⟲ Restart</button>
+      <div class="seg" id="champSpeed" role="group" aria-label="Speed"><button type="button" data-s="0.5">½×</button><button type="button" class="on" data-s="1">1×</button><button type="button" data-s="2">2×</button><button type="button" data-s="4">4×</button></div>
+      <div class="seg" id="champCam" role="group" aria-label="Camera"><button type="button" class="on" data-c="whole">Whole track</button><button type="button" data-c="leader">Follow leader</button></div>
+    </div>
+  </div>
+  <div class="arena">
+    <div class="card" style="margin-top:0;padding:10px"><canvas id="champCanvas" width="900" height="900" role="img" aria-label="Race track with the championship cars"></canvas></div>
+    <div class="card" style="margin-top:0">
+      <div class="clock"><span class="t" id="champClock">0:00.00</span><span class="of" id="champClockOf"></span></div>
+      <div class="timebar"><b id="champTimebar"></b></div>
+      <ol class="board" id="champBoard"></ol>
+      <div class="scrub"><span class="small muted">Scrub</span><input type="range" id="champScrub" min="0" max="2000" value="0" aria-label="Race time"></div>
+      <ul class="pit" id="pitLane"></ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Standings</h2>
+  <p class="muted narrow" id="standingsNote"></p>
+  <div class="card table-scroll"><table id="standings"></table></div>
+</section>
+
+<section>
+  <h2>The cars</h2>
+  <p class="muted narrow">Each recipe is built on the ladder steps listed under it. Click a step to see what it changed and what happened.</p>
+  <div class="cars" id="cars"></div>
+</section>
+
+<section>
+  <h2>Training against the clock</h2>
+  <p class="muted narrow">The mean lap on the five validation tracks during training, plotted against hours of training. Only checks where the car finished all five tracks are plotted. ⏱ marks the "quickest to finish" checkpoint and 🏁 the "fastest lap" one.</p>
+  <div class="card">
+    <div class="chart-wrap"><canvas id="curve" role="img" aria-label="Validation lap time against training hours for each car"></canvas></div>
+    <div class="legend" id="curveLegend"></div>
+    <p class="small faint" id="curveEmpty" style="display:none;margin:8px 0 0">No car has finished training yet.</p>
+  </div>
+</section>
+
+<section>
+  <h2>What works, and how we know</h2>
+  <p class="muted narrow">Each lesson comes from a step on the ladders, run with one change at a time and benchmarked on the same five tracks.</p>
+  <div class="findings" id="findings"></div>
+</section>
+
+<footer>Data: <code>experiments/championship/*.toml</code> (cars), <code>scripts/run_step.py</code> (training, both checkpoints, benchmark), <code>scripts/build_site.py</code>. Lessons: <code>experiments/findings.toml</code>.</footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="assets/site.js"></script>
+<script src="assets/race-player.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.Site, css = S.css;
+  var C = null, TRACKS = null, FINDINGS = null, DRIVES = { fast: {}, finish: {} }, chart = null, player = null;
+  var cur = { cat: "fast", track: 0 };
+  var CAT = {
+    fast: { name: "Fastest lap", icon: "🏁" },
+    finish: { name: "Quickest to finish", icon: "⏱" }
+  };
+
+  function car(id) { return C.cars.filter(function (c) { return c.id === id; })[0]; }
+  function color(c) { return css(c.color); }
+  function entry(c, cat) { return c.categories && c.categories[cat]; }
+  function entrants(cat) { return C.cars.filter(function (c) { return entry(c, cat); }); }
+  function result(id, seed, cat) { return entry(car(id), cat || cur.cat).tracks.filter(function (t) { return t.seed === seed; })[0]; }
+  function stepLink(id) {
+    var m = id.charAt(0) === "p" ? "ppo" : "neat";
+    return '<a href="' + m + ".html#" + id + '" title="' + S.esc(id) + '">' + S.esc(id.split("_")[0].toUpperCase()) + "</a>";
+  }
+
+  /** Per track: order the cars that finished (fast: lap time; finish: training time), award points. */
+  function score(cat) {
+    var cars = entrants(cat), table = {};
+    cars.forEach(function (c) { table[c.id] = { pts: 0, wins: 0, laps: 0, cells: {} }; });
+    C.seeds.forEach(function (seed) {
+      var done = cars.map(function (c) { return { c: c, r: result(c.id, seed, cat), e: entry(c, cat) }; })
+        .filter(function (x) { return x.r.finished; })
+        .sort(function (a, b) {
+          return cat === "fast" ? a.r.lap_s - b.r.lap_s || a.e.train_seconds - b.e.train_seconds
+                                : a.e.train_seconds - b.e.train_seconds || a.r.lap_s - b.r.lap_s;
+        });
+      cars.forEach(function (c) { table[c.id].cells[seed] = { pos: null, r: result(c.id, seed, cat) }; });
+      done.forEach(function (x, i) {
+        var t = table[x.c.id];
+        t.cells[seed].pos = i + 1; t.pts += C.points[i] || 0; t.laps++;
+        if (i === 0) t.wins++;
+      });
+    });
+    var order = cars.map(function (c) { return c.id; }).sort(function (a, b) {
+      return table[b].pts - table[a].pts || table[b].wins - table[a].wins || table[b].laps - table[a].laps;
+    });
+    return { table: table, order: order };
+  }
+
+  function titles() {
+    document.getElementById("titles").innerHTML = ["fast", "finish"].map(function (cat) {
+      var sc = score(cat), lead = sc.order.length ? car(sc.order[0]) : null;
+      var head = '<p class="trophy">' + CAT[cat].icon + " " + CAT[cat].name + "</p>";
+      if (!lead || sc.table[lead.id].pts === 0) {
+        var training = C.cars.filter(function (c) { return c.status === "queued"; }).length;
+        return '<div class="card title-card">' + head + "<h3>No leader yet</h3>" +
+          '<div class="empty">' + (training ? training + " car" + (training === 1 ? " is" : "s are") + " in the garage, training.<br>The first results will appear here." : "No car has finished a race yet.") + "</div></div>";
+      }
+      var e = entry(lead, cat), t = sc.table[lead.id];
+      var big = cat === "fast" ? S.lap(e.summary.lap_s) + ' <span class="small muted">mean lap</span>'
+                               : S.dur(e.train_seconds) + ' <span class="small muted">of training</span>';
+      return '<div class="card title-card" style="border-top:4px solid ' + color(lead) + '">' + head +
+        '<h3><i class="dot" style="background:' + color(lead) + '"></i>' + S.esc(lead.label) + "</h3>" +
+        '<p class="small muted" style="margin:0">' + t.pts + " points · " + t.wins + " track win" + (t.wins === 1 ? "" : "s") + " · " + t.laps + "/5 finished</p>" +
+        '<div class="big">' + big + "</div>" +
+        '<img src="assets/gifs/champ_' + lead.id + "_" + cat + '.gif" alt="' + S.esc(lead.label) + ' driving race track 3" loading="lazy"></div>';
+    }).join("");
+  }
+
+  function pitLane() {
+    var out = C.cars.filter(function (c) { return !entry(c, cur.cat); });
+    document.getElementById("pitLane").innerHTML = out.length ? '<li class="faint" style="font-weight:600">Not on the grid</li>' + out.map(function (c) {
+      var why = c.status === "pit" ? "in the pit lane: PPO is being fixed" : c.status === "queued" ? "in the garage: training" :
+        "didn't qualify: never finished all 5 validation tracks";
+      return '<li><i class="dot" style="background:' + color(c) + ';opacity:0.5"></i>' + S.esc(c.label) + ' <span class="why">· ' + why + "</span></li>";
+    }).join("") : "";
+  }
+
+  function standings() {
+    var sc = score(cur.cat), cat = cur.cat;
+    document.getElementById("standingsNote").innerHTML = cat === "fast"
+      ? "🏁 <strong>Fastest lap</strong>: each cell is the car's lap time on that track. The fastest lap on a track wins it."
+      : "⏱ <strong>Quickest to finish</strong>: each cell is the training time behind the car's first checkpoint to lap all five validation tracks. On each track, the finisher with the least training wins.";
+    if (!sc.order.length) {
+      document.getElementById("standings").innerHTML = "<tbody><tr><td class='muted'>No car has raced in this title yet.</td></tr></tbody>";
+      return;
+    }
+    document.getElementById("standings").innerHTML = "<thead><tr><th>Pos</th><th>Car</th>" +
+      C.seeds.map(function (s) { return "<th class='num'>Track " + s + "</th>"; }).join("") +
+      "<th class='num'>Wins</th><th class='num'>Finished</th><th class='num'>Points</th></tr></thead><tbody>" +
+      sc.order.map(function (id, i) {
+        var c = car(id), t = sc.table[id], e = entry(c, cat);
+        return "<tr><td class='medal'>" + (i + 1) + "</td><td><i style='background:" + color(c) + "'></i>" + S.esc(c.label) + "</td>" +
+          C.seeds.map(function (seed) {
+            var cell = t.cells[seed];
+            if (!cell.r.finished) return "<td class='num cell-dnf'>DNF</td>";
+            var txt = cat === "fast" ? cell.r.lap_s.toFixed(2) + " s" : S.dur(e.train_seconds);
+            return "<td class='num cell-fin" + (cell.pos === 1 ? " p1" : "") + "'>" + (cell.pos === 1 ? "🥇 " : "P" + cell.pos + " · ") + txt + "</td>";
+          }).join("") +
+          "<td class='num'>" + t.wins + "</td><td class='num'>" + t.laps + "/5</td><td class='num'><b>" + t.pts + "</b></td></tr>";
+      }).join("") + "</tbody>";
+  }
+
+  function cars() {
+    document.getElementById("cars").innerHTML = C.cars.map(function (c) {
+      var badge = { raced: "raced", queued: "training", pit: "pit lane" }[c.status] || c.status;
+      var tiles = "";
+      if (c.status === "raced") {
+        var f = c.categories.finish, s = c.categories.fast;
+        tiles = '<div class="tiles">' +
+          '<div class="tile"><div class="num">' + (f ? S.dur(f.train_seconds) : "–") + '</div><div class="lbl">⏱ to finish all validation tracks' + (f ? " · " + f.summary.finished + "/5 race tracks" : " (never did)") + "</div></div>" +
+          '<div class="tile"><div class="num">' + (s.summary.lap_s ? S.lap(s.summary.lap_s) : "–") + '</div><div class="lbl">🏁 mean lap · ' + s.summary.finished + "/5 finished · trained " + S.dur(s.train_seconds) + "</div></div>" +
+          "</div>" + '<p class="small faint" style="margin:8px 0 0">Network: ' + S.esc(c.size.label) + " · " + S.fmt(c.size.params, 0) + " parameters</p>";
+      }
+      return '<div class="card car" style="--car:' + color(c) + '"><h3><i class="dot" style="background:' + color(c) + '"></i>' + S.esc(c.label) +
+        '<span class="badge ' + c.status + '">' + badge + "</span></h3>" +
+        '<p class="small" style="margin:2px 0 6px;font-weight:600">' + S.esc(c.title.split(":").slice(1).join(":").trim() || "") + "</p>" +
+        '<p class="small muted" style="margin:0">' + S.esc(c.why) + "</p>" +
+        (c.lineage.length ? '<div class="lineage">Built on ' + c.lineage.map(stepLink).join(" → ") + "</div>" : "") +
+        tiles + (c.outcome ? '<div class="outcome"><strong>Outcome:</strong> ' + S.esc(c.outcome) + "</div>" : "") + "</div>";
+    }).join("");
+  }
+
+  function curve() {
+    if (chart) chart.destroy();
+    var raced = C.cars.filter(function (c) { return c.status === "raced"; });
+    document.getElementById("curveEmpty").style.display = raced.length ? "none" : "block";
+    var ax = S.chartTheme();
+    chart = new Chart(document.getElementById("curve"), {
+      type: "line",
+      data: { datasets: raced.map(function (c) {
+        var pts = c.lap_checks.filter(function (r) { return r.finished === 5 && r.lap; });
+        var f = c.categories.finish, s = c.categories.fast;
+        function mark(r) { return (f && r.t === f.train_seconds) || r.t === s.train_seconds; }
+        return { label: c.label, data: pts.map(function (r) { return { x: r.t / 3600, y: r.lap, at: r.at, t: r.t }; }),
+          borderColor: color(c), backgroundColor: color(c), borderWidth: 2, tension: 0, stepped: false,
+          pointRadius: pts.map(function (r) { return mark(r) ? 7 : 0; }), pointBackgroundColor: css("--surface"),
+          pointBorderWidth: 2.5, pointHoverRadius: 5 };
+      }) },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        interaction: { mode: "nearest", intersect: false },
+        plugins: { legend: { display: false }, tooltip: Object.assign(S.tooltipTheme(), { callbacks: {
+          title: function (it) { return it[0].dataset.label; },
+          label: function (ctx) {
+            var c = raced[ctx.datasetIndex], f = c.categories.finish, s = c.categories.fast, tags = [];
+            if (f && ctx.raw.t === f.train_seconds) tags.push("⏱ quickest-to-finish checkpoint");
+            if (ctx.raw.t === s.train_seconds) tags.push("🏁 fastest-lap checkpoint");
+            return [" " + S.dur(ctx.raw.t) + " of training · validation lap " + ctx.parsed.y.toFixed(2) + " s"].concat(tags.map(function (t) { return " " + t; }));
+          }
+        } }) },
+        scales: {
+          x: Object.assign({}, ax, { type: "linear", min: 0, title: { display: true, text: "training time (hours)", color: css("--text-3") } }),
+          y: Object.assign({}, ax, { title: { display: true, text: "mean validation lap (s), lower is faster", color: css("--text-3") } })
+        }
+      }
+    });
+    document.getElementById("curveLegend").innerHTML = raced.map(function (c) {
+      return '<span><i class="swatch-line" style="background:' + color(c) + '"></i>' + S.esc(c.label) + "</span>";
+    }).join("");
+  }
+
+  function findings() {
+    document.getElementById("findings").innerHTML = FINDINGS.map(function (f, i) {
+      return '<div class="card finding"><p class="num">LESSON ' + (i + 1) + "</p><h3>" + S.esc(f.title) + '</h3><p class="small muted" style="margin:0">' +
+        S.esc(f.text) + '</p><div class="links">' + f.steps.map(stepLink).join("") + "</div></div>";
+    }).join("");
+  }
+
+  function setCat(cat) {
+    cur.cat = cat;
+    [].forEach.call(document.querySelectorAll("#catSeg button"), function (b) { b.className = b.dataset.c === cat ? "on" : ""; });
+    player.setRacers(entrants(cat).map(function (c) { return c.id; }));
+    player.setTrack(TRACKS[cur.track]); pitLane(); standings();
+  }
+  function setTrack(i) {
+    cur.track = i;
+    [].forEach.call(document.querySelectorAll("#trackPills .pill"), function (p, j) { p.className = "pill" + (j === i ? " on" : ""); });
+    player.setTrack(TRACKS[i]);
+  }
+
+  function render() { titles(); cars(); curve(); findings(); pitLane(); standings(); }
+  S.onTheme(function () { if (C) { render(); player.redraw(); } });
+
+  Promise.all([S.json("assets/data/championship.json"), S.json("assets/data/tracks.json"), S.json("assets/data/findings.json")]).then(function (r) {
+    C = r[0]; TRACKS = r[1]; FINDINGS = r[2];
+    document.getElementById("budget").textContent = C.budget_hours;
+    var loads = [];
+    ["fast", "finish"].forEach(function (cat) {
+      entrants(cat).forEach(function (c) {
+        loads.push(S.json("assets/data/champ/" + c.id + "_" + cat + ".json").then(function (d) { DRIVES[cat][c.id] = d; }));
+      });
+    });
+    return Promise.all(loads);
+  }).then(function () {
+    player = RacePlayer({
+      prefix: "champ", fps: C.fps,
+      racer: function (id) { var c = car(id); return { label: c.label, color: color(c) }; },
+      run: function (id, seed) { return DRIVES[cur.cat][id][String(seed)]; },
+      result: function (id, seed) { return result(id, seed); }
+    });
+    var tp = document.getElementById("trackPills");
+    TRACKS.forEach(function (t, i) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "pill" + (i === 0 ? " on" : "");
+      b.textContent = "Track " + t.seed + " · " + t.tiles + " tiles"; b.onclick = function () { setTrack(i); }; tp.appendChild(b);
+    });
+    [].forEach.call(document.querySelectorAll("#catSeg button"), function (b) { b.onclick = function () { setCat(b.dataset.c); }; });
+    render();
+    setCat("fast");
+  });
+})();
+</script>
+</body>
+</html>

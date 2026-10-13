@@ -143,6 +143,37 @@ tr.top td { font-weight: 600; }
 .rules li { margin: 0 0 4px; }
 footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-3); }
 
+/* lesson cards (overview + championship) */
+.findings { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-top: 12px; }
+.finding { margin: 0; }
+.finding .num { font-size: 0.74rem; font-weight: 700; color: var(--text-3); letter-spacing: 0.06em; }
+.finding .links { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
+.finding .links a { font-family: "JetBrains Mono", monospace; font-size: 0.74rem; padding: 1px 6px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); text-decoration: none; color: var(--text-2); }
+
+/* ghost race (race + championship tabs) */
+.arena { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; align-items: start; }
+.arena canvas { width: 100%; aspect-ratio: 1 / 1; display: block; border-radius: 10px; background: var(--grass); }
+.clock { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.clock .t { font-family: "JetBrains Mono", monospace; font-size: 1.6rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.clock .of { color: var(--text-3); font-size: 0.85rem; }
+.timebar { height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden; margin-bottom: 12px; }
+.timebar b { display: block; height: 100%; background: var(--text-3); width: 0; }
+.board { list-style: none; margin: 0; padding: 0; }
+.board li { display: grid; grid-template-columns: 22px 12px 1fr auto; gap: 4px 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+.board li:last-child { border-bottom: none; }
+.board .pos { font-weight: 700; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.board .dot { width: 12px; height: 12px; border-radius: 50%; }
+.board .name { font-weight: 600; }
+.board .stat { font-size: 0.8rem; color: var(--text-2); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.board .prog { grid-column: 3 / 5; height: 5px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.board .prog b { display: block; height: 100%; border-radius: 3px; }
+.board .flag { color: var(--good); font-weight: 600; }
+.board .warn { color: var(--text-3); }
+.scrub { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.scrub input { flex: 1; }
+.medal { font-weight: 700; }
+@media (max-width: 900px) { .arena { grid-template-columns: 1fr; } }
+
 @media (max-width: 860px) {
   .duel, .rules, .ladder .grid { grid-template-columns: 1fr; }
   .tiles { grid-template-columns: repeat(2, 1fr); }

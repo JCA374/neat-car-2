@@ -1,0 +1,115 @@
+{
+ "seeds": [
+  3,
+  11,
+  21,
+  34,
+  55
+ ],
+ "fps": 50,
+ "hardware": {
+  "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+  "threads": 8,
+  "gpu": false
+ },
+ "budget_hours": 8,
+ "points": [
+  25,
+  18,
+  15,
+  12,
+  10,
+  8
+ ],
+ "cars": [
+  {
+   "id": "neat16",
+   "model": "neat",
+   "label": "NEAT 16",
+   "title": "NEAT 16: the proven recipe",
+   "why": "The best NEAT recipe from the ladder (n05): 16 rays facing forward over ±120°, 2000-frame training episodes,\n+1 fitness per frame a lap beats 1000 frames, population 100. Trained from scratch for up to 8 hours, stopping\nearly if the validation lap time has not improved for 2 hours.",
+   "outcome": "",
+   "color": "--c1",
+   "lineage": [
+    "n00_baseline",
+    "n01_lap_time",
+    "n02_forward_rays",
+    "n04_long_episodes",
+    "n05_more_generations"
+   ],
+   "status": "queued",
+   "categories": null
+  },
+  {
+   "id": "neat32",
+   "model": "neat",
+   "label": "NEAT 32",
+   "title": "NEAT 32: twice the rays",
+   "why": "Same as NEAT 16 but with 32 forward rays over the same ±120°: twice the detail ahead, but twice the inputs to evolve\nand a slower simulation. Do more rays make a faster car, or only a slower-to-train one?",
+   "outcome": "",
+   "color": "--c3",
+   "lineage": [
+    "n00_baseline",
+    "n01_lap_time",
+    "n02_forward_rays",
+    "n04_long_episodes",
+    "n05_more_generations",
+    "neat16"
+   ],
+   "status": "queued",
+   "categories": null
+  },
+  {
+   "id": "neatsmart",
+   "model": "neat",
+   "label": "NEAT Smart",
+   "title": "NEAT Smart: every lesson at once",
+   "why": "NEAT 16 plus three lessons from the ladder. (1) No compass inputs: cos/sin(heading) are useless on random tracks,\nand in n00 evolution had already cut cos(heading) off. (2) Five tracks per generation instead of three, so a network\ncan't win by drawing easy tracks. (3) A stronger lap-time bonus (2 per frame) to push harder for speed.",
+   "outcome": "",
+   "color": "--c7",
+   "lineage": [
+    "n00_baseline",
+    "n01_lap_time",
+    "n02_forward_rays",
+    "n04_long_episodes",
+    "n05_more_generations",
+    "neat16"
+   ],
+   "status": "queued",
+   "categories": null
+  },
+  {
+   "id": "ppo16",
+   "model": "ppo",
+   "title": "PPO 16",
+   "label": "PPO 16",
+   "status": "pit",
+   "color": "--c2",
+   "why": "PPO is being fixed first: no PPO step has learned to finish a track since the traction fix.",
+   "categories": null,
+   "lineage": []
+  },
+  {
+   "id": "ppo32",
+   "model": "ppo",
+   "title": "PPO 32",
+   "label": "PPO 32",
+   "status": "pit",
+   "color": "--c4",
+   "why": "PPO is being fixed first: no PPO step has learned to finish a track since the traction fix.",
+   "categories": null,
+   "lineage": []
+  },
+  {
+   "id": "pposmart",
+   "model": "ppo",
+   "title": "PPO Smart",
+   "label": "PPO Smart",
+   "status": "pit",
+   "color": "--c5",
+   "why": "PPO is being fixed first: no PPO step has learned to finish a track since the traction fix.",
+   "categories": null,
+   "lineage": []
+  }
+ ]
+}

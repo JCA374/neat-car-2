@@ -1,0 +1,53 @@
+[
+ {
+  "title": "NEAT beats PPO on a laptop CPU",
+  "text": "Every NEAT step from n02 on finishes all five tracks. No PPO step has finished more than one track, and none since the traction input was fixed. NEAT evaluates 100 small networks in parallel on all cores; PPO needs millions of steps and is very sensitive to how the reward is shaped.",
+  "steps": [
+   "n02_forward_rays",
+   "n05_more_generations",
+   "p00_baseline",
+   "p04_back_to_p00"
+  ]
+ },
+ {
+  "title": "Look forward, not around",
+  "text": "The original 32 rays fanned 324° around the car's right side: 13 pointed backwards and the left side was blind. 16 rays facing forward over ±120° finished every track with half the inputs, and the run took a fifth of the training time.",
+  "steps": [
+   "n00_baseline",
+   "n02_forward_rays"
+  ]
+ },
+ {
+  "title": "Train the way you're tested",
+  "text": "Training episodes stopped at 20 s, but long tracks take 25 s, so finishing them was never rewarded. With 40 s training episodes (the same as the benchmark) laps got about 1 s faster and the car stopped leaving the road.",
+  "steps": [
+   "n02_forward_rays",
+   "n04_long_episodes"
+  ]
+ },
+ {
+  "title": "More generations help, up to a point",
+  "text": "Doubling to 200 generations gave the fastest NEAT car yet (20.4 s), beating the baseline with about 45% less training. The best network came from generation 117; the rest of the run added nothing.",
+  "steps": [
+   "n04_long_episodes",
+   "n05_more_generations"
+  ]
+ },
+ {
+  "title": "Too simple doesn't drive",
+  "text": "Starting with no connections at all evolved a tiny 8-link network that got round 98% of the track but never crossed the line. Speed rewards alone also backfired: the car got faster but left the road on two tracks.",
+  "steps": [
+   "n03_sparse_start",
+   "n01_lap_time"
+  ]
+ },
+ {
+  "title": "PPO breaks easily on rewards",
+  "text": "A per-frame grass penalty made PPO creep at walking pace. Ending the episode when the car stops making progress fixed the creeping, but the cars still never learned to finish. Three short checks (control, rays only, stuck rule only) are finding out which change is to blame.",
+  "steps": [
+   "p01_lap_time",
+   "p03_end_when_stuck",
+   "p04_back_to_p00"
+  ]
+ }
+]

@@ -10,6 +10,9 @@ docs/assets/data/:
     steps/<id>.json         training curve (+ NEAT: every generation's champion network)
     drives/<id>.json        the benchmark drives (positions) for the race page
     think/<id>/<seed>.json  NEAT only: inputs, node activations and actions per frame
+    championship.json       the championship cars, both categories, per-track results
+    champ/<id>_<cat>.json   drives of each car's "finish" and "fast" checkpoints
+    findings.json           experiments/findings.toml
 and docs/assets/gifs/<id>.gif.
 """
 
@@ -19,6 +22,7 @@ import json
 import os
 import shutil
 import sys
+import tomllib
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -28,6 +32,13 @@ from carracing.steps import FPS, MODELS, all_steps, hardware, rank_key  # noqa: 
 OUT = "docs/assets/data"
 HEADLINE = ("id", "model", "title", "why", "outcome", "parent", "lidar_rays", "lidar_fov", "train", "neat_config", "imported", "note",
             "hardware", "commit", "trained_on", "train_seconds", "selected", "size", "summary", "tracks")
+# Championship cars: fixed colour per car (categorical tokens) and the PPO cars still to come.
+CAR_COLORS = {"neat16": "--c1", "neat32": "--c3", "neatsmart": "--c7", "ppo16": "--c2", "ppo32": "--c4", "pposmart": "--c5"}
+PIT_LANE = [
+    {"id": "ppo16", "model": "ppo", "title": "PPO 16"},
+    {"id": "ppo32", "model": "ppo", "title": "PPO 32"},
+    {"id": "pposmart", "model": "ppo", "title": "PPO Smart"},
+]
 POSITION_KEYS = ("every", "finish", "x", "y", "a", "v", "tiles", "grass")
 
 
@@ -79,6 +90,12 @@ def main() -> None:
         "pending": pending,
     }, pretty=True)
 
+    steps = {s.id: s for s in all_steps()}
+    by_id = {r["id"]: r for r in results}
+    dump(os.path.join(OUT, "championship.json"), championship(steps, by_id), pretty=True)
+    with open("experiments/findings.toml", "rb") as fh:
+        dump(os.path.join(OUT, "findings.json"), tomllib.load(fh)["finding"], pretty=True)
+
     tracks_path = os.path.join(OUT, "tracks.json")
     if not os.path.exists(tracks_path):
         dump(tracks_path, [track_geometry(seed) for seed in SEEDS])
@@ -89,6 +106,48 @@ def main() -> None:
         lap = f"{s['lap_s']:6.2f} s" if s["lap_s"] is not None else "   -    "
         print(f"  {i}. {r['id']:<22} {s['finished']}/5 finished  mean lap {lap}  "
               f"trained {r['train_seconds'] / 60:6.0f} min  {r['size']['label']}")
+
+
+def lineage(step_id: str, steps: dict) -> list:
+    """The chain of ladder steps a car was built from, oldest first."""
+    chain, cur = [], steps[step_id].parent
+    while cur and cur in steps and cur not in chain:
+        chain.append(cur)
+        cur = steps[cur].parent
+    return chain[::-1]
+
+
+def championship(steps: dict, results: dict) -> dict:
+    """Cars, their two checkpoints and benchmark results; drives go to champ/<id>_<cat>.json."""
+    cars = []
+    for step in sorted((s for s in steps.values() if s.championship), key=lambda s: (s.model, s.id)):
+        car = {"id": step.id, "model": step.model, "label": step.title.split(":")[0], "title": step.title,
+               "why": step.why, "outcome": step.outcome, "color": CAR_COLORS.get(step.id, "--c8"),
+               "lineage": lineage(step.id, steps), "status": "queued", "categories": None}
+        result = results.get(step.id)
+        if result and result.get("categories"):
+            car.update(status="raced", size=result["size"], lap_checks=result.get("lap_checks", []),
+                       trained_on=result.get("trained_on"), categories=result["categories"])
+            for cat, entry in result["categories"].items():
+                drives_path = os.path.join(step.out_dir, f"drives_{cat}.json")
+                if entry is None or not os.path.exists(drives_path):
+                    continue
+                with open(drives_path) as fh:
+                    drives = json.load(fh)
+                dump(os.path.join(OUT, "champ", f"{step.id}_{cat}.json"),
+                     {seed: {k: rec[k] for k in POSITION_KEYS} for seed, rec in drives.items()})
+                gif = os.path.join(step.out_dir, "lap.gif" if cat == "fast" else f"lap_{cat}.gif")
+                if os.path.exists(gif):
+                    shutil.copyfile(gif, os.path.join("docs/assets/gifs", f"champ_{step.id}_{cat}.gif"))
+        cars.append(car)
+    present = {c["id"] for c in cars}
+    for pit in PIT_LANE:
+        if pit["id"] not in present:
+            cars.append({**pit, "label": pit["title"], "status": "pit", "color": CAR_COLORS[pit["id"]],
+                         "why": "PPO is being fixed first: no PPO step has learned to finish a track since the traction fix.",
+                         "categories": None, "lineage": []})
+    return {"seeds": SEEDS, "fps": FPS, "hardware": hardware(), "budget_hours": 8, "points": [25, 18, 15, 12, 10, 8],
+            "cars": cars}
 
 
 if __name__ == "__main__":
