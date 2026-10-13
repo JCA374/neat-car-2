@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import os
+import time
 from typing import List, Optional, Sequence
 
 from stable_baselines3 import PPO
-from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback, EvalCallback
+from stable_baselines3.common.callbacks import BaseCallback, CallbackList, CheckpointCallback, EvalCallback
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
@@ -95,6 +97,11 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     )
     parser.add_argument("--lidar-rays", type=int, default=32, help="Lidar distances in the state (8 + this inputs).")
     parser.add_argument("--drop-heading", action="store_true", help="Leave cos/sin(heading) out of the state.")
+    parser.add_argument("--lap-check-frequency", type=int, default=0,
+                        help="Every N steps: lap check on the validation tracks + checkpoint (0 = off).")
+    parser.add_argument("--max-hours", type=float, default=None, help="Stop after this much training (needs lap checks).")
+    parser.add_argument("--patience-hours", type=float, default=None,
+                        help="Stop when the lap check has not improved for this long (needs lap checks).")
     parser.add_argument(
         "--stuck-patience",
         type=int,
@@ -192,6 +199,68 @@ def _make_vector_envs(
     )
 
 
+class _Driver:
+    """Deterministic policy wrapper in the shape carracing.benchmark.drive expects."""
+
+    def __init__(self, model) -> None:
+        self.model = model
+
+    def reset(self) -> None:
+        pass
+
+    def __call__(self, obs):
+        return self.model.predict(obs, deterministic=True)[0]
+
+
+class LapCheckCallback(BaseCallback):
+    """Every `frequency` steps: lap check on the 5 validation tracks, save the checkpoint,
+    log logs/validation_laps.csv, and stop at the time budget or when the laps stop improving.
+    The check runs inside the training clock, so it counts as training time (as in NEAT)."""
+
+    def __init__(self, frequency: int, checkpoint_dir: str, log_dir: str, env_kwargs: dict,
+                 max_hours: Optional[float] = None, patience_hours: Optional[float] = None) -> None:
+        super().__init__()
+        self.frequency = frequency
+        self.checkpoint_dir = checkpoint_dir
+        self.csv_path = os.path.join(log_dir, "validation_laps.csv")
+        self.env_kwargs = env_kwargs
+        self.max_s = max_hours * 3600 if max_hours else None
+        self.patience_s = patience_hours * 3600 if patience_hours else None
+        self.next_check = frequency
+        self.best = None
+        self.best_at = 0.0
+
+    def _on_training_start(self) -> None:
+        self.start = time.time()
+        with open(self.csv_path, "w", newline="") as fh:
+            csv.writer(fh).writerow(["timestep", "time_s", "finished", "mean_lap_s"])
+
+    def _on_step(self) -> bool:
+        from carracing.benchmark import lap_check
+
+        if self.num_timesteps < self.next_check:
+            return True
+        self.next_check += self.frequency
+        laps = lap_check(_Driver(self.model), self.env_kwargs)
+        self.model.save(os.path.join(self.checkpoint_dir, f"val_{self.num_timesteps}.zip"))
+        now = time.time() - self.start
+        with open(self.csv_path, "a", newline="") as fh:
+            csv.writer(fh).writerow([self.num_timesteps, f"{now:.1f}", laps["finished"],
+                                     "" if laps["mean_lap_s"] is None else laps["mean_lap_s"]])
+        print(f"Lap check at {self.num_timesteps} steps: {laps['finished']}/5 validation tracks"
+              + (f", mean lap {laps['mean_lap_s']:.2f} s" if laps["mean_lap_s"] else ""), flush=True)
+        key = (laps["finished"], -(laps["mean_lap_s"] or 1e9))
+        if self.best is None or key > self.best:
+            self.best, self.best_at = key, now
+        if self.max_s and now >= self.max_s:
+            print(f"Stopped: time budget of {self.max_s / 3600:g} h reached.", flush=True)
+            return False
+        if self.patience_s and now - self.best_at >= self.patience_s:
+            print(f"Stopped: no better lap check for {self.patience_s / 3600:g} h.", flush=True)
+            return False
+        return True
+
+
 def _build_callbacks(
     args: argparse.Namespace,
     eval_env,
@@ -217,6 +286,10 @@ def _build_callbacks(
                 render=False,
             )
         )
+    if args.lap_check_frequency and args.lap_check_frequency > 0:
+        env_kwargs = {"lidar_rays": args.lidar_rays, "lidar_fov": args.lidar_fov, "drop_heading": args.drop_heading}
+        callbacks.append(LapCheckCallback(args.lap_check_frequency, args.checkpoint_dir, args.log_dir, env_kwargs,
+                                          args.max_hours, args.patience_hours))
     if not callbacks:
         return None
     return CallbackList(callbacks)

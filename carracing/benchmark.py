@@ -17,6 +17,7 @@ from carracing.env import make_env
 from carracing.steps import FPS, Step
 
 SEEDS = [3, 11, 21, 34, 55]   # never used for training or validation
+VALIDATION_SEEDS = [101, 202, 303, 404, 505]  # model selection only (NEAT and PPO lap checks)
 GIF_SEED = SEEDS[0]
 MAX_FRAMES = 2000
 RECORD_EVERY = 2              # keep every 2nd frame in recordings (25 fps on the page)
@@ -85,10 +86,12 @@ def load_policy(step: Step, model_path: Optional[str] = None):
     return PPOPolicy(path, step.legacy_traction)
 
 
-def drive(policy, seed: int, env_kwargs: Optional[Dict] = None, gif: bool = False, activations: bool = False) -> Dict:
+def drive(policy, seed: int, env_kwargs: Optional[Dict] = None, gif: bool = False, activations: bool = False,
+          give_up: Optional[int] = None) -> Dict:
     """One benchmark lap. Returns the result plus a recording for the race page.
 
-    ``env_kwargs`` holds the step's sensor settings (``Step.env_kwargs()``).
+    ``env_kwargs`` holds the step's sensor settings (``Step.env_kwargs()``). ``give_up`` ends the drive
+    after that many frames without a new tile (lap checks only; the benchmark always runs to the end).
     """
     env = make_env(render_mode="rgb_array" if gif else None, offtrack_penalty=0.0, allow_multiple_laps=False,
                    lap_completion_bonus=0.0, max_episode_steps=MAX_FRAMES, **(env_kwargs or {}))
@@ -101,6 +104,7 @@ def drive(policy, seed: int, env_kwargs: Optional[Dict] = None, gif: bool = Fals
         rec.update(inputs=[], nodes=[], actions=[])
     frames: List[np.ndarray] = []
     score, offtrack, finish, frame, info = 0.0, 0, None, 0, {}
+    since_tile, tiles_seen = 0, 0
     for frame in range(1, MAX_FRAMES + 1):
         action = policy(obs)
         if (frame - 1) % RECORD_EVERY == 0:
@@ -124,6 +128,10 @@ def drive(policy, seed: int, env_kwargs: Optional[Dict] = None, gif: bool = Fals
             finish = frame
         if terminated or truncated:
             break
+        since_tile = 0 if base.tile_visited_count > tiles_seen else since_tile + 1
+        tiles_seen = base.tile_visited_count
+        if give_up and since_tile >= give_up:
+            break
     tiles_total = len(base.track)
     reached = int(base.tile_visited_count) if finish is None else tiles_total
     env.close()
@@ -141,6 +149,13 @@ def drive(policy, seed: int, env_kwargs: Optional[Dict] = None, gif: bool = Fals
     if activations:
         rec["node_keys"] = node_keys
     return {"result": result, "recording": {"every": RECORD_EVERY, "finish": finish, **rec}, "frames": frames}
+
+
+def lap_check(policy, env_kwargs: Optional[Dict] = None) -> Dict:
+    """Lap check on the validation tracks in the benchmark's conditions (used to pick checkpoints)."""
+    laps = [drive(policy, seed, env_kwargs, give_up=150)["result"] for seed in VALIDATION_SEEDS]
+    done = [r["lap_s"] for r in laps if r["finished"]]
+    return {"finished": len(done), "mean_lap_s": round(float(np.mean(done)), 3) if done else None}
 
 
 def track_geometry(seed: int) -> Dict:
