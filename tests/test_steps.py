@@ -102,3 +102,15 @@ def test_forward_lidar_fan_is_centred_on_the_nose():
     assert state.shape == (24,)
     # On the start straight the forward rays see far more road than the side rays.
     assert state[8 + 7] > state[8]
+
+
+def test_stuck_car_ends_the_episode_and_pays_for_the_rest():
+    env = make_env(seed=0, offtrack_penalty=0.0, allow_multiple_laps=False, max_episode_steps=1000, stuck_patience=30)
+    env.reset(seed=0)
+    for frame in range(1, 200):
+        _, reward, terminated, _, info = env.step(np.array([0.0, 0.0, 1.0]))  # brake: never moves
+        if terminated:
+            break
+    # The start tile counts as reached on frame 1, so the next 30 frames are stuck.
+    assert info.get("stuck") and frame <= 32
+    assert reward < -0.1 * (1000 - frame) + 0.01  # time penalty for the remaining frames

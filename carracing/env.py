@@ -58,6 +58,7 @@ class CarRacingStateWrapper(gym.Wrapper):
         lap_completion_bonus: float = 100.0,
         lap_time_bonus: float = 0.0,
         lap_time_budget: int = 1000,
+        stuck_patience: Optional[int] = None,
     ) -> None:
         super().__init__(env)
         self.lidar_rays = lidar_rays
@@ -69,6 +70,7 @@ class CarRacingStateWrapper(gym.Wrapper):
         self.lap_completion_bonus = lap_completion_bonus
         self.lap_time_bonus = lap_time_bonus
         self.lap_time_budget = lap_time_budget
+        self.stuck_patience = stuck_patience
 
         self.lidar_angles = lidar_angles(lidar_rays, lidar_fov)
         self.base_feature_count = 8
@@ -86,6 +88,8 @@ class CarRacingStateWrapper(gym.Wrapper):
         self._laps_completed = 0
         self._steps = 0
         self._lap_start = 0
+        self._since_tile = 0
+        self._tiles_seen = 0
         spec = getattr(env, "spec", None)
         self._max_steps: Optional[int] = getattr(spec, "max_episode_steps", None)
 
@@ -98,6 +102,8 @@ class CarRacingStateWrapper(gym.Wrapper):
         self._laps_completed = 0
         self._steps = 0
         self._lap_start = 0
+        self._since_tile = 0
+        self._tiles_seen = 0
         state = self._build_state(obs)
         return state, info
 
@@ -130,6 +136,19 @@ class CarRacingStateWrapper(gym.Wrapper):
                 self._start_new_lap()
                 truncated = self._max_steps is not None and self._steps >= self._max_steps
         info["laps_completed"] = self._laps_completed
+
+        if self.stuck_patience and not (terminated or truncated):
+            # End the episode once no new tile has been reached for stuck_patience
+            # frames (lost on the grass, parked, driving backwards). Charge the time
+            # penalty the rest of the episode would have cost, so ending early never pays.
+            tiles = int(getattr(self.env.unwrapped, "tile_visited_count", 0))
+            self._since_tile = 0 if tiles > self._tiles_seen else self._since_tile + 1
+            self._tiles_seen = tiles  # drops to 0 when a new lap re-arms the tiles
+            if self._since_tile >= self.stuck_patience:
+                terminated = True
+                info["stuck"] = True
+                if self._max_steps is not None:
+                    reward -= 0.1 * max(0, self._max_steps - self._steps)
 
         return state, reward, terminated, truncated, info
 
@@ -322,6 +341,7 @@ def make_env(
     lidar_rays: int = 32,
     lap_time_bonus: float = 0.0,
     lidar_fov: Optional[float] = None,
+    stuck_patience: Optional[int] = None,
     **kwargs,
 ) -> CarRacingStateWrapper:
     """
@@ -352,6 +372,8 @@ def make_env(
         Lidar distances in the state (state size = 8 + lidar_rays).
     lidar_fov: Optional[float]
         None = original 324-degree layout; degrees = forward fan of +-fov/2 around the nose.
+    stuck_patience: Optional[int]
+        End the episode (with the remaining time penalty) after this many frames without a new tile.
     lap_time_bonus: float
         Reward per frame a finished lap comes in under 1000 frames (0 = off).
     kwargs:
@@ -383,4 +405,5 @@ def make_env(
         lidar_rays=lidar_rays,
         lidar_fov=lidar_fov,
         lap_time_bonus=lap_time_bonus,
+        stuck_patience=stuck_patience,
     )

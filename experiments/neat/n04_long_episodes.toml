@@ -1,0 +1,18 @@
+id = "n04_long_episodes"
+model = "neat"
+parent = "n02_forward_rays"
+title = "2000-frame training episodes"
+why = """
+Training episodes stopped at 1000 frames (20 s), but n02 needs 19-28 s per lap, so on long tracks a lap was never
+finished during training and finishing it was never rewarded. The benchmark allows 2000 frames. Here training
+and validation get 2000 frames too. Cars that stop making progress are still cut off after 100 frames, so the extra
+time is only spent on cars that keep driving. Everything else as n02.
+"""
+lidar_rays = 16
+lidar_fov = 240
+
+[train]
+generations = 100
+tracks-per-generation = 3
+lap-time-bonus = 1.0
+max-steps = 2000

@@ -726,5 +726,18 @@
    ]
   }
  ],
- "pending": []
+ "pending": [
+  {
+   "id": "n04_long_episodes",
+   "model": "neat",
+   "title": "2000-frame training episodes",
+   "why": "Training episodes stopped at 1000 frames (20 s), but n02 needs 19-28 s per lap, so on long tracks a lap was never\nfinished during training and finishing it was never rewarded. The benchmark allows 2000 frames. Here training\nand validation get 2000 frames too. Cars that stop making progress are still cut off after 100 frames, so the extra\ntime is only spent on cars that keep driving. Everything else as n02."
+  },
+  {
+   "id": "p03_end_when_stuck",
+   "model": "ppo",
+   "title": "No grass penalty: end the episode when stuck",
+   "why": "p01 and p02 failed because the per-frame grass penalty (up to 3.75 per frame for 1500 frames) swamped the tile\nrewards, and the policy learned to creep. Here there is no grass penalty at all. Instead, as in NEAT, an episode\nends after 100 frames without reaching a new tile, and the time penalty for the rest of the episode is charged,\nso getting lost or parking never pays. Grass is then only bad because it leads nowhere. Everything else as p02."
+  }
+ ]
 }

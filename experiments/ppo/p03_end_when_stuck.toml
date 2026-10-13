@@ -1,0 +1,28 @@
+id = "p03_end_when_stuck"
+model = "ppo"
+parent = "p02_forward_rays"
+title = "No grass penalty: end the episode when stuck"
+why = """
+p01 and p02 failed because the per-frame grass penalty (up to 3.75 per frame for 1500 frames) swamped the tile
+rewards, and the policy learned to creep. Here there is no grass penalty at all. Instead, as in NEAT, an episode
+ends after 100 frames without reaching a new tile, and the time penalty for the rest of the episode is charged,
+so getting lost or parking never pays. Grass is then only bad because it leads nowhere. Everything else as p02.
+"""
+lidar_rays = 16
+lidar_fov = 240
+
+[train]
+total-timesteps = 1000000
+num-envs = 4
+n-steps = 1024
+batch-size = 256
+entropy-coef = 0.005
+offtrack-penalty = 0.0
+stuck-patience = 100
+lr-schedule = "linear"
+target-kl = 0.02
+lap-time-bonus = 1.0
+allow-multiple-laps = false
+max-episode-steps = 1500
+eval-frequency = 25000
+checkpoint-frequency = 100000

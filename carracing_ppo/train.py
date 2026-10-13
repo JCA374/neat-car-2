@@ -95,6 +95,12 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     )
     parser.add_argument("--lidar-rays", type=int, default=32, help="Lidar distances in the state (8 + this inputs).")
     parser.add_argument(
+        "--stuck-patience",
+        type=int,
+        default=None,
+        help="End an episode after this many frames without a new tile, charging the remaining time penalty.",
+    )
+    parser.add_argument(
         "--lidar-fov",
         type=float,
         default=None,
@@ -157,6 +163,7 @@ def _env_kwargs(args: argparse.Namespace) -> dict:
         "max_episode_steps": args.max_episode_steps,
         "lidar_rays": args.lidar_rays,
         "lidar_fov": args.lidar_fov,
+        "stuck_patience": args.stuck_patience,
         "lap_time_bonus": args.lap_time_bonus,
     }
 
