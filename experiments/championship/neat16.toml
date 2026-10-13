@@ -1,0 +1,20 @@
+id = "neat16"
+model = "neat"
+championship = true
+parent = "n05_more_generations"
+title = "NEAT 16: the proven recipe"
+why = """
+The best NEAT recipe from the ladder (n05): 16 rays facing forward over ±120°, 2000-frame training episodes,
++1 fitness per frame a lap beats 1000 frames, population 100. Trained from scratch for up to 8 hours, stopping
+early if the validation lap time has not improved for 2 hours.
+"""
+lidar_rays = 16
+lidar_fov = 240
+
+[train]
+generations = 1000
+tracks-per-generation = 3
+lap-time-bonus = 1.0
+max-steps = 2000
+max-hours = 8
+patience-hours = 2

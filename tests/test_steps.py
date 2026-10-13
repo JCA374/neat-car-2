@@ -14,7 +14,8 @@ def test_every_step_file_loads_and_ids_are_unique():
     assert {"n00_baseline", "p00_baseline"} <= {s.id for s in steps}
     assert len({s.id for s in steps}) == len(steps)
     for s in steps:
-        assert s.id[0] == s.model[0]  # n.. for NEAT, p.. for PPO
+        # n.. for NEAT, p.. for PPO; championship cars are named after the model (neat16, ppo32 ...)
+        assert s.id.startswith(s.model) if s.championship else s.id[0] == s.model[0]
         if s.parent:
             assert s.parent in {t.id for t in steps}
 
@@ -114,3 +115,55 @@ def test_stuck_car_ends_the_episode_and_pays_for_the_rest():
     # The start tile counts as reached on frame 1, so the next 30 frames are stuck.
     assert info.get("stuck") and frame <= 32
     assert reward < -0.1 * (1000 - frame) + 0.01  # time penalty for the remaining frames
+
+
+def test_drop_heading_removes_the_compass_inputs():
+    env = make_env(seed=0, lidar_rays=16, lidar_fov=240, drop_heading=True)
+    state, _ = env.reset(seed=0)
+    assert state.shape == (22,)
+    full = make_env(seed=0, lidar_rays=16, lidar_fov=240)
+    full_state, _ = full.reset(seed=0)
+    assert np.allclose(state, np.delete(full_state, [3, 4]))
+    assert env.last_traction == full_state[7]  # traction is still readable, wherever it sits in the state
+
+
+def test_championship_picks_first_finish_and_fastest(tmp_path, monkeypatch):
+    import importlib.util
+    import sys
+
+    spec = importlib.util.spec_from_file_location("run_step", "scripts/run_step.py")
+    run_step = importlib.util.module_from_spec(spec)
+    sys.modules["run_step"] = run_step
+    spec.loader.exec_module(run_step)
+
+    step = load_step("experiments/championship/neat16.toml")
+    monkeypatch.setattr(type(step), "out_dir", property(lambda self: str(tmp_path)))
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs" / "validation_laps.csv").write_text(
+        "generation,time_s,finished,mean_lap_s\n"
+        "0,60,0,\n1,120,3,21.0\n2,180,5,24.0\n3,240,5,22.5\n4,300,5,22.5\n5,360,4,19.0\n")
+    cats = run_step.select_categories(step)
+    assert cats["finish"]["selected"] == {"generation": 2} and cats["finish"]["train_seconds"] == 180
+    # Fastest = most tracks finished, then the fastest lap, then the earlier checkpoint.
+    assert cats["fast"]["selected"] == {"generation": 3} and cats["fast"]["train_seconds"] == 240
+
+
+def test_budget_reporter_stops_on_time_and_patience():
+    from types import SimpleNamespace
+
+    import pytest as _pytest
+
+    from carracing_neat.train import BudgetReporter, TrainingBudgetReached
+
+    clock = SimpleNamespace(t=0.0, elapsed=lambda: clock.t)
+    validation = SimpleNamespace(last_laps={"finished": 2, "mean_lap_s": 20.0})
+    budget = BudgetReporter(clock, validation, max_hours=1.0, patience_hours=0.5)
+    budget.post_evaluate(None, None, None, None)
+    clock.t = 1700  # under 30 min since the last improvement
+    budget.post_evaluate(None, None, None, None)
+    clock.t = 1900  # 31+ min without a better lap check
+    with _pytest.raises(TrainingBudgetReached):
+        budget.post_evaluate(None, None, None, None)
+    late = BudgetReporter(clock, validation, max_hours=0.5, patience_hours=None)
+    with _pytest.raises(TrainingBudgetReached):
+        late.post_evaluate(None, None, None, None)

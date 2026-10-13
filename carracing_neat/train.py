@@ -21,6 +21,7 @@ from carracing.env import make_env
 # Held-out tracks for picking the best genome. Kept apart from the
 # carracing/benchmark.py tracks so the page's benchmark stays unseen.
 VALIDATION_SEEDS = [101, 202, 303, 404, 505]
+LAP_FRAMES = 2000  # same frame limit as the benchmark
 RESERVED_SEEDS = set(VALIDATION_SEEDS) | {3, 11, 21, 34, 55}
 
 
@@ -38,6 +39,17 @@ def generation_seeds(generation: int, count: int, base_seed: int) -> List[int]:
 def _validate_genome(genome, config, settings: EvalSettings) -> float:
     net = neat.nn.FeedForwardNetwork.create(genome, config)
     return run_episode(net, settings, settings.seeds[0], stop_when_stuck=False)["reward"]
+
+
+def _lap_genome(genome, config, settings: EvalSettings) -> Tuple[bool, int]:
+    """(finished, frames) for one validation lap in the benchmark's conditions."""
+    net = neat.nn.FeedForwardNetwork.create(genome, config)
+    result = run_episode(net, settings, settings.seeds[0], stop_when_stuck=True)
+    return result["laps"] >= 1, result["steps"]
+
+
+class TrainingBudgetReached(Exception):
+    """Raised by BudgetReporter to end a run cleanly at its time budget or patience."""
 
 
 class SharedTrackEvaluator:
@@ -76,6 +88,13 @@ class SharedTrackEvaluator:
         """Mean full-length reward of one genome on the held-out tracks."""
         jobs = [(genome, config, dataclasses.replace(self.settings, seeds=[s])) for s in VALIDATION_SEEDS]
         return float(np.mean(self._map(_validate_genome, jobs)))
+
+    def validate_laps(self, genome, config) -> dict:
+        """Lap check on the held-out tracks, in the benchmark's conditions: raw reward, 2000 frames."""
+        raw = dataclasses.replace(self.settings, offtrack_penalty=0.0, lap_time_bonus=0.0, max_steps=LAP_FRAMES)
+        laps = self._map(_lap_genome, [(genome, config, dataclasses.replace(raw, seeds=[s])) for s in VALIDATION_SEEDS])
+        done = [frames for finished, frames in laps if finished]
+        return {"finished": len(done), "mean_lap_s": round(float(np.mean(done)) / 50.0, 3) if done else None}
 
     def close(self) -> None:
         if self.pool is not None:
@@ -124,6 +143,9 @@ class CSVReporter(neat.reporting.BaseReporter):
     def start_generation(self, generation):
         self.generation = generation
 
+    def elapsed(self) -> float:
+        return time.time() - self.start_time
+
     def post_evaluate(self, config, population, species, best_genome):
         fitnesses = [g.fitness for g in population.values() if g.fitness is not None]
         if not fitnesses:
@@ -144,7 +166,8 @@ class ValidationReporter(neat.reporting.BaseReporter):
     The saved ``best-genome.pkl`` is chosen by validation score instead.
     """
 
-    def __init__(self, evaluator: SharedTrackEvaluator, checkpoint_dir: str, csv_path: str, every: int) -> None:
+    def __init__(self, evaluator: SharedTrackEvaluator, checkpoint_dir: str, csv_path: str, every: int,
+                 clock: Optional["CSVReporter"] = None, laps_csv: Optional[str] = None) -> None:
         self.evaluator = evaluator
         self.checkpoint_dir = checkpoint_dir
         self.csv_path = csv_path
@@ -152,6 +175,13 @@ class ValidationReporter(neat.reporting.BaseReporter):
         self.generation = 0
         self.best_score: Optional[float] = None
         self.cache = {}  # genome key -> validation score (elites survive many generations)
+        self.lap_cache = {}
+        self.clock = clock
+        self.laps_csv = laps_csv
+        self.last_laps = None
+        if laps_csv and not os.path.exists(laps_csv):
+            with open(laps_csv, "w", encoding="utf-8") as f:
+                f.write("generation,time_s,finished,mean_lap_s\n")
         os.makedirs(checkpoint_dir, exist_ok=True)
         if os.path.dirname(csv_path):
             os.makedirs(os.path.dirname(csv_path), exist_ok=True)
@@ -184,7 +214,46 @@ class ValidationReporter(neat.reporting.BaseReporter):
             with open(os.path.join(self.checkpoint_dir, "best-genome.pkl"), "wb") as f:
                 pickle.dump(best_genome, f)
             marker = "  (new best)"
-        print(f"Validation gen {self.generation}: {score:.1f} on {len(VALIDATION_SEEDS)} held-out tracks{marker}")
+        laps = ""
+        if self.laps_csv:
+            if best_genome.key not in self.lap_cache:
+                self.lap_cache[best_genome.key] = self.evaluator.validate_laps(best_genome, config)
+            self.last_laps = self.lap_cache[best_genome.key]
+            # Validation counts as training time: stamp it after the check has run.
+            with open(self.laps_csv, "a", encoding="utf-8") as f:
+                lap = self.last_laps["mean_lap_s"]
+                f.write(f"{self.generation},{self.clock.elapsed():.1f},{self.last_laps['finished']},"
+                        f"{'' if lap is None else lap}\n")
+            laps = f", laps {self.last_laps['finished']}/5" + (f" in {lap:.2f} s" if lap else "")
+        print(f"Validation gen {self.generation}: {score:.1f} on {len(VALIDATION_SEEDS)} held-out tracks{laps}{marker}")
+
+
+def lap_key(laps: dict) -> Tuple[int, float]:
+    """Higher is better: more validation tracks finished, then a faster mean lap."""
+    return laps["finished"], -(laps["mean_lap_s"] or 1e9)
+
+
+class BudgetReporter(neat.reporting.BaseReporter):
+    """Stop at a wall-clock budget, or once the lap check has not improved for a while."""
+
+    def __init__(self, clock: "CSVReporter", validation: ValidationReporter,
+                 max_hours: Optional[float], patience_hours: Optional[float]) -> None:
+        self.clock = clock
+        self.validation = validation
+        self.max_s = max_hours * 3600 if max_hours else None
+        self.patience_s = patience_hours * 3600 if patience_hours else None
+        self.best = None
+        self.best_at = 0.0
+
+    def post_evaluate(self, config, population, species, best_genome):
+        now = self.clock.elapsed()
+        laps = self.validation.last_laps
+        if laps is not None and (self.best is None or lap_key(laps) > self.best):
+            self.best, self.best_at = lap_key(laps), now
+        if self.max_s and now >= self.max_s:
+            raise TrainingBudgetReached(f"time budget of {self.max_s / 3600:g} h reached")
+        if self.patience_s and self.best is not None and now - self.best_at >= self.patience_s:
+            raise TrainingBudgetReached(f"no faster validation lap for {self.patience_s / 3600:g} h")
 
 
 class SpeciesTargetReporter(neat.reporting.BaseReporter):
@@ -241,14 +310,15 @@ def _build_population(config_path: str, checkpoint: Optional[str]) -> neat.Popul
     return pop
 
 
-def _validate_state_size(config: neat.Config, lidar_rays: int) -> None:
-    env = make_env(render_mode=None, lidar_rays=lidar_rays)
+def _validate_state_size(config: neat.Config, settings: EvalSettings) -> None:
+    env = make_env(render_mode=None, lidar_rays=settings.lidar_rays, lidar_fov=settings.lidar_fov,
+                   drop_heading=settings.drop_heading)
     state, _ = env.reset(seed=0)
     env.close()
     if len(state) != config.genome_config.num_inputs:
         raise ValueError(
             f"Config expects {config.genome_config.num_inputs} inputs, "
-            f"but environment produced {len(state)} (8 + --lidar-rays)."
+            f"but environment produced {len(state)} (car readings + --lidar-rays)."
         )
 
 
@@ -293,6 +363,7 @@ def parse_args(argv=None):
     parser.add_argument("--lidar-rays", type=int, default=32, help="Lidar inputs (config num_inputs must be 8 + this).")
     parser.add_argument("--lidar-fov", type=float, default=None,
                         help="Forward lidar fan in degrees (default: original 324-degree layout).")
+    parser.add_argument("--drop-heading", action="store_true", help="Leave cos/sin(heading) out of the state.")
     parser.add_argument("--lap-time-bonus", type=float, default=0.0,
                         help="Fitness per frame a lap finishes under 1000 frames (0 = raw score).")
     parser.add_argument("--legacy-decode", action="store_true",
@@ -301,6 +372,9 @@ def parse_args(argv=None):
                         help="Adjust compatibility_threshold each generation toward this many species (0 = fixed).")
     parser.add_argument("--threshold-step", type=float, default=0.1, help="Threshold change per generation.")
     parser.add_argument("--validate-every", type=int, default=1, help="Validate the champion every N generations.")
+    parser.add_argument("--max-hours", type=float, default=None, help="Stop after this much training wall-clock.")
+    parser.add_argument("--patience-hours", type=float, default=None,
+                        help="Stop when the validation lap check has not improved for this long.")
     parser.add_argument("--checkpoint-dir", default="outputs/neat/dev/checkpoints", help="Checkpoints and best genomes.")
     parser.add_argument("--log-dir", default="outputs/neat/dev/logs", help="fitness.csv, validation.csv, species.csv.")
     parser.add_argument("--checkpoint-interval", type=int, default=5, help="Checkpoint every N generations.")
@@ -315,6 +389,7 @@ def main(argv=None):
     fitness_log = os.path.join(args.log_dir, "fitness.csv")
     validation_log = os.path.join(args.log_dir, "validation.csv")
     species_log = os.path.join(args.log_dir, "species.csv")
+    laps_log = os.path.join(args.log_dir, "validation_laps.csv")
 
     resume_ckpt = None
     if args.resume == "auto":
@@ -323,14 +398,13 @@ def main(argv=None):
     elif args.resume and args.resume != "none":
         resume_ckpt = args.resume
     if resume_ckpt is None:
-        _reset_logs([fitness_log, validation_log, species_log])
+        _reset_logs([fitness_log, validation_log, species_log, laps_log])
 
     pop = _build_population(args.config, resume_ckpt)
     if resume_ckpt is not None:
-        _drop_rows_from([fitness_log, validation_log, species_log], pop.generation)
+        _drop_rows_from([fitness_log, validation_log, species_log, laps_log], pop.generation)
         _apply_speciation_settings(pop.config, args.config)
     config = pop.config
-    _validate_state_size(config, args.lidar_rays)
 
     settings = EvalSettings(
         max_steps=args.max_steps,
@@ -342,22 +416,29 @@ def main(argv=None):
         legacy_decode=args.legacy_decode,
         lidar_rays=args.lidar_rays,
         lidar_fov=args.lidar_fov,
+        drop_heading=args.drop_heading,
         lap_time_bonus=args.lap_time_bonus,
     )
+    _validate_state_size(config, settings)
     evaluator = SharedTrackEvaluator(pop, settings, args.num_workers, args.tracks_per_generation, args.seed)
 
+    clock = CSVReporter(fitness_log)
+    validation = ValidationReporter(evaluator, args.checkpoint_dir, validation_log, args.validate_every,
+                                    clock=clock, laps_csv=laps_log)
     reporters = [
         neat.StdOutReporter(show_species_detail=False),
         neat.StatisticsReporter(),
-        CSVReporter(fitness_log),
+        clock,
         neat.Checkpointer(
             generation_interval=args.checkpoint_interval,
             filename_prefix=os.path.join(args.checkpoint_dir, "neat-checkpoint-"),
         ),
-        ValidationReporter(evaluator, args.checkpoint_dir, validation_log, args.validate_every),
+        validation,
     ]
     if args.target_species > 0:
         reporters.append(SpeciesTargetReporter(args.target_species, args.threshold_step, species_log))
+    if args.max_hours or args.patience_hours:
+        reporters.append(BudgetReporter(clock, validation, args.max_hours, args.patience_hours))
     for rep in reporters:
         pop.add_reporter(rep)
 
@@ -366,6 +447,9 @@ def main(argv=None):
           f"{args.tracks_per_generation} shared tracks per generation.")
     try:
         winner = pop.run(evaluator.evaluate, args.generations)
+    except TrainingBudgetReached as stop:
+        print(f"Stopped: {stop}. Best validated genome: {os.path.join(args.checkpoint_dir, 'best-genome.pkl')}")
+        return 0
     except KeyboardInterrupt:
         print("Interrupted. Latest checkpoint and best genome preserved.", file=sys.stderr)
         return 1

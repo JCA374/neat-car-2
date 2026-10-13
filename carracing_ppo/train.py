@@ -94,6 +94,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="Override CarRacing's 1000-step limit (a lap takes ~850 steps).",
     )
     parser.add_argument("--lidar-rays", type=int, default=32, help="Lidar distances in the state (8 + this inputs).")
+    parser.add_argument("--drop-heading", action="store_true", help="Leave cos/sin(heading) out of the state.")
     parser.add_argument(
         "--stuck-patience",
         type=int,
@@ -163,6 +164,7 @@ def _env_kwargs(args: argparse.Namespace) -> dict:
         "max_episode_steps": args.max_episode_steps,
         "lidar_rays": args.lidar_rays,
         "lidar_fov": args.lidar_fov,
+        "drop_heading": args.drop_heading,
         "stuck_patience": args.stuck_patience,
         "lap_time_bonus": args.lap_time_bonus,
     }

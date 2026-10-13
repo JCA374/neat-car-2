@@ -85,12 +85,13 @@ def load_policy(step: Step, model_path: Optional[str] = None):
     return PPOPolicy(path, step.legacy_traction)
 
 
-def drive(policy, seed: int, lidar_rays: int = 32, gif: bool = False, activations: bool = False,
-          lidar_fov: Optional[float] = None) -> Dict:
-    """One benchmark lap. Returns the result plus a recording for the race page."""
+def drive(policy, seed: int, env_kwargs: Optional[Dict] = None, gif: bool = False, activations: bool = False) -> Dict:
+    """One benchmark lap. Returns the result plus a recording for the race page.
+
+    ``env_kwargs`` holds the step's sensor settings (``Step.env_kwargs()``).
+    """
     env = make_env(render_mode="rgb_array" if gif else None, offtrack_penalty=0.0, allow_multiple_laps=False,
-                   lap_completion_bonus=0.0, max_episode_steps=MAX_FRAMES, lidar_rays=lidar_rays,
-                   lidar_fov=lidar_fov)
+                   lap_completion_bonus=0.0, max_episode_steps=MAX_FRAMES, **(env_kwargs or {}))
     obs, _ = env.reset(seed=seed)
     policy.reset()
     base = env.unwrapped
@@ -109,14 +110,14 @@ def drive(policy, seed: int, lidar_rays: int = 32, gif: bool = False, activation
             rec["a"].append(_r(hull.angle, 3))
             rec["v"].append(_r(math.hypot(*hull.linearVelocity)))
             rec["tiles"].append(int(base.tile_visited_count))
-            rec["grass"].append(int(round((1 - float(obs[7])) * 4)))  # wheels on grass
+            rec["grass"].append(int(round((1 - env.last_traction) * 4)))  # wheels on grass
             if activations:
                 rec["inputs"].append([_r(v, 2) for v in obs])
                 rec["nodes"].append([_r(policy.net.values[k], 2) for k in node_keys])
                 rec["actions"].append([_r(v, 2) for v in action])
         obs, reward, terminated, truncated, info = env.step(action)
         score += float(reward)
-        offtrack += float(obs[7]) < 0.99
+        offtrack += env.last_traction < 0.99
         if gif:
             frames.append(env.render())
         if info.get("laps_completed", 0) >= 1:

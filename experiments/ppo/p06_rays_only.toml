@@ -1,0 +1,21 @@
+id = "p06_rays_only"
+model = "ppo"
+parent = "p05_control"
+title = "Check: control + 16 forward rays"
+why = """
+Second check: the control recipe with only the 16 forward rays added. If p05 learns and this doesn't, the ray
+change is what hurts PPO.
+"""
+lidar_rays = 16
+lidar_fov = 240
+
+[train]
+total-timesteps = 600000
+num-envs = 4
+n-steps = 1024
+batch-size = 256
+entropy-coef = 0.005
+offtrack-penalty = 0.0
+allow-multiple-laps = false
+eval-frequency = 25000
+checkpoint-frequency = 100000

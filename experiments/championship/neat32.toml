@@ -1,0 +1,19 @@
+id = "neat32"
+model = "neat"
+championship = true
+parent = "neat16"
+title = "NEAT 32: twice the rays"
+why = """
+Same as NEAT 16 but with 32 forward rays over the same ±120°: twice the detail ahead, but twice the inputs to evolve
+and a slower simulation. Do more rays make a faster car, or only a slower-to-train one?
+"""
+lidar_rays = 32
+lidar_fov = 240
+
+[train]
+generations = 1000
+tracks-per-generation = 3
+lap-time-bonus = 1.0
+max-steps = 2000
+max-hours = 8
+patience-hours = 2

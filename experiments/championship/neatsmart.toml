@@ -1,0 +1,21 @@
+id = "neatsmart"
+model = "neat"
+championship = true
+parent = "neat16"
+title = "NEAT Smart: every lesson at once"
+why = """
+NEAT 16 plus three lessons from the ladder. (1) No compass inputs: cos/sin(heading) are useless on random tracks,
+and in n00 evolution had already cut cos(heading) off. (2) Five tracks per generation instead of three, so a network
+can't win by drawing easy tracks. (3) A stronger lap-time bonus (2 per frame) to push harder for speed.
+"""
+lidar_rays = 16
+lidar_fov = 240
+drop_heading = true
+
+[train]
+generations = 1000
+tracks-per-generation = 5
+lap-time-bonus = 2.0
+max-steps = 2000
+max-hours = 8
+patience-hours = 2

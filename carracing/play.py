@@ -34,8 +34,7 @@ def main(argv=None) -> int:
     policy = load_policy(step)
     env = make_env(render_mode="rgb_array" if args.gif else "human", offtrack_penalty=0.0,
                    allow_multiple_laps=args.laps > 1, lap_completion_bonus=0.0,
-                   max_episode_steps=1000 * args.laps + 1000, lidar_rays=step.lidar_rays,
-                   lidar_fov=step.lidar_fov)
+                   max_episode_steps=1000 * args.laps + 1000, **step.env_kwargs())
     obs, _ = env.reset(seed=args.seed)
     policy.reset()
     frames, score, steps, info = [], 0.0, 0, {}

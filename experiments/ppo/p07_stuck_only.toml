@@ -1,0 +1,21 @@
+id = "p07_stuck_only"
+model = "ppo"
+parent = "p05_control"
+title = "Check: control + stuck rule"
+why = """
+Third check: the control recipe with only the stuck rule added (end the episode after 100 frames without a new
+tile). If p05 learns and this doesn't, cutting episodes short is what hurts PPO: the car gets little practice
+recovering from the grass.
+"""
+
+[train]
+total-timesteps = 600000
+num-envs = 4
+n-steps = 1024
+batch-size = 256
+entropy-coef = 0.005
+offtrack-penalty = 0.0
+allow-multiple-laps = false
+eval-frequency = 25000
+checkpoint-frequency = 100000
+stuck-patience = 100

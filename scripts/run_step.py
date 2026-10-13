@@ -56,7 +56,7 @@ def write_neat_config(step: Step) -> str:
     """neat_config/neat.cfg + this step's [neat_config] overrides + num_inputs for its lidar."""
     parser = configparser.ConfigParser()
     parser.read(BASE_NEAT_CONFIG)
-    overrides = {"DefaultGenome.num_inputs": 8 + step.lidar_rays, **step.neat_config}
+    overrides = {"DefaultGenome.num_inputs": step.state_inputs, **step.neat_config}
     for dotted, value in overrides.items():
         section, key = dotted.split(".", 1)
         if not parser.has_option(section, key):
@@ -72,10 +72,7 @@ def write_neat_config(step: Step) -> str:
 def train(step: Step) -> float:
     ckpt, logs = os.path.join(step.out_dir, "checkpoints"), os.path.join(step.out_dir, "logs")
     os.makedirs(logs, exist_ok=True)
-    flags = train_flags(step.train) + ["--checkpoint-dir", ckpt, "--log-dir", logs,
-                                       "--lidar-rays", str(step.lidar_rays)]
-    if step.lidar_fov is not None:
-        flags += ["--lidar-fov", str(step.lidar_fov)]
+    flags = train_flags(step.train) + ["--checkpoint-dir", ckpt, "--log-dir", logs] + step.env_flags()
     if step.model == "neat":
         cmd = [sys.executable, "-m", "carracing_neat.train", "--config", os.path.join(step.out_dir, "neat.cfg")]
     else:
@@ -144,7 +141,8 @@ def neat_curves(step: Step) -> dict:
                      **genome_graph(genome, config)})
     gens.sort(key=lambda g: g["gen"])
     _, config = load_genome(step.model_path, cfg_path)
-    return {"curve": curve, "generations": gens, "inputs": input_spec(config, step.lidar_fov), "outputs": output_spec(config)}
+    return {"curve": curve, "generations": gens, "inputs": input_spec(config, step.lidar_fov, step.drop_heading),
+            "outputs": output_spec(config)}
 
 
 def ppo_curves(step: Step) -> dict:
@@ -162,12 +160,49 @@ def trained_on(step: Step) -> str:
     return dt.date.fromtimestamp(stamp).isoformat()
 
 
-def benchmark(step: Step) -> tuple:
-    policy = load_policy(step)
+def read_lap_checks(step: Step) -> list:
+    """Rows of logs/validation_laps.csv: the lap check on the 5 validation tracks during training."""
+    path = os.path.join(step.out_dir, "logs", "validation_laps.csv")
+    if not os.path.exists(path):
+        return []
+    with open(path) as fh:
+        rows = list(csv.DictReader(fh))
+    key = "generation" if step.model == "neat" else "timestep"
+    return [{"at": int(r[key]), "t": float(r["time_s"]), "finished": int(r["finished"]),
+             "lap": float(r["mean_lap_s"]) if r["mean_lap_s"] else None} for r in rows]
+
+
+def checkpoint_for(step: Step, at: int) -> str:
+    if step.model == "neat":
+        return os.path.join(step.out_dir, "checkpoints", f"best-genome-gen-{at}.pkl")
+    return os.path.join(step.out_dir, "checkpoints", f"val_{at}.zip")
+
+
+def select_categories(step: Step) -> dict:
+    """Championship checkpoints, chosen on the validation tracks only.
+
+    finish: the first checkpoint that laps all 5 validation tracks (and how long that took);
+    fast:   the fastest validation mean lap (most tracks finished first; the earlier one on a tie).
+    """
+    rows = read_lap_checks(step)
+    if not rows:
+        raise SystemExit(f"{step.id}: no logs/validation_laps.csv, so no championship checkpoints")
+    kind = "generation" if step.model == "neat" else "timestep"
+    first = next((r for r in rows if r["finished"] == 5), None)
+    fast = max(rows, key=lambda r: (r["finished"], -(r["lap"] or 1e9), -r["t"]))
+    out = {}
+    for name, row in (("finish", first), ("fast", fast)):
+        out[name] = None if row is None else {
+            "src": checkpoint_for(step, row["at"]), "selected": {kind: row["at"]}, "train_seconds": row["t"],
+            "validation": {"finished": row["finished"], "mean_lap_s": row["lap"]}}
+    return out
+
+
+def benchmark(step: Step, model_path: str = None, gif: str = "lap.gif") -> tuple:
+    policy = load_policy(step, model_path)
     tracks, drives = [], {}
     for seed in SEEDS:
-        out = drive(policy, seed, step.lidar_rays, gif=seed == GIF_SEED, activations=step.model == "neat",
-                    lidar_fov=step.lidar_fov)
+        out = drive(policy, seed, step.env_kwargs(), gif=seed == GIF_SEED, activations=step.model == "neat")
         tracks.append(out["result"])
         drives[str(seed)] = out["recording"]
         res = out["result"]
@@ -175,7 +210,7 @@ def benchmark(step: Step) -> tuple:
                                         f"DNF ({res['reached_pct']:.0f}% of the lap)") + f", score {res['score']}",
               flush=True)
         if out["frames"]:
-            save_gif(out["frames"][60:660], os.path.join(step.out_dir, "lap.gif"))
+            save_gif(out["frames"][60:660], os.path.join(step.out_dir, gif))
     return tracks, drives, policy.size()
 
 
@@ -195,17 +230,36 @@ def main() -> None:
     if not (args.benchmark_only or step.imported):
         process_seconds = round(train(step), 1)
 
-    picked = select_neat(step) if step.model == "neat" else select_ppo(step)
-    shutil.copyfile(picked["src"], step.model_path)
-    print(f"{step.id}: selected {picked['selected']} after {fmt_duration(picked['train_seconds'])} of training")
-
-    tracks, drives, size = benchmark(step)
+    categories = {}
+    if step.championship:
+        for name, pick in select_categories(step).items():
+            if pick is None:
+                print(f"{step.id}: never finished all 5 validation tracks, so no '{name}' entry")
+                categories[name] = None
+                continue
+            shutil.copyfile(pick["src"], step.model_file(name))
+            print(f"{step.id} [{name}]: {pick['selected']} after {fmt_duration(pick['train_seconds'])} of training")
+            c_tracks, c_drives, c_size = benchmark(step, step.model_file(name), "lap.gif" if name == "fast" else f"lap_{name}.gif")
+            with open(os.path.join(step.out_dir, f"drives_{name}.json"), "w") as fh:
+                json.dump(c_drives, fh, separators=(",", ":"))
+            categories[name] = {k: v for k, v in pick.items() if k != "src"}
+            categories[name].update(size=c_size, summary=summarise(c_tracks), tracks=c_tracks)
+        if categories.get("fast") is None:
+            raise SystemExit(f"{step.id}: no lap check rows to pick from")
+        picked = select_categories(step)["fast"]
+        shutil.copyfile(picked["src"], step.model_path)
+        tracks, drives, size = categories["fast"]["tracks"], json.load(open(os.path.join(step.out_dir, "drives_fast.json"))), categories["fast"]["size"]
+    else:
+        picked = select_neat(step) if step.model == "neat" else select_ppo(step)
+        shutil.copyfile(picked["src"], step.model_path)
+        print(f"{step.id}: selected {picked['selected']} after {fmt_duration(picked['train_seconds'])} of training")
+        tracks, drives, size = benchmark(step)
     curves = neat_curves(step) if step.model == "neat" else ppo_curves(step)
     result_path = os.path.join(step.out_dir, "result.json")
     previous = json.load(open(result_path)) if os.path.exists(result_path) else {}
     result = {
         "id": step.id, "model": step.model, "title": step.title, "why": step.why, "parent": step.parent,
-        "lidar_rays": step.lidar_rays, "lidar_fov": step.lidar_fov, "train": step.train, "neat_config": step.neat_config,
+        "lidar_rays": step.lidar_rays, "lidar_fov": step.lidar_fov, "drop_heading": step.drop_heading, "train": step.train, "neat_config": step.neat_config,
         "imported": bool(step.imported), "note": step.imported.get("note", ""),
         "hardware": step.imported.get("hardware") or previous.get("hardware") or hardware(),
         "commit": step.imported.get("commit") or (git_commit() if process_seconds else previous.get("commit", git_commit())),
@@ -213,6 +267,8 @@ def main() -> None:
         "train_seconds": picked["train_seconds"],
         "process_seconds": process_seconds or previous.get("process_seconds"),
         "selected": picked["selected"], "size": size, "summary": summarise(tracks), "tracks": tracks, **curves,
+        "championship": step.championship, "categories": categories or None,
+        "lap_checks": read_lap_checks(step),
     }
     with open(result_path, "w") as fh:
         json.dump(result, fh, indent=1, ensure_ascii=False)

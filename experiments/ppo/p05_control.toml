@@ -1,0 +1,20 @@
+id = "p05_control"
+model = "ppo"
+parent = "p00_baseline"
+title = "Control: p00's recipe, only the real traction input"
+why = """
+First of three short checks to find what broke PPO. This is p00's recipe exactly (32 original rays, no stuck rule,
+no grass penalty, 1000-frame episodes, constant learning rate). The only difference from p00 is that the traction
+input now works, which can't be undone. If this learns, the traction fix is not the problem.
+"""
+
+[train]
+total-timesteps = 600000
+num-envs = 4
+n-steps = 1024
+batch-size = 256
+entropy-coef = 0.005
+offtrack-penalty = 0.0
+allow-multiple-laps = false
+eval-frequency = 25000
+checkpoint-frequency = 100000

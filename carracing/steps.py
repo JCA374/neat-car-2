@@ -29,6 +29,8 @@ class Step:
     parent: Optional[str] = None
     lidar_rays: int = 32
     lidar_fov: Optional[float] = None  # None = original 324-degree layout
+    drop_heading: bool = False         # leave cos/sin(heading) out of the state
+    championship: bool = False         # pick two checkpoints from the lap check: first to finish, fastest
     # Compatibility with models trained before Oct 12 2026 (n00/p00 only).
     legacy_decode: bool = False
     legacy_traction: bool = False
@@ -40,6 +42,27 @@ class Step:
     @property
     def out_dir(self) -> str:
         return os.path.join("outputs", self.model, self.id)
+
+    def env_kwargs(self) -> Dict:
+        """The sensor settings this step's model was trained with (for make_env)."""
+        return {"lidar_rays": self.lidar_rays, "lidar_fov": self.lidar_fov, "drop_heading": self.drop_heading}
+
+    def env_flags(self) -> List[str]:
+        """The same settings as trainer flags."""
+        flags = ["--lidar-rays", str(self.lidar_rays)]
+        if self.lidar_fov is not None:
+            flags += ["--lidar-fov", str(self.lidar_fov)]
+        if self.drop_heading:
+            flags.append("--drop-heading")
+        return flags
+
+    @property
+    def state_inputs(self) -> int:
+        return (6 if self.drop_heading else 8) + self.lidar_rays
+
+    def model_file(self, category: str) -> str:
+        """model_finish.pkl / model_fast.zip ... for championship checkpoints."""
+        return os.path.join(self.out_dir, f"model_{category}." + ("pkl" if self.model == "neat" else "zip"))
 
     @property
     def model_path(self) -> str:
@@ -60,6 +83,8 @@ def load_step(path: str) -> Step:
         outcome=raw.get("outcome", "").strip(),
         parent=raw.get("parent"), lidar_rays=int(raw.get("lidar_rays", 32)),
         lidar_fov=float(raw["lidar_fov"]) if "lidar_fov" in raw else None,
+        drop_heading=bool(raw.get("drop_heading", False)),
+        championship=bool(raw.get("championship", False)),
         legacy_decode=bool(raw.get("legacy_decode", False)),
         legacy_traction=bool(raw.get("legacy_traction", False)),
         train=dict(raw.get("train", {})), neat_config=dict(raw.get("neat_config", {})),

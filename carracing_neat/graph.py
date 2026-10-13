@@ -10,6 +10,7 @@ import numpy as np
 from carracing.env import lidar_angles
 
 DYNAMICS = ["Speed", "Vx (sideways)", "Vy (forward)", "cos(heading)", "sin(heading)", "Spin rate", "Steering", "Traction"]
+HEADING = ("cos(heading)", "sin(heading)")
 OUTPUTS = ["Steer", "Gas", "Brake"]
 
 
@@ -17,15 +18,16 @@ def _r(v: float, nd: int = 2) -> float:
     return round(float(v), nd)
 
 
-def input_spec(config: neat.Config, lidar_fov: Optional[float] = None) -> List[dict]:
-    n_lidar = config.genome_config.num_inputs - len(DYNAMICS)
+def input_spec(config: neat.Config, lidar_fov: Optional[float] = None, drop_heading: bool = False) -> List[dict]:
+    dynamics = [d for d in DYNAMICS if not (drop_heading and d in HEADING)]
+    n_lidar = config.genome_config.num_inputs - len(dynamics)
     angles = np.degrees(lidar_angles(n_lidar, lidar_fov))
-    spec = [{"key": -(i + 1), "label": name, "group": "dynamics"} for i, name in enumerate(DYNAMICS)]
+    spec = [{"key": -(i + 1), "label": name, "group": "dynamics"} for i, name in enumerate(dynamics)]
     for j, deg in enumerate(angles):
         # The wrapper measures ray angles from the car's local +x axis (its right
         # side); the nose is local +y. Label relative to the nose, + = left.
         ahead = (deg - 90.0 + 180.0) % 360.0 - 180.0
-        spec.append({"key": -(len(DYNAMICS) + j + 1), "label": f"Lidar {ahead:+.0f}°", "group": "lidar",
+        spec.append({"key": -(len(dynamics) + j + 1), "label": f"Lidar {ahead:+.0f}°", "group": "lidar",
                      "angle": _r(deg, 1), "ahead": _r(ahead, 1)})
     return spec
 

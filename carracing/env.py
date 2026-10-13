@@ -50,6 +50,7 @@ class CarRacingStateWrapper(gym.Wrapper):
         env: gym.Env,
         lidar_rays: int = 32,
         lidar_fov: Optional[float] = None,
+        drop_heading: bool = False,
         lidar_max_dist: float = 45.0,
         lidar_step: float = 3.0,
         offtrack_penalty: float = 1.0,
@@ -73,7 +74,10 @@ class CarRacingStateWrapper(gym.Wrapper):
         self.stuck_patience = stuck_patience
 
         self.lidar_angles = lidar_angles(lidar_rays, lidar_fov)
-        self.base_feature_count = 8
+        # cos/sin(heading) is the car's absolute compass direction: no use on a random track.
+        self.drop_heading = drop_heading
+        self.base_feature_count = 6 if drop_heading else 8
+        self.last_traction = 1.0  # fraction of wheels on the road, whatever the state layout
         self.state_size = self.base_feature_count + lidar_rays
 
         # Re-declare observation space to match the state vector.
@@ -113,10 +117,9 @@ class CarRacingStateWrapper(gym.Wrapper):
         obs, reward, terminated, truncated, info = self.env.step(action)
         state = self._build_state(obs)
 
-        # Encourage staying on track using traction fraction (state[7]).
-        if self.offtrack_penalty > 0.0 and len(state) > 7:
-            traction = float(state[7])
-            delta = max(0.0, self.traction_threshold - traction)
+        # Encourage staying on track using the traction fraction.
+        if self.offtrack_penalty > 0.0:
+            delta = max(0.0, self.traction_threshold - self.last_traction)
             reward -= self.offtrack_penalty * delta
 
         self._steps += 1
@@ -215,6 +218,7 @@ class CarRacingStateWrapper(gym.Wrapper):
             else 1.0
         )
         mean_steer = float(np.clip(np.mean(steer_angles) / steer_limit, -1.0, 1.0)) if steer_angles else 0.0
+        self.last_traction = traction_fraction
 
         base_features = np.array(
             [
@@ -235,6 +239,8 @@ class CarRacingStateWrapper(gym.Wrapper):
             heading=heading,
         )
 
+        if self.drop_heading:
+            base_features = np.delete(base_features, [3, 4])
         state = np.concatenate([base_features, lidar]).astype(np.float32)
         return state
 
@@ -342,6 +348,7 @@ def make_env(
     lap_time_bonus: float = 0.0,
     lidar_fov: Optional[float] = None,
     stuck_patience: Optional[int] = None,
+    drop_heading: bool = False,
     **kwargs,
 ) -> CarRacingStateWrapper:
     """
@@ -372,6 +379,8 @@ def make_env(
         Lidar distances in the state (state size = 8 + lidar_rays).
     lidar_fov: Optional[float]
         None = original 324-degree layout; degrees = forward fan of +-fov/2 around the nose.
+    drop_heading: bool
+        Leave cos/sin(heading) out of the state (6 car readings instead of 8).
     stuck_patience: Optional[int]
         End the episode (with the remaining time penalty) after this many frames without a new tile.
     lap_time_bonus: float
@@ -406,4 +415,5 @@ def make_env(
         lidar_fov=lidar_fov,
         lap_time_bonus=lap_time_bonus,
         stuck_patience=stuck_patience,
+        drop_heading=drop_heading,
     )
