@@ -11,6 +11,9 @@ time is only spent on cars that keep driving. Everything else as n02.
 lidar_rays = 16
 lidar_fov = 240
 
+outcome = """
+Finishes all five tracks about 1 s per lap faster than n02 (22.1 s vs 23.2 s), with a smaller network (4 hidden, 62 links) and almost no time on the grass. The longer episodes cost training time: 1 h 45 min instead of 47 min. The best generation was 98 of 100, so it was probably still improving.
+"""
 [train]
 generations = 100
 tracks-per-generation = 3

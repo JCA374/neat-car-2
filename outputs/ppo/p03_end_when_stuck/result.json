@@ -1,0 +1,309 @@
+{
+ "id": "p03_end_when_stuck",
+ "model": "ppo",
+ "title": "No grass penalty: end the episode when stuck",
+ "why": "p01 and p02 failed because the per-frame grass penalty (up to 3.75 per frame for 1500 frames) swamped the tile\nrewards, and the policy learned to creep. Here there is no grass penalty at all. Instead, as in NEAT, an episode\nends after 100 frames without reaching a new tile, and the time penalty for the rest of the episode is charged,\nso getting lost or parking never pays. Grass is then only bad because it leads nowhere. Everything else as p02.",
+ "parent": "p02_forward_rays",
+ "lidar_rays": 16,
+ "lidar_fov": 240.0,
+ "train": {
+  "total-timesteps": 1000000,
+  "num-envs": 4,
+  "n-steps": 1024,
+  "batch-size": 256,
+  "entropy-coef": 0.005,
+  "offtrack-penalty": 0.0,
+  "stuck-patience": 100,
+  "lr-schedule": "linear",
+  "target-kl": 0.02,
+  "lap-time-bonus": 1.0,
+  "allow-multiple-laps": false,
+  "max-episode-steps": 1500,
+  "eval-frequency": 25000,
+  "checkpoint-frequency": 100000
+ },
+ "neat_config": {},
+ "imported": false,
+ "note": "",
+ "hardware": {
+  "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+  "threads": 8,
+  "gpu": false
+ },
+ "commit": "fe6e005",
+ "trained_on": "2026-10-13",
+ "train_seconds": 99.2,
+ "process_seconds": 1049.8,
+ "selected": {
+  "timestep": 100000
+ },
+ "size": {
+  "params": 145415,
+  "label": "256×256 MLP"
+ },
+ "summary": {
+  "finished": 0,
+  "lap_s": null,
+  "score": 226.8,
+  "offtrack_pct": 82.3
+ },
+ "tracks": [
+  {
+   "seed": 3,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 320.3,
+   "offtrack_pct": 82.0,
+   "avg_speed": 34.0,
+   "reached_pct": 52.0,
+   "crashed": false
+  },
+  {
+   "seed": 11,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 124.3,
+   "offtrack_pct": 85.6,
+   "avg_speed": 28.2,
+   "reached_pct": 32.4,
+   "crashed": false
+  },
+  {
+   "seed": 21,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 152.1,
+   "offtrack_pct": 85.4,
+   "avg_speed": 28.7,
+   "reached_pct": 35.2,
+   "crashed": false
+  },
+  {
+   "seed": 34,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 396.3,
+   "offtrack_pct": 72.7,
+   "avg_speed": 36.3,
+   "reached_pct": 59.6,
+   "crashed": false
+  },
+  {
+   "seed": 55,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 140.8,
+   "offtrack_pct": 85.8,
+   "avg_speed": 28.5,
+   "reached_pct": 34.1,
+   "crashed": false
+  }
+ ],
+ "curve": [
+  {
+   "steps": 25000,
+   "t": 24.5,
+   "eval": -68.4
+  },
+  {
+   "steps": 50000,
+   "t": 48.5,
+   "eval": -117.6
+  },
+  {
+   "steps": 75000,
+   "t": 73.7,
+   "eval": 170.5
+  },
+  {
+   "steps": 100000,
+   "t": 99.2,
+   "eval": 357.9
+  },
+  {
+   "steps": 125000,
+   "t": 122.7,
+   "eval": 179.4
+  },
+  {
+   "steps": 150000,
+   "t": 147.7,
+   "eval": 126.1
+  },
+  {
+   "steps": 175000,
+   "t": 175.0,
+   "eval": 64.2
+  },
+  {
+   "steps": 200000,
+   "t": 199.7,
+   "eval": 42.6
+  },
+  {
+   "steps": 225000,
+   "t": 224.9,
+   "eval": 112.5
+  },
+  {
+   "steps": 250000,
+   "t": 251.1,
+   "eval": 72.9
+  },
+  {
+   "steps": 275000,
+   "t": 276.9,
+   "eval": 129.1
+  },
+  {
+   "steps": 300000,
+   "t": 316.1,
+   "eval": 253.0
+  },
+  {
+   "steps": 325000,
+   "t": 349.3,
+   "eval": 121.8
+  },
+  {
+   "steps": 350000,
+   "t": 379.2,
+   "eval": 49.7
+  },
+  {
+   "steps": 375000,
+   "t": 409.1,
+   "eval": 99.8
+  },
+  {
+   "steps": 400000,
+   "t": 440.3,
+   "eval": -31.8
+  },
+  {
+   "steps": 425000,
+   "t": 467.6,
+   "eval": -20.3
+  },
+  {
+   "steps": 450000,
+   "t": 496.9,
+   "eval": 65.7
+  },
+  {
+   "steps": 475000,
+   "t": 523.9,
+   "eval": 42.0
+  },
+  {
+   "steps": 500000,
+   "t": 548.5,
+   "eval": 78.2
+  },
+  {
+   "steps": 525000,
+   "t": 573.8,
+   "eval": 19.5
+  },
+  {
+   "steps": 550000,
+   "t": 598.0,
+   "eval": -51.2
+  },
+  {
+   "steps": 575000,
+   "t": 622.2,
+   "eval": 15.6
+  },
+  {
+   "steps": 600000,
+   "t": 646.8,
+   "eval": -4.1
+  },
+  {
+   "steps": 625000,
+   "t": 672.6,
+   "eval": 145.7
+  },
+  {
+   "steps": 650000,
+   "t": 697.1,
+   "eval": 84.8
+  },
+  {
+   "steps": 675000,
+   "t": 721.3,
+   "eval": 21.6
+  },
+  {
+   "steps": 700000,
+   "t": 746.7,
+   "eval": 56.3
+  },
+  {
+   "steps": 725000,
+   "t": 770.7,
+   "eval": -48.0
+  },
+  {
+   "steps": 750000,
+   "t": 796.4,
+   "eval": 95.8
+  },
+  {
+   "steps": 775000,
+   "t": 821.3,
+   "eval": 114.9
+  },
+  {
+   "steps": 800000,
+   "t": 845.8,
+   "eval": 70.3
+  },
+  {
+   "steps": 825000,
+   "t": 870.5,
+   "eval": 69.6
+  },
+  {
+   "steps": 850000,
+   "t": 895.1,
+   "eval": 106.1
+  },
+  {
+   "steps": 875000,
+   "t": 919.7,
+   "eval": 80.5
+  },
+  {
+   "steps": 900000,
+   "t": 944.4,
+   "eval": 103.6
+  },
+  {
+   "steps": 925000,
+   "t": 968.7,
+   "eval": 9.9
+  },
+  {
+   "steps": 950000,
+   "t": 994.6,
+   "eval": 84.4
+  },
+  {
+   "steps": 975000,
+   "t": 1020.2,
+   "eval": 151.4
+  },
+  {
+   "steps": 1000000,
+   "t": 1044.2,
+   "eval": 33.6
+  }
+ ]
+}

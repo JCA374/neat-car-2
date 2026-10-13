@@ -116,6 +116,105 @@
    ]
   },
   {
+   "id": "n04_long_episodes",
+   "model": "neat",
+   "title": "2000-frame training episodes",
+   "why": "Training episodes stopped at 1000 frames (20 s), but n02 needs 19-28 s per lap, so on long tracks a lap was never\nfinished during training and finishing it was never rewarded. The benchmark allows 2000 frames. Here training\nand validation get 2000 frames too. Cars that stop making progress are still cut off after 100 frames, so the extra\ntime is only spent on cars that keep driving. Everything else as n02.",
+   "outcome": "Finishes all five tracks about 1 s per lap faster than n02 (22.1 s vs 23.2 s), with a smaller network (4 hidden, 62 links) and almost no time on the grass. The longer episodes cost training time: 1 h 45 min instead of 47 min. The best generation was 98 of 100, so it was probably still improving.",
+   "parent": "n02_forward_rays",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "generations": 100,
+    "tracks-per-generation": 3,
+    "lap-time-bonus": 1.0,
+    "max-steps": 2000
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "fe6e005",
+   "trained_on": "2026-10-13",
+   "train_seconds": 6294.8,
+   "selected": {
+    "generation": 98
+   },
+   "size": {
+    "params": 69,
+    "hidden": 4,
+    "connections": 62,
+    "label": "4 hidden, 62 links"
+   },
+   "summary": {
+    "finished": 5,
+    "lap_s": 22.14,
+    "score": 889.3,
+    "offtrack_pct": 0.2
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 19.44,
+     "frames": 972,
+     "score": 902.8,
+     "offtrack_pct": 0.0,
+     "avg_speed": 48.1,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 18.76,
+     "frames": 938,
+     "score": 906.2,
+     "offtrack_pct": 0.0,
+     "avg_speed": 47.7,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": true,
+     "lap_s": 25.26,
+     "frames": 1263,
+     "score": 873.7,
+     "offtrack_pct": 0.0,
+     "avg_speed": 46.4,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": true,
+     "lap_s": 23.5,
+     "frames": 1175,
+     "score": 882.5,
+     "offtrack_pct": 0.0,
+     "avg_speed": 47.6,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": true,
+     "lap_s": 23.74,
+     "frames": 1187,
+     "score": 881.3,
+     "offtrack_pct": 1.2,
+     "avg_speed": 45.4,
+     "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "n02_forward_rays",
    "model": "neat",
    "title": "16 forward rays instead of 32 all around",
@@ -407,6 +506,113 @@
      "offtrack_pct": 0.0,
      "avg_speed": 57.8,
      "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
+   "id": "p03_end_when_stuck",
+   "model": "ppo",
+   "title": "No grass penalty: end the episode when stuck",
+   "why": "p01 and p02 failed because the per-frame grass penalty (up to 3.75 per frame for 1500 frames) swamped the tile\nrewards, and the policy learned to creep. Here there is no grass penalty at all. Instead, as in NEAT, an episode\nends after 100 frames without reaching a new tile, and the time penalty for the rest of the episode is charged,\nso getting lost or parking never pays. Grass is then only bad because it leads nowhere. Everything else as p02.",
+   "outcome": "Better than p01/p02: it no longer creeps, driving at speed 28-36 and covering 32-60% of each track. But it spends 73-86% of the time on the grass and never finishes. Training reward rose early, then flattened at about 200; the kept checkpoint is from 100k of 1M steps. Several settings changed at once since the recipe that worked (p00), so the next step goes back to it.",
+   "parent": "p02_forward_rays",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "total-timesteps": 1000000,
+    "num-envs": 4,
+    "n-steps": 1024,
+    "batch-size": 256,
+    "entropy-coef": 0.005,
+    "offtrack-penalty": 0.0,
+    "stuck-patience": 100,
+    "lr-schedule": "linear",
+    "target-kl": 0.02,
+    "lap-time-bonus": 1.0,
+    "allow-multiple-laps": false,
+    "max-episode-steps": 1500,
+    "eval-frequency": 25000,
+    "checkpoint-frequency": 100000
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "fe6e005",
+   "trained_on": "2026-10-13",
+   "train_seconds": 99.2,
+   "selected": {
+    "timestep": 100000
+   },
+   "size": {
+    "params": 145415,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 0,
+    "lap_s": null,
+    "score": 226.8,
+    "offtrack_pct": 82.3
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 320.3,
+     "offtrack_pct": 82.0,
+     "avg_speed": 34.0,
+     "reached_pct": 52.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 124.3,
+     "offtrack_pct": 85.6,
+     "avg_speed": 28.2,
+     "reached_pct": 32.4,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 152.1,
+     "offtrack_pct": 85.4,
+     "avg_speed": 28.7,
+     "reached_pct": 35.2,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 396.3,
+     "offtrack_pct": 72.7,
+     "avg_speed": 36.3,
+     "reached_pct": 59.6,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 140.8,
+     "offtrack_pct": 85.8,
+     "avg_speed": 28.5,
+     "reached_pct": 34.1,
      "crashed": false
     }
    ]
@@ -728,16 +934,16 @@
  ],
  "pending": [
   {
-   "id": "n04_long_episodes",
+   "id": "n05_more_generations",
    "model": "neat",
-   "title": "2000-frame training episodes",
-   "why": "Training episodes stopped at 1000 frames (20 s), but n02 needs 19-28 s per lap, so on long tracks a lap was never\nfinished during training and finishing it was never rewarded. The benchmark allows 2000 frames. Here training\nand validation get 2000 frames too. Cars that stop making progress are still cut off after 100 frames, so the extra\ntime is only spent on cars that keep driving. Everything else as n02."
+   "title": "200 generations instead of 100",
+   "why": "n04's best network came from generation 98 of 100, so evolution was probably still improving when it stopped.\nSame recipe as n04 with twice the generations, from a fresh start so the training time stays honest. Shows how\nmuch faster the car gets for the extra training time."
   },
   {
-   "id": "p03_end_when_stuck",
+   "id": "p04_back_to_p00",
    "model": "ppo",
-   "title": "No grass penalty: end the episode when stuck",
-   "why": "p01 and p02 failed because the per-frame grass penalty (up to 3.75 per frame for 1500 frames) swamped the tile\nrewards, and the policy learned to creep. Here there is no grass penalty at all. Instead, as in NEAT, an episode\nends after 100 frames without reaching a new tile, and the time penalty for the rest of the episode is charged,\nso getting lost or parking never pays. Grass is then only bad because it leads nowhere. Everything else as p02."
+   "title": "Back to p00's recipe, plus forward rays and the stuck rule",
+   "why": "p01-p03 never learned to drive, and each one changed several settings at once compared with p00, the only PPO run\nthat learned. Here p00's recipe is restored as it was: constant learning rate, no KL early stop, 1000-frame\nepisodes, no lap-time bonus, no grass penalty. Only three things differ from p00: the 16 forward rays, the stuck\nrule from p03, and the real traction input (p00 only ever saw 1.0). If this learns, the lap-time bonus comes back\nas its own step."
   }
  ]
 }

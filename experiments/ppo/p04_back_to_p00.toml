@@ -1,0 +1,25 @@
+id = "p04_back_to_p00"
+model = "ppo"
+parent = "p00_baseline"
+title = "Back to p00's recipe, plus forward rays and the stuck rule"
+why = """
+p01-p03 never learned to drive, and each one changed several settings at once compared with p00, the only PPO run
+that learned. Here p00's recipe is restored as it was: constant learning rate, no KL early stop, 1000-frame
+episodes, no lap-time bonus, no grass penalty. Only three things differ from p00: the 16 forward rays, the stuck
+rule from p03, and the real traction input (p00 only ever saw 1.0). If this learns, the lap-time bonus comes back
+as its own step.
+"""
+lidar_rays = 16
+lidar_fov = 240
+
+[train]
+total-timesteps = 600000
+num-envs = 4
+n-steps = 1024
+batch-size = 256
+entropy-coef = 0.005
+offtrack-penalty = 0.0
+stuck-patience = 100
+allow-multiple-laps = false
+eval-frequency = 25000
+checkpoint-frequency = 100000

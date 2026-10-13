@@ -1,0 +1,17 @@
+id = "n05_more_generations"
+model = "neat"
+parent = "n04_long_episodes"
+title = "200 generations instead of 100"
+why = """
+n04's best network came from generation 98 of 100, so evolution was probably still improving when it stopped.
+Same recipe as n04 with twice the generations, from a fresh start so the training time stays honest. Shows how
+much faster the car gets for the extra training time.
+"""
+lidar_rays = 16
+lidar_fov = 240
+
+[train]
+generations = 200
+tracks-per-generation = 3
+lap-time-bonus = 1.0
+max-steps = 2000

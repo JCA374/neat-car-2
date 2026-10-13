@@ -11,6 +11,9 @@ so getting lost or parking never pays. Grass is then only bad because it leads n
 lidar_rays = 16
 lidar_fov = 240
 
+outcome = """
+Better than p01/p02: it no longer creeps, driving at speed 28-36 and covering 32-60% of each track. But it spends 73-86% of the time on the grass and never finishes. Training reward rose early, then flattened at about 200; the kept checkpoint is from 100k of 1M steps. Several settings changed at once since the recipe that worked (p00), so the next step goes back to it.
+"""
 [train]
 total-timesteps = 1000000
 num-envs = 4
