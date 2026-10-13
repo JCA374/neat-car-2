@@ -78,6 +78,7 @@
 <section>
   <h2>Championship: all five tracks</h2>
   <p class="small muted narrow">The selected drivers race on every track and score F1-style points per finishing position (25, 18, 15, 12, 10, 8, 6, 4). A finished lap beats any unfinished run, and a faster lap beats a slower one. Unfinished runs are ranked by how much of the track they covered.</p>
+  <p class="small muted narrow">A lap only counts when the car has touched every road tile. A driver that cuts the last corner across the grass can pass right beside the finish line and still not finish: it shows as <em>DNF · missed 1 tile</em>.</p>
   <div class="card table-scroll"><table id="champ"></table></div>
 </section>
 
@@ -101,6 +102,14 @@
   function result(id, seed) { return step(id).tracks.filter(function (t) { return t.seed === seed; })[0]; }
   function run(id, trackObj) { return DRIVES[id][String((trackObj || T).seed)]; }
   function endFrame(id, trackObj) { return result(id, (trackObj || T).seed).frames; }
+  // Tiles a driver never touched on this track (a lap needs every tile).
+  function missed(id, trackObj) { var r = run(id, trackObj); return (trackObj || T).tiles - r.tiles[r.tiles.length - 1]; }
+  function dnfText(id, trackObj) {
+    var m = missed(id, trackObj);
+    return m <= 3 ? "DNF · missed " + m + " tile" + (m === 1 ? "" : "s") : "DNF";
+  }
+  // Coverage without rounding a near-miss up to 100%.
+  function covered(pct) { return pct >= 99.5 && pct < 100 ? pct.toFixed(1) + "%" : Math.round(pct) + "%"; }
   function raceLength() { return Math.max.apply(null, [1].concat(selected().map(function (id) { return endFrame(id); }))); }
 
   // Interpolated state of one racer at (possibly fractional) game frame f.
@@ -178,7 +187,7 @@
     document.getElementById("board").innerHTML = board.map(function (e, i) {
       var pct = 100 * e.s.tiles / T.tiles, st, s = step(e.id);
       if (e.s.done) st = '<span class="flag">🏁 ' + fmtTime(e.s.finish) + "</span>";
-      else if (f >= endFrame(e.id)) st = '<span class="warn">DNF</span>';
+      else if (f >= endFrame(e.id)) st = '<span class="warn">' + dnfText(e.id) + "</span>";
       else if (f > 0 && e.s.v < 2) st = '<span class="warn">stopped</span>';
       else if (e.s.grass >= 2) st = '<span class="warn">on grass · ' + Math.round(e.s.v) + "</span>";
       else st = Math.round(e.s.v) + " speed";
@@ -199,7 +208,7 @@
         var s = step(r.id);
         return "<tr><td class='medal'>" + r.pos + "</td><td><i style='background:" + color(r.id) + "'></i>" + Site.modelName(s.model) + " " + Site.short(s) +
           " <span class='muted'>" + Site.esc(s.title) + "</span></td>" +
-          "<td class='num'>" + (r.res.finished ? Site.lap(r.res.lap_s) : "DNF") + "</td><td class='num'>" + Math.round(r.res.reached_pct) + "%</td>" +
+          "<td class='num'>" + (r.res.finished ? Site.lap(r.res.lap_s) : dnfText(r.id, T)) + "</td><td class='num'>" + covered(r.res.reached_pct) + "</td>" +
           "<td class='num'>" + Math.round(r.res.offtrack_pct) + "%</td><td class='num'>" + Site.dur(s.train_seconds) + "</td></tr>";
       }).join("") + "</tbody>";
     var ids = selected(), pts = {}, wins = {}, laps = {};
