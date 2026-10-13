@@ -8,6 +8,9 @@ speciation on, and +1 fitness per frame a lap finishes under 1000 frames, so fas
 Fresh start, so the training time is honest.
 """
 
+outcome = """
+Faster where it finishes: 17.3 s on track 3, the quickest NEAT lap so far. But it takes corners at 55-60 and on tracks 21 and 34 it leaves the road and never finds its way back. Its fitness only saw 1000-frame episodes, so long tracks were never finished in training.
+"""
 [train]
 generations = 100
 tracks-per-generation = 3

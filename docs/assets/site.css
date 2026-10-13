@@ -113,6 +113,8 @@ input[type=range] { accent-color: var(--accent); }
 .kv span { font-size: 0.76rem; font-family: "JetBrains Mono", monospace; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 1px 7px; color: var(--text-2); }
 .tag { display: inline-block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; margin-left: 6px; vertical-align: 2px; color: var(--text-3); }
 .tag.champ-tag { color: var(--good); }
+.outcome { margin: 10px 0 0; padding: 9px 12px; border-radius: 8px; background: var(--surface-2); font-size: 0.88rem; color: var(--text-2); line-height: 1.5; }
+.outcome strong { color: var(--text); }
 .laps { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; }
 .laps span { font-size: 0.76rem; font-variant-numeric: tabular-nums; padding: 2px 7px; border-radius: 6px; background: var(--surface-2); color: var(--text-2); }
 .laps span.dnf { color: var(--bad); }

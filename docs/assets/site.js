@@ -95,6 +95,7 @@
         '<div class="tile"><div class="num">' + Site.fmt(s.size.params, 0) + '</div><div class="lbl">parameters · ' + Site.esc(s.size.label) + "</div>" + delta(s.size.params, p && p.size.params, "", true) + "</div>" +
         "</div>" +
         '<div class="laps">' + laps + "</div>" +
+        (s.outcome ? '<div class="outcome"><strong>Outcome:</strong> ' + Site.esc(s.outcome) + "</div>" : "") +
         '<div class="kv">' + settingChips(s) + "</div>" +
         (s.note ? '<p class="small faint" style="margin:8px 0 0">' + Site.esc(s.note) + "</p>" : "") +
         "</div><figure style=\"margin:0\"><img src=\"assets/gifs/" + s.id + '.gif" alt="' + Site.esc(s.id) + ' driving benchmark track 3" loading="lazy">' +

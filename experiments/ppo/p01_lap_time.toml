@@ -7,6 +7,9 @@ The fixed traction input with a mild off-track penalty (the strict 15 × 0.99 re
 learning-rate decay against the late collapse, and +1 reward per frame a lap finishes under 1000 frames.
 """
 
+outcome = """
+Failed. The off-track penalty (up to 3.75 per frame, and episodes don't end on grass) swamped the tile rewards: evaluation rewards of -2000 to -5000, and the policy learned to creep at walking pace. Training was fast (1M steps in 27 minutes) but learned nothing useful.
+"""
 [train]
 total-timesteps = 1000000
 num-envs = 4

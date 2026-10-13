@@ -11,6 +11,9 @@ smaller network to evolve. Everything else as n01.
 lidar_rays = 16
 lidar_fov = 240
 
+outcome = """
+Finishes all five tracks with half the inputs and in 47 minutes, a fifth of n00's training time. Laps are slower than n00 (23.2 s vs 20.9 s): it runs wide onto the grass on tracks 21 and 55 and loses 4-5 s there. Training episodes stop at 1000 frames (20 s), so a lap that long never finished during training.
+"""
 [train]
 generations = 100
 tracks-per-generation = 3

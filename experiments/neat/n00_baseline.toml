@@ -9,6 +9,9 @@ so gas was capped at 0.88 and the brake never released below 0.12: a car with th
 """
 legacy_decode = true
 
+outcome = """
+Finishes all five tracks without touching the grass, but slowly: gas capped at 0.88 and the brake always partly on. The reference everything else is measured against.
+"""
 [train]
 generations = 150
 tracks-per-generation = 3

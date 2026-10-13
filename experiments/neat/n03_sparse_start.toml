@@ -10,6 +10,9 @@ help are simply never wired in. The NEAT page then shows which rays evolution ch
 lidar_rays = 16
 lidar_fov = 240
 
+outcome = """
+Evolution wired up only 8 connections and 1 hidden node, the simplest driver yet, and it gets round 98-99% of three tracks. But it cuts across the grass, gets lost, and never crosses the finish line. Too simple, or 100 generations was not enough to grow.
+"""
 [train]
 generations = 100
 tracks-per-generation = 3

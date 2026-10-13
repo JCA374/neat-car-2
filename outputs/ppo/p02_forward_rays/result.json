@@ -1,0 +1,309 @@
+{
+ "id": "p02_forward_rays",
+ "model": "ppo",
+ "title": "16 forward rays instead of 32 all around",
+ "why": "Same sensor change as NEAT n02. In p00 the 9 rays within ±45° of the nose carried 48% of the policy's lidar\nsensitivity, and the 15 backward rays still carried 32%: likely noise it reacts to. 16 rays over ±120° remove the\nbackward rays and the blind spot on the left, and simulate about 25% faster, so the same number of steps trains\nin less time. Everything else as p01.",
+ "parent": "p01_lap_time",
+ "lidar_rays": 16,
+ "lidar_fov": 240.0,
+ "train": {
+  "total-timesteps": 1000000,
+  "num-envs": 4,
+  "n-steps": 1024,
+  "batch-size": 256,
+  "entropy-coef": 0.005,
+  "offtrack-penalty": 5.0,
+  "traction-threshold": 0.75,
+  "lr-schedule": "linear",
+  "target-kl": 0.02,
+  "lap-time-bonus": 1.0,
+  "allow-multiple-laps": false,
+  "max-episode-steps": 1500,
+  "eval-frequency": 25000,
+  "checkpoint-frequency": 100000
+ },
+ "neat_config": {},
+ "imported": false,
+ "note": "",
+ "hardware": {
+  "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+  "threads": 8,
+  "gpu": false
+ },
+ "commit": "e5b371f",
+ "trained_on": "2026-10-12",
+ "train_seconds": 330.8,
+ "process_seconds": 1125.9,
+ "selected": {
+  "timestep": 300000
+ },
+ "size": {
+  "params": 145415,
+  "label": "256×256 MLP"
+ },
+ "summary": {
+  "finished": 0,
+  "lap_s": null,
+  "score": -112.2,
+  "offtrack_pct": 18.3
+ },
+ "tracks": [
+  {
+   "seed": 3,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": -126.2,
+   "offtrack_pct": 0.0,
+   "avg_speed": 1.7,
+   "reached_pct": 7.4,
+   "crashed": false
+  },
+  {
+   "seed": 11,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": -26.3,
+   "offtrack_pct": 91.5,
+   "avg_speed": 3.8,
+   "reached_pct": 17.4,
+   "crashed": false
+  },
+  {
+   "seed": 21,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": -137.9,
+   "offtrack_pct": 0.0,
+   "avg_speed": 1.7,
+   "reached_pct": 6.2,
+   "crashed": false
+  },
+  {
+   "seed": 34,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": -137.9,
+   "offtrack_pct": 0.0,
+   "avg_speed": 1.7,
+   "reached_pct": 6.2,
+   "crashed": false
+  },
+  {
+   "seed": 55,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": -132.5,
+   "offtrack_pct": 0.0,
+   "avg_speed": 1.7,
+   "reached_pct": 6.8,
+   "crashed": false
+  }
+ ],
+ "curve": [
+  {
+   "steps": 25000,
+   "t": 28.7,
+   "eval": -4582.8
+  },
+  {
+   "steps": 50000,
+   "t": 54.6,
+   "eval": -5117.3
+  },
+  {
+   "steps": 75000,
+   "t": 83.7,
+   "eval": -123.6
+  },
+  {
+   "steps": 100000,
+   "t": 110.6,
+   "eval": -303.1
+  },
+  {
+   "steps": 125000,
+   "t": 140.7,
+   "eval": -1927.7
+  },
+  {
+   "steps": 150000,
+   "t": 162.1,
+   "eval": -5349.6
+  },
+  {
+   "steps": 175000,
+   "t": 200.4,
+   "eval": -137.2
+  },
+  {
+   "steps": 200000,
+   "t": 227.7,
+   "eval": -140.7
+  },
+  {
+   "steps": 225000,
+   "t": 255.5,
+   "eval": -132.8
+  },
+  {
+   "steps": 250000,
+   "t": 284.6,
+   "eval": -130.4
+  },
+  {
+   "steps": 275000,
+   "t": 310.1,
+   "eval": -3479.2
+  },
+  {
+   "steps": 300000,
+   "t": 330.8,
+   "eval": -77.2
+  },
+  {
+   "steps": 325000,
+   "t": 368.1,
+   "eval": -79.2
+  },
+  {
+   "steps": 350000,
+   "t": 394.5,
+   "eval": -641.1
+  },
+  {
+   "steps": 375000,
+   "t": 421.5,
+   "eval": -4517.7
+  },
+  {
+   "steps": 400000,
+   "t": 448.5,
+   "eval": -637.9
+  },
+  {
+   "steps": 425000,
+   "t": 475.2,
+   "eval": -3470.5
+  },
+  {
+   "steps": 450000,
+   "t": 495.2,
+   "eval": -3021.8
+  },
+  {
+   "steps": 475000,
+   "t": 533.5,
+   "eval": -3971.0
+  },
+  {
+   "steps": 500000,
+   "t": 558.6,
+   "eval": -2134.1
+  },
+  {
+   "steps": 525000,
+   "t": 584.4,
+   "eval": -2824.7
+  },
+  {
+   "steps": 550000,
+   "t": 609.3,
+   "eval": -1904.5
+  },
+  {
+   "steps": 575000,
+   "t": 635.7,
+   "eval": -2578.0
+  },
+  {
+   "steps": 600000,
+   "t": 657.8,
+   "eval": -2880.1
+  },
+  {
+   "steps": 625000,
+   "t": 695.1,
+   "eval": -4604.0
+  },
+  {
+   "steps": 650000,
+   "t": 723.7,
+   "eval": -1188.5
+  },
+  {
+   "steps": 675000,
+   "t": 752.3,
+   "eval": -5037.3
+  },
+  {
+   "steps": 700000,
+   "t": 780.2,
+   "eval": -2714.7
+  },
+  {
+   "steps": 725000,
+   "t": 808.1,
+   "eval": -1539.7
+  },
+  {
+   "steps": 750000,
+   "t": 829.6,
+   "eval": -1664.3
+  },
+  {
+   "steps": 775000,
+   "t": 867.5,
+   "eval": -4408.4
+  },
+  {
+   "steps": 800000,
+   "t": 896.2,
+   "eval": -4667.7
+  },
+  {
+   "steps": 825000,
+   "t": 924.0,
+   "eval": -1880.6
+  },
+  {
+   "steps": 850000,
+   "t": 951.4,
+   "eval": -3457.2
+  },
+  {
+   "steps": 875000,
+   "t": 978.1,
+   "eval": -4416.0
+  },
+  {
+   "steps": 900000,
+   "t": 999.8,
+   "eval": -4783.4
+  },
+  {
+   "steps": 925000,
+   "t": 1036.9,
+   "eval": -4868.9
+  },
+  {
+   "steps": 950000,
+   "t": 1065.3,
+   "eval": -3127.6
+  },
+  {
+   "steps": 975000,
+   "t": 1093.6,
+   "eval": -4813.6
+  },
+  {
+   "steps": 1000000,
+   "t": 1121.4,
+   "eval": -3332.9
+  }
+ ]
+}

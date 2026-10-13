@@ -25,6 +25,7 @@ class Step:
     model: str
     title: str
     why: str = ""
+    outcome: str = ""                 # what happened, written after the run (shown on the page)
     parent: Optional[str] = None
     lidar_rays: int = 32
     lidar_fov: Optional[float] = None  # None = original 324-degree layout
@@ -56,6 +57,7 @@ def load_step(path: str) -> Step:
         raise ValueError(f"{path}: id {raw['id']!r} must match the file name {expected!r}")
     return Step(
         id=raw["id"], model=model, title=raw["title"], why=raw.get("why", "").strip(),
+        outcome=raw.get("outcome", "").strip(),
         parent=raw.get("parent"), lidar_rays=int(raw.get("lidar_rays", 32)),
         lidar_fov=float(raw["lidar_fov"]) if "lidar_fov" in raw else None,
         legacy_decode=bool(raw.get("legacy_decode", False)),

@@ -11,6 +11,9 @@ in less time. Everything else as p01.
 lidar_rays = 16
 lidar_fov = 240
 
+outcome = """
+Failed the same way as p01, so the sensor change could not show its effect. The reward has to be fixed first (next PPO step).
+"""
 [train]
 total-timesteps = 1000000
 num-envs = 4

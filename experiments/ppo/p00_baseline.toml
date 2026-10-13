@@ -9,6 +9,9 @@ and the network never learned what grass is.
 """
 legacy_traction = true
 
+outcome = """
+Fast when it gets it right (18.1 s on track 55), but it spends a lot of time on the grass and runs out of time on four of the five tracks.
+"""
 [train]
 total-timesteps = 450000
 num-envs = 4

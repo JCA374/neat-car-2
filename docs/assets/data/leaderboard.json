@@ -22,6 +22,7 @@
    "model": "neat",
    "title": "Baseline: NEAT run 1",
    "why": "Population 100, every genome drives the same 3 random tracks per generation, fitness = raw game score,\nchampion picked on 5 held-out tracks. Starts as a plain 40→3 network. Its output decoding applied tanh twice,\nso gas was capped at 0.88 and the brake never released below 0.12: a car with the handbrake on.",
+   "outcome": "Finishes all five tracks without touching the grass, but slowly: gas capped at 0.88 and the brake always partly on. The reference everything else is measured against.",
    "parent": null,
    "lidar_rays": 32,
    "lidar_fov": null,
@@ -115,10 +116,207 @@
    ]
   },
   {
+   "id": "n02_forward_rays",
+   "model": "neat",
+   "title": "16 forward rays instead of 32 all around",
+   "why": "The original lidar fans 32 rays over 324° centred on the car's right side: 13 point backwards and there is a\n36° blind gap on the left. In n00 the forward rays (about ±45°) carried most of the signal, and the side and\nback rays barely changed. Here: 16 rays over ±120° around the nose. Half the inputs, no blind spot, and a\nsmaller network to evolve. Everything else as n01.",
+   "outcome": "Finishes all five tracks with half the inputs and in 47 minutes, a fifth of n00's training time. Laps are slower than n00 (23.2 s vs 20.9 s): it runs wide onto the grass on tracks 21 and 55 and loses 4-5 s there. Training episodes stop at 1000 frames (20 s), so a lap that long never finished during training.",
+   "parent": "n01_lap_time",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "generations": 100,
+    "tracks-per-generation": 3,
+    "lap-time-bonus": 1.0
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "e5b371f",
+   "trained_on": "2026-10-12",
+   "train_seconds": 2824.7,
+   "selected": {
+    "generation": 73
+   },
+   "size": {
+    "params": 87,
+    "hidden": 8,
+    "connections": 76,
+    "label": "8 hidden, 76 links"
+   },
+   "summary": {
+    "finished": 5,
+    "lap_s": 23.15,
+    "score": 884.2,
+    "offtrack_pct": 4.0
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 19.32,
+     "frames": 966,
+     "score": 903.4,
+     "offtrack_pct": 2.2,
+     "avg_speed": 47.5,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 18.84,
+     "frames": 942,
+     "score": 905.8,
+     "offtrack_pct": 1.0,
+     "avg_speed": 46.5,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": true,
+     "lap_s": 27.92,
+     "frames": 1396,
+     "score": 860.4,
+     "offtrack_pct": 4.7,
+     "avg_speed": 46.5,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": true,
+     "lap_s": 23.26,
+     "frames": 1163,
+     "score": 883.7,
+     "offtrack_pct": 2.5,
+     "avg_speed": 47.3,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": true,
+     "lap_s": 26.42,
+     "frames": 1321,
+     "score": 867.9,
+     "offtrack_pct": 9.5,
+     "avg_speed": 45.0,
+     "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
+   "id": "n01_lap_time",
+   "model": "neat",
+   "title": "Fixed controls + reward lap time",
+   "why": "Same recipe as the baseline, but with the corrected output decoding (full gas, brake can release),\nspeciation on, and +1 fitness per frame a lap finishes under 1000 frames, so faster laps clearly win.\nFresh start, so the training time is honest.",
+   "outcome": "Faster where it finishes: 17.3 s on track 3, the quickest NEAT lap so far. But it takes corners at 55-60 and on tracks 21 and 34 it leaves the road and never finds its way back. Its fitness only saw 1000-frame episodes, so long tracks were never finished in training.",
+   "parent": "n00_baseline",
+   "lidar_rays": 32,
+   "lidar_fov": null,
+   "train": {
+    "generations": 100,
+    "tracks-per-generation": 3,
+    "lap-time-bonus": 1.0
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "a1a9e70",
+   "trained_on": "2026-10-12",
+   "train_seconds": 4631.1,
+   "selected": {
+    "generation": 65
+   },
+   "size": {
+    "params": 114,
+    "hidden": 2,
+    "connections": 109,
+    "label": "2 hidden, 109 links"
+   },
+   "summary": {
+    "finished": 3,
+    "lap_s": 19.4,
+    "score": 827.8,
+    "offtrack_pct": 6.8
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 17.28,
+     "frames": 864,
+     "score": 913.6,
+     "offtrack_pct": 0.0,
+     "avg_speed": 53.8,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 20.66,
+     "frames": 1033,
+     "score": 896.7,
+     "offtrack_pct": 0.0,
+     "avg_speed": 42.9,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 779.3,
+     "offtrack_pct": 17.6,
+     "avg_speed": 52.1,
+     "reached_pct": 97.9,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 650.9,
+     "offtrack_pct": 16.6,
+     "avg_speed": 54.7,
+     "reached_pct": 85.1,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": true,
+     "lap_s": 20.26,
+     "frames": 1013,
+     "score": 898.7,
+     "offtrack_pct": 0.0,
+     "avg_speed": 52.7,
+     "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "p00_baseline",
    "model": "ppo",
    "title": "Baseline: PPO, stopped at its peak",
    "why": "Stable-Baselines3 PPO, two 256-unit layers, 4 parallel envs, stopped at 450k steps because longer runs\ncollapsed. It was trained while the traction input was stuck at 1.0, so the off-track penalty never fired\nand the network never learned what grass is.",
+   "outcome": "Fast when it gets it right (18.1 s on track 55), but it spends a lot of time on the grass and runs out of time on four of the five tracks.",
    "parent": null,
    "lidar_rays": 32,
    "lidar_fov": null,
@@ -212,38 +410,321 @@
      "crashed": false
     }
    ]
-  }
- ],
- "pending": [
-  {
-   "id": "n01_lap_time",
-   "model": "neat",
-   "title": "Fixed controls + reward lap time",
-   "why": "Same recipe as the baseline, but with the corrected output decoding (full gas, brake can release),\nspeciation on, and +1 fitness per frame a lap finishes under 1000 frames, so faster laps clearly win.\nFresh start, so the training time is honest."
-  },
-  {
-   "id": "n02_forward_rays",
-   "model": "neat",
-   "title": "16 forward rays instead of 32 all around",
-   "why": "The original lidar fans 32 rays over 324° centred on the car's right side: 13 point backwards and there is a\n36° blind gap on the left. In n00 the forward rays (about ±45°) carried most of the signal, and the side and\nback rays barely changed. Here: 16 rays over ±120° around the nose. Half the inputs, no blind spot, and a\nsmaller network to evolve. Everything else as n01."
-  },
-  {
-   "id": "n03_sparse_start",
-   "model": "neat",
-   "title": "Start unconnected: evolve which inputs to use",
-   "why": "Every earlier NEAT run started with all inputs wired to all outputs, and evolution never fully cut a single ray.\nHere every network starts with no connections at all, and only gains them by mutation, so inputs that don't\nhelp are simply never wired in. The NEAT page then shows which rays evolution chose. Everything else as n02."
-  },
-  {
-   "id": "p01_lap_time",
-   "model": "ppo",
-   "title": "Real traction + reward lap time",
-   "why": "The fixed traction input with a mild off-track penalty (the strict 15 × 0.99 recipe taught the car to park),\nlearning-rate decay against the late collapse, and +1 reward per frame a lap finishes under 1000 frames."
   },
   {
    "id": "p02_forward_rays",
    "model": "ppo",
    "title": "16 forward rays instead of 32 all around",
-   "why": "Same sensor change as NEAT n02. In p00 the 9 rays within ±45° of the nose carried 48% of the policy's lidar\nsensitivity, and the 15 backward rays still carried 32%: likely noise it reacts to. 16 rays over ±120° remove the\nbackward rays and the blind spot on the left, and simulate about 25% faster, so the same number of steps trains\nin less time. Everything else as p01."
+   "why": "Same sensor change as NEAT n02. In p00 the 9 rays within ±45° of the nose carried 48% of the policy's lidar\nsensitivity, and the 15 backward rays still carried 32%: likely noise it reacts to. 16 rays over ±120° remove the\nbackward rays and the blind spot on the left, and simulate about 25% faster, so the same number of steps trains\nin less time. Everything else as p01.",
+   "outcome": "Failed the same way as p01, so the sensor change could not show its effect. The reward has to be fixed first (next PPO step).",
+   "parent": "p01_lap_time",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "total-timesteps": 1000000,
+    "num-envs": 4,
+    "n-steps": 1024,
+    "batch-size": 256,
+    "entropy-coef": 0.005,
+    "offtrack-penalty": 5.0,
+    "traction-threshold": 0.75,
+    "lr-schedule": "linear",
+    "target-kl": 0.02,
+    "lap-time-bonus": 1.0,
+    "allow-multiple-laps": false,
+    "max-episode-steps": 1500,
+    "eval-frequency": 25000,
+    "checkpoint-frequency": 100000
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "e5b371f",
+   "trained_on": "2026-10-12",
+   "train_seconds": 330.8,
+   "selected": {
+    "timestep": 300000
+   },
+   "size": {
+    "params": 145415,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 0,
+    "lap_s": null,
+    "score": -112.2,
+    "offtrack_pct": 18.3
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -126.2,
+     "offtrack_pct": 0.0,
+     "avg_speed": 1.7,
+     "reached_pct": 7.4,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -26.3,
+     "offtrack_pct": 91.5,
+     "avg_speed": 3.8,
+     "reached_pct": 17.4,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -137.9,
+     "offtrack_pct": 0.0,
+     "avg_speed": 1.7,
+     "reached_pct": 6.2,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -137.9,
+     "offtrack_pct": 0.0,
+     "avg_speed": 1.7,
+     "reached_pct": 6.2,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -132.5,
+     "offtrack_pct": 0.0,
+     "avg_speed": 1.7,
+     "reached_pct": 6.8,
+     "crashed": false
+    }
+   ]
+  },
+  {
+   "id": "p01_lap_time",
+   "model": "ppo",
+   "title": "Real traction + reward lap time",
+   "why": "The fixed traction input with a mild off-track penalty (the strict 15 × 0.99 recipe taught the car to park),\nlearning-rate decay against the late collapse, and +1 reward per frame a lap finishes under 1000 frames.",
+   "outcome": "Failed. The off-track penalty (up to 3.75 per frame, and episodes don't end on grass) swamped the tile rewards: evaluation rewards of -2000 to -5000, and the policy learned to creep at walking pace. Training was fast (1M steps in 27 minutes) but learned nothing useful.",
+   "parent": "p00_baseline",
+   "lidar_rays": 32,
+   "lidar_fov": null,
+   "train": {
+    "total-timesteps": 1000000,
+    "num-envs": 4,
+    "n-steps": 1024,
+    "batch-size": 256,
+    "entropy-coef": 0.005,
+    "offtrack-penalty": 5.0,
+    "traction-threshold": 0.75,
+    "lr-schedule": "linear",
+    "target-kl": 0.02,
+    "lap-time-bonus": 1.0,
+    "allow-multiple-laps": false,
+    "max-episode-steps": 1500,
+    "eval-frequency": 25000,
+    "checkpoint-frequency": 100000
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "e5b371f",
+   "trained_on": "2026-10-12",
+   "train_seconds": 1253.3,
+   "selected": {
+    "timestep": 825000
+   },
+   "size": {
+    "params": 153607,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 0,
+    "lap_s": null,
+    "score": -33.3,
+    "offtrack_pct": 55.3
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 194.8,
+     "offtrack_pct": 87.8,
+     "avg_speed": 9.4,
+     "reached_pct": 39.5,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -14.7,
+     "offtrack_pct": 93.0,
+     "avg_speed": 4.4,
+     "reached_pct": 18.5,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -123.1,
+     "offtrack_pct": 95.5,
+     "avg_speed": 2.1,
+     "reached_pct": 7.7,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -100.6,
+     "offtrack_pct": 0.2,
+     "avg_speed": 2.6,
+     "reached_pct": 9.9,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -122.8,
+     "offtrack_pct": 0.2,
+     "avg_speed": 1.9,
+     "reached_pct": 7.7,
+     "crashed": false
+    }
+   ]
+  },
+  {
+   "id": "n03_sparse_start",
+   "model": "neat",
+   "title": "Start unconnected: evolve which inputs to use",
+   "why": "Every earlier NEAT run started with all inputs wired to all outputs, and evolution never fully cut a single ray.\nHere every network starts with no connections at all, and only gains them by mutation, so inputs that don't\nhelp are simply never wired in. The NEAT page then shows which rays evolution chose. Everything else as n02.",
+   "outcome": "Evolution wired up only 8 connections and 1 hidden node, the simplest driver yet, and it gets round 98-99% of three tracks. But it cuts across the grass, gets lost, and never crosses the finish line. Too simple, or 100 generations was not enough to grow.",
+   "parent": "n02_forward_rays",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "generations": 100,
+    "tracks-per-generation": 3,
+    "lap-time-bonus": 1.0
+   },
+   "neat_config": {
+    "DefaultGenome.initial_connection": "unconnected"
+   },
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "e5b371f",
+   "trained_on": "2026-10-12",
+   "train_seconds": 4981.5,
+   "selected": {
+    "generation": 95
+   },
+   "size": {
+    "params": 12,
+    "hidden": 1,
+    "connections": 8,
+    "label": "1 hidden, 8 links"
+   },
+   "summary": {
+    "finished": 0,
+    "lap_s": null,
+    "score": 657.5,
+    "offtrack_pct": 41.6
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 785.2,
+     "offtrack_pct": 45.0,
+     "avg_speed": 35.8,
+     "reached_pct": 98.5,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 784.6,
+     "offtrack_pct": 46.5,
+     "avg_speed": 36.2,
+     "reached_pct": 98.5,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 462.7,
+     "offtrack_pct": 41.1,
+     "avg_speed": 40.3,
+     "reached_pct": 66.3,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 461.5,
+     "offtrack_pct": 63.8,
+     "avg_speed": 27.5,
+     "reached_pct": 66.1,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 793.6,
+     "offtrack_pct": 11.8,
+     "avg_speed": 46.7,
+     "reached_pct": 99.4,
+     "crashed": false
+    }
+   ]
   }
- ]
+ ],
+ "pending": []
 }

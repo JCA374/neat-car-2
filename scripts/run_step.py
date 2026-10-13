@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import configparser
+import csv
 import datetime as dt
 import glob
 import json
@@ -32,10 +33,14 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Import everything up front: a step can train for hours, and a lazy import
+# would pick up code edited in the meantime.
 from carracing.benchmark import GIF_SEED, SEEDS, drive, load_policy, save_gif  # noqa: E402
 from carracing.steps import (  # noqa: E402
     Step, fmt_duration, hardware, load_step, neat_train_seconds, ppo_train_seconds, summarise, train_flags,
 )
+from carracing_neat.eval import load_genome  # noqa: E402
+from carracing_neat.graph import genome_graph, input_spec, output_spec  # noqa: E402
 
 BASE_NEAT_CONFIG = "neat_config/neat.cfg"
 
@@ -117,11 +122,6 @@ def select_ppo(step: Step) -> dict:
 
 def neat_curves(step: Step) -> dict:
     """Training curve against wall-clock, and every generation's champion network."""
-    import csv
-
-    from carracing_neat.eval import load_genome
-    from carracing_neat.graph import genome_graph, input_spec, output_spec
-
     logs = os.path.join(step.out_dir, "logs")
     with open(os.path.join(logs, "fitness.csv")) as fh:
         fitness = list(csv.DictReader(fh))
@@ -153,6 +153,13 @@ def ppo_curves(step: Step) -> dict:
     curve = [{"steps": int(ts), "t": ppo_train_seconds(logs, int(ts)), "eval": round(float(r.mean()), 1)}
              for ts, r in zip(ev["timesteps"], ev["results"])]
     return {"curve": curve}
+
+
+def trained_on(step: Step) -> str:
+    """Date of the last training log write (re-benchmarking later keeps the training date)."""
+    logs = glob.glob(os.path.join(step.out_dir, "logs", "*"))
+    stamp = max(os.path.getmtime(p) for p in logs) if logs else time.time()
+    return dt.date.fromtimestamp(stamp).isoformat()
 
 
 def benchmark(step: Step) -> tuple:
@@ -202,8 +209,7 @@ def main() -> None:
         "imported": bool(step.imported), "note": step.imported.get("note", ""),
         "hardware": step.imported.get("hardware") or previous.get("hardware") or hardware(),
         "commit": step.imported.get("commit") or (git_commit() if process_seconds else previous.get("commit", git_commit())),
-        "trained_on": step.imported.get("trained_on") or (
-            dt.date.today().isoformat() if process_seconds else previous.get("trained_on", dt.date.today().isoformat())),
+        "trained_on": step.imported.get("trained_on") or previous.get("trained_on") or trained_on(step),
         "train_seconds": picked["train_seconds"],
         "process_seconds": process_seconds or previous.get("process_seconds"),
         "selected": picked["selected"], "size": size, "summary": summarise(tracks), "tracks": tracks, **curves,
