@@ -9,6 +9,9 @@ change is what hurts PPO.
 lidar_rays = 16
 lidar_fov = 240
 
+outcome = """
+The best PPO model yet: 3/5 tracks, 18.4 s mean lap, and 16.8 s on track 3, the fastest lap any model has driven. No grass on the tracks it finishes. Forward rays help PPO as much as NEAT: best evaluation 896 vs 558 for the control.
+"""
 [train]
 total-timesteps = 600000
 num-envs = 4

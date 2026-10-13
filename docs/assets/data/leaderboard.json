@@ -14,7 +14,7 @@
  },
  "champions": {
   "neat": "n05_more_generations",
-  "ppo": "p00_baseline"
+  "ppo": "p06_rays_only"
  },
  "steps": [
   {
@@ -412,6 +412,108 @@
    ]
   },
   {
+   "id": "p06_rays_only",
+   "model": "ppo",
+   "title": "Check: control + 16 forward rays",
+   "why": "Second check: the control recipe with only the 16 forward rays added. If p05 learns and this doesn't, the ray\nchange is what hurts PPO.",
+   "outcome": "The best PPO model yet: 3/5 tracks, 18.4 s mean lap, and 16.8 s on track 3, the fastest lap any model has driven. No grass on the tracks it finishes. Forward rays help PPO as much as NEAT: best evaluation 896 vs 558 for the control.",
+   "parent": "p05_control",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "total-timesteps": 600000,
+    "num-envs": 4,
+    "n-steps": 1024,
+    "batch-size": 256,
+    "entropy-coef": 0.005,
+    "offtrack-penalty": 0.0,
+    "allow-multiple-laps": false,
+    "eval-frequency": 25000,
+    "checkpoint-frequency": 100000
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "635bddc",
+   "trained_on": "2026-10-13",
+   "train_seconds": 292.7,
+   "selected": {
+    "timestep": 275000
+   },
+   "size": {
+    "params": 145415,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 3,
+    "lap_s": 18.39,
+    "score": 636.4,
+    "offtrack_pct": 26.5
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 16.78,
+     "frames": 839,
+     "score": 916.1,
+     "offtrack_pct": 0.0,
+     "avg_speed": 54.9,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 18.1,
+     "frames": 905,
+     "score": 909.5,
+     "offtrack_pct": 0.2,
+     "avg_speed": 47.8,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 98.8,
+     "offtrack_pct": 60.0,
+     "avg_speed": 37.7,
+     "reached_pct": 29.9,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 359.0,
+     "offtrack_pct": 72.4,
+     "avg_speed": 26.3,
+     "reached_pct": 55.9,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": true,
+     "lap_s": 20.3,
+     "frames": 1015,
+     "score": 898.5,
+     "offtrack_pct": 0.0,
+     "avg_speed": 51.4,
+     "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "n01_lap_time",
    "model": "neat",
    "title": "Fixed controls + reward lap time",
@@ -610,6 +712,108 @@
    ]
   },
   {
+   "id": "p05_control",
+   "model": "ppo",
+   "title": "Control: p00's recipe, only the real traction input",
+   "why": "First of three short checks to find what broke PPO. This is p00's recipe exactly (32 original rays, no stuck rule,\nno grass penalty, 1000-frame episodes, constant learning rate). The only difference from p00 is that the traction\ninput now works, which can't be undone. If this learns, the traction fix is not the problem.",
+   "outcome": "It learns, unlike p01-p04: training reward reached about 465 with full-length episodes, so the traction fix is not what broke PPO. But only 1/5 finished (track 3, 24.2 s), and the kept checkpoint came early (125k steps). Its training time is slightly inflated: test runs shared the CPU while it trained.",
+   "parent": "p00_baseline",
+   "lidar_rays": 32,
+   "lidar_fov": null,
+   "train": {
+    "total-timesteps": 600000,
+    "num-envs": 4,
+    "n-steps": 1024,
+    "batch-size": 256,
+    "entropy-coef": 0.005,
+    "offtrack-penalty": 0.0,
+    "allow-multiple-laps": false,
+    "eval-frequency": 25000,
+    "checkpoint-frequency": 100000
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "635bddc",
+   "trained_on": "2026-10-13",
+   "train_seconds": 196.2,
+   "selected": {
+    "timestep": 125000
+   },
+   "size": {
+    "params": 153607,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 1,
+    "lap_s": 24.2,
+    "score": 502.2,
+    "offtrack_pct": 46.2
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 24.2,
+     "frames": 1210,
+     "score": 879.0,
+     "offtrack_pct": 12.3,
+     "avg_speed": 65.2,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 788.4,
+     "offtrack_pct": 36.8,
+     "avg_speed": 44.4,
+     "reached_pct": 98.8,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 977,
+     "score": 83.5,
+     "offtrack_pct": 72.9,
+     "avg_speed": 59.5,
+     "reached_pct": 28.1,
+     "crashed": true
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 912,
+     "score": 358.6,
+     "offtrack_pct": 43.4,
+     "avg_speed": 67.9,
+     "reached_pct": 55.0,
+     "crashed": true
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 401.3,
+     "offtrack_pct": 65.5,
+     "avg_speed": 31.7,
+     "reached_pct": 60.1,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "p03_end_when_stuck",
    "model": "ppo",
    "title": "No grass penalty: end the episode when stuck",
@@ -712,6 +916,109 @@
      "offtrack_pct": 85.8,
      "avg_speed": 28.5,
      "reached_pct": 34.1,
+     "crashed": false
+    }
+   ]
+  },
+  {
+   "id": "p07_stuck_only",
+   "model": "ppo",
+   "title": "Check: control + stuck rule",
+   "why": "Third check: the control recipe with only the stuck rule added (end the episode after 100 frames without a new\ntile). If p05 learns and this doesn't, cutting episodes short is what hurts PPO: the car gets little practice\nrecovering from the grass.",
+   "outcome": "The culprit. With the stuck rule, episodes last about 350 frames instead of 1000, the car spends 82-92% of the time on grass and finishes nothing. Cutting a lost car off early means PPO never practises getting back on the road, and that recovery is what it needs to learn. The stuck rule is dropped for PPO.",
+   "parent": "p05_control",
+   "lidar_rays": 32,
+   "lidar_fov": null,
+   "train": {
+    "total-timesteps": 600000,
+    "num-envs": 4,
+    "n-steps": 1024,
+    "batch-size": 256,
+    "entropy-coef": 0.005,
+    "offtrack-penalty": 0.0,
+    "allow-multiple-laps": false,
+    "eval-frequency": 25000,
+    "checkpoint-frequency": 100000,
+    "stuck-patience": 100
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "635bddc",
+   "trained_on": "2026-10-13",
+   "train_seconds": 103.2,
+   "selected": {
+    "timestep": 75000
+   },
+   "size": {
+    "params": 153607,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 0,
+    "lap_s": null,
+    "score": 136.8,
+    "offtrack_pct": 87.8
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 416.2,
+     "offtrack_pct": 82.3,
+     "avg_speed": 30.0,
+     "reached_pct": 61.6,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -10.8,
+     "offtrack_pct": 92.0,
+     "avg_speed": 18.0,
+     "reached_pct": 18.9,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 33.7,
+     "offtrack_pct": 89.3,
+     "avg_speed": 25.5,
+     "reached_pct": 23.4,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 119.9,
+     "offtrack_pct": 88.4,
+     "avg_speed": 22.6,
+     "reached_pct": 32.0,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 124.8,
+     "offtrack_pct": 87.0,
+     "avg_speed": 29.0,
+     "reached_pct": 32.5,
      "crashed": false
     }
    ]
@@ -1154,22 +1461,16 @@
    "why": "NEAT 16 plus three lessons from the ladder. (1) No compass inputs: cos/sin(heading) are useless on random tracks,\nand in n00 evolution had already cut cos(heading) off. (2) Five tracks per generation instead of three, so a network\ncan't win by drawing easy tracks. (3) A stronger lap-time bonus (2 per frame) to push harder for speed."
   },
   {
-   "id": "p05_control",
+   "id": "p08_longer",
    "model": "ppo",
-   "title": "Control: p00's recipe, only the real traction input",
-   "why": "First of three short checks to find what broke PPO. This is p00's recipe exactly (32 original rays, no stuck rule,\nno grass penalty, 1000-frame episodes, constant learning rate). The only difference from p00 is that the traction\ninput now works, which can't be undone. If this learns, the traction fix is not the problem."
+   "title": "Train longer, with the learning rate easing off",
+   "why": "p06 was still noisy after 600k steps. Here it trains for 1.5M steps, with the learning rate decaying to zero over the\nrun so the policy settles instead of collapsing late (as p00's longer run did). Everything else as p06."
   },
   {
-   "id": "p06_rays_only",
+   "id": "p09_pick_by_laps",
    "model": "ppo",
-   "title": "Check: control + 16 forward rays",
-   "why": "Second check: the control recipe with only the 16 forward rays added. If p05 learns and this doesn't, the ray\nchange is what hurts PPO."
-  },
-  {
-   "id": "p07_stuck_only",
-   "model": "ppo",
-   "title": "Check: control + stuck rule",
-   "why": "Third check: the control recipe with only the stuck rule added (end the episode after 100 frames without a new\ntile). If p05 learns and this doesn't, cutting episodes short is what hurts PPO: the car gets little practice\nrecovering from the grass."
+   "title": "Keep the checkpoint that laps best",
+   "why": "PPO kept its checkpoint by the reward on 3 random tracks, and p05/p06 kept surprisingly early ones. Here every 25k\nsteps the policy drives the 5 validation tracks (the same check NEAT uses), and the checkpoint with the most finished\nlaps and the fastest mean lap is kept. Training is the same as p08."
   }
  ]
 }

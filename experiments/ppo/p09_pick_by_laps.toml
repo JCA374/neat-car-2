@@ -1,0 +1,24 @@
+id = "p09_pick_by_laps"
+model = "ppo"
+parent = "p08_longer"
+title = "Keep the checkpoint that laps best"
+why = """
+PPO kept its checkpoint by the reward on 3 random tracks, and p05/p06 kept surprisingly early ones. Here every 25k
+steps the policy drives the 5 validation tracks (the same check NEAT uses), and the checkpoint with the most finished
+laps and the fastest mean lap is kept. Training is the same as p08.
+"""
+lidar_rays = 16
+lidar_fov = 240
+
+[train]
+total-timesteps = 1500000
+lr-schedule = "linear"
+lap-check-frequency = 25000
+num-envs = 4
+n-steps = 1024
+batch-size = 256
+entropy-coef = 0.005
+offtrack-penalty = 0.0
+allow-multiple-laps = false
+eval-frequency = 25000
+checkpoint-frequency = 100000

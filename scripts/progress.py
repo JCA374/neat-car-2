@@ -52,9 +52,21 @@ def neat_detail(step, rows: int) -> list:
     done = len(fit)
     elapsed = float(fit["time_s"].iloc[-1])
     per_gen = fit["time_s"].diff().tail(5).mean() if done > 1 else elapsed
-    lines = [f"  Generations {bar(done / total)}  {done}/{total}",
-             f"  Training time {fmt_duration(elapsed)}   ~{per_gen / 60:.1f} min/generation   "
-             f"ETA {fmt_duration(max(0, total - done) * per_gen)}"]
+    budget = step.train.get("max-hours")
+    if budget:  # championship car: the time budget is the limit, not the generation count
+        lines = [f"  Time budget {bar(elapsed / (budget * 3600))}  {fmt_duration(elapsed)} of {budget:g} h"
+                 f" (stops early after {step.train.get('patience-hours', '-')} h without a faster lap)",
+                 f"  Generation {done}   ~{per_gen / 60:.1f} min/generation"]
+    else:
+        lines = [f"  Generations {bar(done / total)}  {done}/{total}",
+                 f"  Training time {fmt_duration(elapsed)}   ~{per_gen / 60:.1f} min/generation   "
+                 f"ETA {fmt_duration(max(0, total - done) * per_gen)}"]
+    laps = _read(os.path.join(logs, "validation_laps.csv"))
+    if not laps.empty:
+        full = laps[laps["finished"] == 5]
+        first = f"first finished all 5 at {fmt_duration(full['time_s'].iloc[0])}" if len(full) else "not yet finished all 5"
+        best = (f", fastest {full['mean_lap_s'].min():.2f} s" if len(full) else "")
+        lines.append(f"  Lap check (5 validation tracks): {first}{best}; latest {int(laps['finished'].iloc[-1])}/5")
     if not val.empty:
         best = val.loc[val["validation_score"].idxmax()]
         lines.append(f"  Best on validation: {best['validation_score']:.1f} (generation {int(best['generation'])}, "

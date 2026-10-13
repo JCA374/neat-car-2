@@ -8,6 +8,9 @@ tile). If p05 learns and this doesn't, cutting episodes short is what hurts PPO:
 recovering from the grass.
 """
 
+outcome = """
+The culprit. With the stuck rule, episodes last about 350 frames instead of 1000, the car spends 82-92% of the time on grass and finishes nothing. Cutting a lost car off early means PPO never practises getting back on the road, and that recovery is what it needs to learn. The stuck rule is dropped for PPO.
+"""
 [train]
 total-timesteps = 600000
 num-envs = 4

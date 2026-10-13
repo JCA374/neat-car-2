@@ -249,6 +249,12 @@ def main() -> None:
         picked = select_categories(step)["fast"]
         shutil.copyfile(picked["src"], step.model_path)
         tracks, drives, size = categories["fast"]["tracks"], json.load(open(os.path.join(step.out_dir, "drives_fast.json"))), categories["fast"]["size"]
+    elif step.train.get("lap-check-frequency"):
+        # Pick by lap check on the validation tracks (as championship cars do), not by PPO's eval reward.
+        picked = select_categories(step)["fast"]
+        shutil.copyfile(picked["src"], step.model_path)
+        print(f"{step.id}: selected {picked['selected']} by lap check after {fmt_duration(picked['train_seconds'])}")
+        tracks, drives, size = benchmark(step)
     else:
         picked = select_neat(step) if step.model == "neat" else select_ppo(step)
         shutil.copyfile(picked["src"], step.model_path)

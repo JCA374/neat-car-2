@@ -2,14 +2,14 @@
 # (scripts/build_site.py -> docs/assets/data/findings.json). Each finding links to the steps that show it.
 
 [[finding]]
-title = "NEAT beats PPO on a laptop CPU"
-text = "Every NEAT step from n02 on finishes all five tracks. No PPO step has finished more than one track, and none since the traction input was fixed. NEAT evaluates 100 small networks in parallel on all cores; PPO needs millions of steps and is very sensitive to how the reward is shaped."
-steps = ["n02_forward_rays", "n05_more_generations", "p00_baseline", "p04_back_to_p00"]
+title = "NEAT is the reliable one on a laptop CPU"
+text = "Every NEAT step from n02 on finishes all five tracks. PPO's best so far finishes three, but when it does it is fast. NEAT evaluates 100 small networks in parallel on all cores; PPO trains one big network and is very sensitive to how the reward is shaped."
+steps = ["n02_forward_rays", "n05_more_generations", "p06_rays_only"]
 
 [[finding]]
 title = "Look forward, not around"
-text = "The original 32 rays fanned 324° around the car's right side: 13 pointed backwards and the left side was blind. 16 rays facing forward over ±120° finished every track with half the inputs, and the run took a fifth of the training time."
-steps = ["n00_baseline", "n02_forward_rays"]
+text = "The original 32 rays fanned 324° around the car's right side: 13 pointed backwards and the left side was blind. 16 rays facing forward over ±120° finished every track with half the inputs, and the run took a fifth of the training time. For PPO the same change took it from 1 to 3 finished tracks."
+steps = ["n00_baseline", "n02_forward_rays", "p05_control", "p06_rays_only"]
 
 [[finding]]
 title = "Train the way you're tested"
@@ -28,5 +28,5 @@ steps = ["n03_sparse_start", "n01_lap_time"]
 
 [[finding]]
 title = "PPO breaks easily on rewards"
-text = "A per-frame grass penalty made PPO creep at walking pace. Ending the episode when the car stops making progress fixed the creeping, but the cars still never learned to finish. Three short checks (control, rays only, stuck rule only) are finding out which change is to blame."
-steps = ["p01_lap_time", "p03_end_when_stuck", "p04_back_to_p00"]
+text = "A per-frame grass penalty made PPO creep at walking pace. Ending episodes early when the car stopped making progress was worse: three one-change checks showed it is the culprit, because PPO never got to practise getting back on the road. Without it, and with forward rays, PPO finishes 3 of 5 tracks and sets the fastest lap of any model (16.8 s)."
+steps = ["p01_lap_time", "p05_control", "p06_rays_only", "p07_stuck_only"]

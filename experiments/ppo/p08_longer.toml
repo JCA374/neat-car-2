@@ -1,0 +1,22 @@
+id = "p08_longer"
+model = "ppo"
+parent = "p06_rays_only"
+title = "Train longer, with the learning rate easing off"
+why = """
+p06 was still noisy after 600k steps. Here it trains for 1.5M steps, with the learning rate decaying to zero over the
+run so the policy settles instead of collapsing late (as p00's longer run did). Everything else as p06.
+"""
+lidar_rays = 16
+lidar_fov = 240
+
+[train]
+total-timesteps = 1500000
+lr-schedule = "linear"
+num-envs = 4
+n-steps = 1024
+batch-size = 256
+entropy-coef = 0.005
+offtrack-penalty = 0.0
+allow-multiple-laps = false
+eval-frequency = 25000
+checkpoint-frequency = 100000

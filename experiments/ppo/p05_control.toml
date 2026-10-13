@@ -8,6 +8,9 @@ no grass penalty, 1000-frame episodes, constant learning rate). The only differe
 input now works, which can't be undone. If this learns, the traction fix is not the problem.
 """
 
+outcome = """
+It learns, unlike p01-p04: training reward reached about 465 with full-length episodes, so the traction fix is not what broke PPO. But only 1/5 finished (track 3, 24.2 s), and the kept checkpoint came early (125k steps). Its training time is slightly inflated: test runs shared the CPU while it trained.
+"""
 [train]
 total-timesteps = 600000
 num-envs = 4
