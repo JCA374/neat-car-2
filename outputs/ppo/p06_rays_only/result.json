@@ -1,0 +1,228 @@
+{
+ "id": "p06_rays_only",
+ "model": "ppo",
+ "title": "Check: control + 16 forward rays",
+ "why": "Second check: the control recipe with only the 16 forward rays added. If p05 learns and this doesn't, the ray\nchange is what hurts PPO.",
+ "parent": "p05_control",
+ "lidar_rays": 16,
+ "lidar_fov": 240.0,
+ "drop_heading": false,
+ "train": {
+  "total-timesteps": 600000,
+  "num-envs": 4,
+  "n-steps": 1024,
+  "batch-size": 256,
+  "entropy-coef": 0.005,
+  "offtrack-penalty": 0.0,
+  "allow-multiple-laps": false,
+  "eval-frequency": 25000,
+  "checkpoint-frequency": 100000
+ },
+ "neat_config": {},
+ "imported": false,
+ "note": "",
+ "hardware": {
+  "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+  "threads": 8,
+  "gpu": false
+ },
+ "commit": "635bddc",
+ "trained_on": "2026-10-13",
+ "train_seconds": 292.7,
+ "process_seconds": 639.6,
+ "selected": {
+  "timestep": 275000
+ },
+ "size": {
+  "params": 145415,
+  "label": "256×256 MLP"
+ },
+ "summary": {
+  "finished": 3,
+  "lap_s": 18.39,
+  "score": 636.4,
+  "offtrack_pct": 26.5
+ },
+ "tracks": [
+  {
+   "seed": 3,
+   "finished": true,
+   "lap_s": 16.78,
+   "frames": 839,
+   "score": 916.1,
+   "offtrack_pct": 0.0,
+   "avg_speed": 54.9,
+   "reached_pct": 100.0,
+   "crashed": false
+  },
+  {
+   "seed": 11,
+   "finished": true,
+   "lap_s": 18.1,
+   "frames": 905,
+   "score": 909.5,
+   "offtrack_pct": 0.2,
+   "avg_speed": 47.8,
+   "reached_pct": 100.0,
+   "crashed": false
+  },
+  {
+   "seed": 21,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 98.8,
+   "offtrack_pct": 60.0,
+   "avg_speed": 37.7,
+   "reached_pct": 29.9,
+   "crashed": false
+  },
+  {
+   "seed": 34,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 359.0,
+   "offtrack_pct": 72.4,
+   "avg_speed": 26.3,
+   "reached_pct": 55.9,
+   "crashed": false
+  },
+  {
+   "seed": 55,
+   "finished": true,
+   "lap_s": 20.3,
+   "frames": 1015,
+   "score": 898.5,
+   "offtrack_pct": 0.0,
+   "avg_speed": 51.4,
+   "reached_pct": 100.0,
+   "crashed": false
+  }
+ ],
+ "curve": [
+  {
+   "steps": 25000,
+   "t": 26.3,
+   "eval": -70.4
+  },
+  {
+   "steps": 50000,
+   "t": 50.8,
+   "eval": 262.7
+  },
+  {
+   "steps": 75000,
+   "t": 74.9,
+   "eval": 371.3
+  },
+  {
+   "steps": 100000,
+   "t": 96.5,
+   "eval": 465.1
+  },
+  {
+   "steps": 125000,
+   "t": 129.2,
+   "eval": 424.3
+  },
+  {
+   "steps": 150000,
+   "t": 155.0,
+   "eval": 454.0
+  },
+  {
+   "steps": 175000,
+   "t": 180.3,
+   "eval": 395.3
+  },
+  {
+   "steps": 200000,
+   "t": 212.1,
+   "eval": 658.9
+  },
+  {
+   "steps": 225000,
+   "t": 239.8,
+   "eval": 784.7
+  },
+  {
+   "steps": 250000,
+   "t": 266.4,
+   "eval": 731.8
+  },
+  {
+   "steps": 275000,
+   "t": 292.7,
+   "eval": 895.7
+  },
+  {
+   "steps": 300000,
+   "t": 320.3,
+   "eval": 660.7
+  },
+  {
+   "steps": 325000,
+   "t": 347.1,
+   "eval": 518.9
+  },
+  {
+   "steps": 350000,
+   "t": 373.8,
+   "eval": 494.1
+  },
+  {
+   "steps": 375000,
+   "t": 400.1,
+   "eval": 621.0
+  },
+  {
+   "steps": 400000,
+   "t": 428.1,
+   "eval": 514.5
+  },
+  {
+   "steps": 425000,
+   "t": 454.5,
+   "eval": 414.8
+  },
+  {
+   "steps": 450000,
+   "t": 479.4,
+   "eval": 318.2
+  },
+  {
+   "steps": 475000,
+   "t": 505.1,
+   "eval": 366.4
+  },
+  {
+   "steps": 500000,
+   "t": 532.8,
+   "eval": 879.7
+  },
+  {
+   "steps": 525000,
+   "t": 559.2,
+   "eval": 688.8
+  },
+  {
+   "steps": 550000,
+   "t": 586.0,
+   "eval": 216.1
+  },
+  {
+   "steps": 575000,
+   "t": 609.7,
+   "eval": 364.7
+  },
+  {
+   "steps": 600000,
+   "t": 635.6,
+   "eval": 340.6
+  }
+ ],
+ "championship": false,
+ "categories": null,
+ "lap_checks": []
+}

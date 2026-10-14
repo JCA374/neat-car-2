@@ -19,6 +19,11 @@ outputs/ppo/*/*
 !outputs/*/*/result.json
 !outputs/*/*/drives.json
 !outputs/*/*/lap.gif
+!outputs/*/*/model_*.pkl
+!outputs/*/*/model_*.zip
+!outputs/*/*/drives_*.json
+!outputs/*/*/lap_*.gif
+!outputs/*/*/exhibition_*.json
 !outputs/neat/*/neat.cfg
 outputs/*/dev/
 

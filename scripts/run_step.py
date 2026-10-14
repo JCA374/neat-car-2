@@ -39,6 +39,7 @@ from carracing.benchmark import GIF_SEED, SEEDS, drive, load_policy, save_gif  #
 from carracing.steps import (  # noqa: E402
     Step, fmt_duration, hardware, load_step, neat_train_seconds, ppo_train_seconds, summarise, train_flags,
 )
+from carracing.exhibition import record as record_exhibition  # noqa: E402
 from carracing_neat.eval import load_genome  # noqa: E402
 from carracing_neat.graph import genome_graph, input_spec, output_spec  # noqa: E402
 
@@ -246,6 +247,7 @@ def main() -> None:
             categories[name].update(size=c_size, summary=summarise(c_tracks), tracks=c_tracks)
         if categories.get("fast") is None:
             raise SystemExit(f"{step.id}: no lap check rows to pick from")
+        print(f"{step.id}: exhibition tracks {record_exhibition(step)}", flush=True)
         picked = select_categories(step)["fast"]
         shutil.copyfile(picked["src"], step.model_path)
         tracks, drives, size = categories["fast"]["tracks"], json.load(open(os.path.join(step.out_dir, "drives_fast.json"))), categories["fast"]["size"]

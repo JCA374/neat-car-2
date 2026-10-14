@@ -1,0 +1,229 @@
+{
+ "id": "p07_stuck_only",
+ "model": "ppo",
+ "title": "Check: control + stuck rule",
+ "why": "Third check: the control recipe with only the stuck rule added (end the episode after 100 frames without a new\ntile). If p05 learns and this doesn't, cutting episodes short is what hurts PPO: the car gets little practice\nrecovering from the grass.",
+ "parent": "p05_control",
+ "lidar_rays": 32,
+ "lidar_fov": null,
+ "drop_heading": false,
+ "train": {
+  "total-timesteps": 600000,
+  "num-envs": 4,
+  "n-steps": 1024,
+  "batch-size": 256,
+  "entropy-coef": 0.005,
+  "offtrack-penalty": 0.0,
+  "allow-multiple-laps": false,
+  "eval-frequency": 25000,
+  "checkpoint-frequency": 100000,
+  "stuck-patience": 100
+ },
+ "neat_config": {},
+ "imported": false,
+ "note": "",
+ "hardware": {
+  "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+  "threads": 8,
+  "gpu": false
+ },
+ "commit": "635bddc",
+ "trained_on": "2026-10-13",
+ "train_seconds": 103.2,
+ "process_seconds": 801.0,
+ "selected": {
+  "timestep": 75000
+ },
+ "size": {
+  "params": 153607,
+  "label": "256×256 MLP"
+ },
+ "summary": {
+  "finished": 0,
+  "lap_s": null,
+  "score": 136.8,
+  "offtrack_pct": 87.8
+ },
+ "tracks": [
+  {
+   "seed": 3,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 416.2,
+   "offtrack_pct": 82.3,
+   "avg_speed": 30.0,
+   "reached_pct": 61.6,
+   "crashed": false
+  },
+  {
+   "seed": 11,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": -10.8,
+   "offtrack_pct": 92.0,
+   "avg_speed": 18.0,
+   "reached_pct": 18.9,
+   "crashed": false
+  },
+  {
+   "seed": 21,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 33.7,
+   "offtrack_pct": 89.3,
+   "avg_speed": 25.5,
+   "reached_pct": 23.4,
+   "crashed": false
+  },
+  {
+   "seed": 34,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 119.9,
+   "offtrack_pct": 88.4,
+   "avg_speed": 22.6,
+   "reached_pct": 32.0,
+   "crashed": false
+  },
+  {
+   "seed": 55,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 124.8,
+   "offtrack_pct": 87.0,
+   "avg_speed": 29.0,
+   "reached_pct": 32.5,
+   "crashed": false
+  }
+ ],
+ "curve": [
+  {
+   "steps": 25000,
+   "t": 32.9,
+   "eval": -34.3
+  },
+  {
+   "steps": 50000,
+   "t": 69.1,
+   "eval": 112.4
+  },
+  {
+   "steps": 75000,
+   "t": 103.2,
+   "eval": 212.6
+  },
+  {
+   "steps": 100000,
+   "t": 136.0,
+   "eval": 62.7
+  },
+  {
+   "steps": 125000,
+   "t": 168.2,
+   "eval": 64.2
+  },
+  {
+   "steps": 150000,
+   "t": 201.8,
+   "eval": 130.7
+  },
+  {
+   "steps": 175000,
+   "t": 234.7,
+   "eval": 24.5
+  },
+  {
+   "steps": 200000,
+   "t": 266.3,
+   "eval": 41.1
+  },
+  {
+   "steps": 225000,
+   "t": 303.8,
+   "eval": 27.6
+  },
+  {
+   "steps": 250000,
+   "t": 339.3,
+   "eval": 72.6
+  },
+  {
+   "steps": 275000,
+   "t": 372.4,
+   "eval": 139.5
+  },
+  {
+   "steps": 300000,
+   "t": 404.5,
+   "eval": 12.4
+  },
+  {
+   "steps": 325000,
+   "t": 437.0,
+   "eval": 180.6
+  },
+  {
+   "steps": 350000,
+   "t": 470.8,
+   "eval": 160.1
+  },
+  {
+   "steps": 375000,
+   "t": 505.0,
+   "eval": 172.1
+  },
+  {
+   "steps": 400000,
+   "t": 536.1,
+   "eval": 83.3
+  },
+  {
+   "steps": 425000,
+   "t": 568.7,
+   "eval": 31.9
+  },
+  {
+   "steps": 450000,
+   "t": 601.7,
+   "eval": 59.9
+  },
+  {
+   "steps": 475000,
+   "t": 633.2,
+   "eval": 41.7
+  },
+  {
+   "steps": 500000,
+   "t": 664.2,
+   "eval": 125.7
+  },
+  {
+   "steps": 525000,
+   "t": 696.7,
+   "eval": 161.8
+  },
+  {
+   "steps": 550000,
+   "t": 731.1,
+   "eval": 195.4
+  },
+  {
+   "steps": 575000,
+   "t": 764.2,
+   "eval": 112.4
+  },
+  {
+   "steps": 600000,
+   "t": 796.2,
+   "eval": 71.6
+  }
+ ],
+ "championship": false,
+ "categories": null,
+ "lap_checks": []
+}

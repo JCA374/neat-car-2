@@ -1,0 +1,225 @@
+{
+ "id": "p04_back_to_p00",
+ "model": "ppo",
+ "title": "Back to p00's recipe, plus forward rays and the stuck rule",
+ "why": "p01-p03 never learned to drive, and each one changed several settings at once compared with p00, the only PPO run\nthat learned. Here p00's recipe is restored as it was: constant learning rate, no KL early stop, 1000-frame\nepisodes, no lap-time bonus, no grass penalty. Only three things differ from p00: the 16 forward rays, the stuck\nrule from p03, and the real traction input (p00 only ever saw 1.0). If this learns, the lap-time bonus comes back\nas its own step.",
+ "parent": "p00_baseline",
+ "lidar_rays": 16,
+ "lidar_fov": 240.0,
+ "train": {
+  "total-timesteps": 600000,
+  "num-envs": 4,
+  "n-steps": 1024,
+  "batch-size": 256,
+  "entropy-coef": 0.005,
+  "offtrack-penalty": 0.0,
+  "stuck-patience": 100,
+  "allow-multiple-laps": false,
+  "eval-frequency": 25000,
+  "checkpoint-frequency": 100000
+ },
+ "neat_config": {},
+ "imported": false,
+ "note": "",
+ "hardware": {
+  "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+  "threads": 8,
+  "gpu": false
+ },
+ "commit": "8458f59",
+ "trained_on": "2026-10-13",
+ "train_seconds": 369.9,
+ "process_seconds": 599.4,
+ "selected": {
+  "timestep": 375000
+ },
+ "size": {
+  "params": 145415,
+  "label": "256×256 MLP"
+ },
+ "summary": {
+  "finished": 0,
+  "lap_s": null,
+  "score": 236.8,
+  "offtrack_pct": 75.3
+ },
+ "tracks": [
+  {
+   "seed": 3,
+   "finished": false,
+   "lap_s": null,
+   "frames": 1830,
+   "score": 285.4,
+   "offtrack_pct": 65.2,
+   "avg_speed": 52.0,
+   "reached_pct": 56.8,
+   "crashed": true
+  },
+  {
+   "seed": 11,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": -14.7,
+   "offtrack_pct": 93.1,
+   "avg_speed": 18.3,
+   "reached_pct": 18.5,
+   "crashed": false
+  },
+  {
+   "seed": 21,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 146.2,
+   "offtrack_pct": 83.5,
+   "avg_speed": 26.5,
+   "reached_pct": 34.6,
+   "crashed": false
+  },
+  {
+   "seed": 34,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 529.8,
+   "offtrack_pct": 74.0,
+   "avg_speed": 34.8,
+   "reached_pct": 73.0,
+   "crashed": false
+  },
+  {
+   "seed": 55,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 237.3,
+   "offtrack_pct": 60.5,
+   "avg_speed": 32.8,
+   "reached_pct": 43.7,
+   "crashed": false
+  }
+ ],
+ "curve": [
+  {
+   "steps": 25000,
+   "t": 25.3,
+   "eval": 10.2
+  },
+  {
+   "steps": 50000,
+   "t": 48.9,
+   "eval": 208.3
+  },
+  {
+   "steps": 75000,
+   "t": 73.0,
+   "eval": 222.8
+  },
+  {
+   "steps": 100000,
+   "t": 97.3,
+   "eval": 287.6
+  },
+  {
+   "steps": 125000,
+   "t": 121.5,
+   "eval": 189.8
+  },
+  {
+   "steps": 150000,
+   "t": 146.3,
+   "eval": 223.3
+  },
+  {
+   "steps": 175000,
+   "t": 171.6,
+   "eval": 191.3
+  },
+  {
+   "steps": 200000,
+   "t": 196.2,
+   "eval": 98.5
+  },
+  {
+   "steps": 225000,
+   "t": 220.1,
+   "eval": 260.1
+  },
+  {
+   "steps": 250000,
+   "t": 245.8,
+   "eval": 184.9
+  },
+  {
+   "steps": 275000,
+   "t": 270.7,
+   "eval": 317.5
+  },
+  {
+   "steps": 300000,
+   "t": 295.4,
+   "eval": 328.3
+  },
+  {
+   "steps": 325000,
+   "t": 319.6,
+   "eval": 170.4
+  },
+  {
+   "steps": 350000,
+   "t": 345.3,
+   "eval": 199.8
+  },
+  {
+   "steps": 375000,
+   "t": 369.9,
+   "eval": 373.4
+  },
+  {
+   "steps": 400000,
+   "t": 394.8,
+   "eval": 248.6
+  },
+  {
+   "steps": 425000,
+   "t": 420.1,
+   "eval": 186.6
+  },
+  {
+   "steps": 450000,
+   "t": 445.5,
+   "eval": 193.9
+  },
+  {
+   "steps": 475000,
+   "t": 470.3,
+   "eval": 43.9
+  },
+  {
+   "steps": 500000,
+   "t": 495.6,
+   "eval": 135.7
+  },
+  {
+   "steps": 525000,
+   "t": 521.3,
+   "eval": 239.1
+  },
+  {
+   "steps": 550000,
+   "t": 545.9,
+   "eval": 67.7
+  },
+  {
+   "steps": 575000,
+   "t": 570.1,
+   "eval": 65.1
+  },
+  {
+   "steps": 600000,
+   "t": 595.8,
+   "eval": 125.6
+  }
+ ]
+}

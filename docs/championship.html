@@ -66,6 +66,11 @@ td.p1 { font-weight: 700; }
   <div class="card">
     <div class="row cat-switch"><span class="lbl">Title</span><div class="seg" id="catSeg" role="group" aria-label="Category"><button type="button" data-c="fast" class="on">🏁 Fastest lap</button><button type="button" data-c="finish">⏱ Quickest to finish</button></div></div>
     <div class="row"><span class="lbl">Track</span><span id="trackPills" style="display:contents"></span></div>
+    <div class="row"><span class="lbl"></span>
+      <button class="btn ghost sm" id="randomTrack" type="button">🎲 Random track</button>
+      <label class="small muted">or pick one <select id="trackSelect" aria-label="Choose a track"></select></label>
+      <span class="small faint" id="trackNote"></span>
+    </div>
     <div class="row" style="margin:6px 0 0">
       <button class="btn" id="champStart" type="button">▶ Start race</button>
       <button class="btn ghost" id="champReset" type="button">⟲ Restart</button>
@@ -83,6 +88,8 @@ td.p1 { font-weight: 700; }
       <ul class="pit" id="pitLane"></ul>
     </div>
   </div>
+  <h3 style="margin-top:8px" id="trackResultTitle">Result on this track</h3>
+  <div class="card table-scroll" style="margin-top:8px"><table id="trackResult"></table></div>
 </section>
 
 <section>
@@ -124,7 +131,8 @@ td.p1 { font-weight: 700; }
   "use strict";
   var S = window.Site, css = S.css;
   var C = null, TRACKS = null, FINDINGS = null, DRIVES = { fast: {}, finish: {} }, chart = null, player = null;
-  var cur = { cat: "fast", track: 0 };
+  var cur = { cat: "fast", seed: null };
+  var EXH = {};  // exhibition track seed -> {track, cars: {id: {cat: {result, drive}}}}
   var CAT = {
     fast: { name: "Fastest lap", icon: "🏁" },
     finish: { name: "Quickest to finish", icon: "⏱" }
@@ -134,7 +142,37 @@ td.p1 { font-weight: 700; }
   function color(c) { return css(c.color); }
   function entry(c, cat) { return c.categories && c.categories[cat]; }
   function entrants(cat) { return C.cars.filter(function (c) { return entry(c, cat); }); }
-  function result(id, seed, cat) { return entry(car(id), cat || cur.cat).tracks.filter(function (t) { return t.seed === seed; })[0]; }
+  function isChampTrack(seed) { return C.seeds.indexOf(seed) !== -1; }
+  function result(id, seed, cat) {
+    cat = cat || cur.cat;
+    if (!isChampTrack(seed)) return EXH[seed].cars[id][cat].result;
+    return entry(car(id), cat).tracks.filter(function (t) { return t.seed === seed; })[0];
+  }
+  function drives(id, seed) {
+    return isChampTrack(seed) ? DRIVES[cur.cat][id][String(seed)] : EXH[seed].cars[id][cur.cat].drive;
+  }
+  /** Cars racing on the current track in the current title. */
+  function grid() {
+    return entrants(cur.cat).filter(function (c) {
+      return isChampTrack(cur.seed) || (EXH[cur.seed] && EXH[cur.seed].cars[c.id] && EXH[cur.seed].cars[c.id][cur.cat]);
+    }).map(function (c) { return c.id; });
+  }
+  function trackObj() { return isChampTrack(cur.seed) ? TRACKS.filter(function (t) { return t.seed === cur.seed; })[0] : EXH[cur.seed].track; }
+
+  function trackResult() {
+    var T = trackObj(), ids = grid(), champ = isChampTrack(cur.seed);
+    document.getElementById("trackResultTitle").textContent = "Result on track " + cur.seed + " (" + T.tiles + " tiles)" +
+      (champ ? " · counts for the championship" : " · exhibition race, no points");
+    if (!ids.length) { document.getElementById("trackResult").innerHTML = "<tbody><tr><td class='muted'>No car on the grid yet.</td></tr></tbody>"; return; }
+    var rows = player.standings(2000, T, ids);
+    document.getElementById("trackResult").innerHTML = "<thead><tr><th>Pos</th><th>Car</th><th class='num'>Lap time</th><th class='num'>Track covered</th><th class='num'>On grass</th><th class='num'>Training</th></tr></thead><tbody>" +
+      rows.map(function (e, i) {
+        var c = car(e.id), r = result(e.id, cur.seed);
+        return "<tr><td class='medal'>" + (i + 1) + "</td><td><i style='background:" + color(c) + "'></i>" + S.esc(c.label) + "</td>" +
+          "<td class='num'>" + (r.finished ? S.lap(r.lap_s) : player.dnfText(e.id, T)) + "</td><td class='num'>" + player.covered(r.reached_pct) + "</td>" +
+          "<td class='num'>" + Math.round(r.offtrack_pct) + "%</td><td class='num'>" + S.dur(entry(c, cur.cat).train_seconds) + "</td></tr>";
+      }).join("") + "</tbody>";
+  }
   function stepLink(id) {
     var m = id.charAt(0) === "p" ? "ppo" : "neat";
     return '<a href="' + m + ".html#" + id + '" title="' + S.esc(id) + '">' + S.esc(id.split("_")[0].toUpperCase()) + "</a>";
@@ -284,16 +322,24 @@ td.p1 { font-weight: 700; }
     }).join("");
   }
 
+  function showTrack() {
+    player.setRacers(grid());
+    player.setTrack(trackObj());
+    trackResult();
+  }
   function setCat(cat) {
     cur.cat = cat;
     [].forEach.call(document.querySelectorAll("#catSeg button"), function (b) { b.className = b.dataset.c === cat ? "on" : ""; });
-    player.setRacers(entrants(cat).map(function (c) { return c.id; }));
-    player.setTrack(TRACKS[cur.track]); pitLane(); standings();
+    showTrack(); pitLane(); standings();
   }
-  function setTrack(i) {
-    cur.track = i;
-    [].forEach.call(document.querySelectorAll("#trackPills .pill"), function (p, j) { p.className = "pill" + (j === i ? " on" : ""); });
-    player.setTrack(TRACKS[i]);
+  function setTrack(seed) {
+    seed = Number(seed);
+    cur.seed = seed;
+    [].forEach.call(document.querySelectorAll("#trackPills .pill"), function (p) { p.className = "pill" + (Number(p.dataset.seed) === seed ? " on" : ""); });
+    document.getElementById("trackSelect").value = String(seed);
+    document.getElementById("trackNote").textContent = isChampTrack(seed) ? "" : "Exhibition track: never seen in training, no points.";
+    if (isChampTrack(seed) || EXH[seed]) return showTrack();
+    S.json("assets/data/champ/tracks/" + seed + ".json").then(function (d) { EXH[seed] = d; if (cur.seed === seed) showTrack(); });
   }
 
   function render() { titles(); cars(); curve(); findings(); pitLane(); standings(); }
@@ -313,17 +359,28 @@ td.p1 { font-weight: 700; }
     player = RacePlayer({
       prefix: "champ", fps: C.fps,
       racer: function (id) { var c = car(id); return { label: c.label, color: color(c) }; },
-      run: function (id, seed) { return DRIVES[cur.cat][id][String(seed)]; },
+      run: drives,
       result: function (id, seed) { return result(id, seed); }
     });
     var tp = document.getElementById("trackPills");
-    TRACKS.forEach(function (t, i) {
-      var b = document.createElement("button"); b.type = "button"; b.className = "pill" + (i === 0 ? " on" : "");
-      b.textContent = "Track " + t.seed + " · " + t.tiles + " tiles"; b.onclick = function () { setTrack(i); }; tp.appendChild(b);
+    TRACKS.forEach(function (t) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "pill"; b.dataset.seed = t.seed;
+      b.textContent = "Track " + t.seed + " · " + t.tiles + " tiles"; b.onclick = function () { setTrack(t.seed); }; tp.appendChild(b);
     });
+    var all = C.seeds.concat(C.exhibition_seeds || []), sel = document.getElementById("trackSelect");
+    sel.innerHTML = '<optgroup label="Championship tracks">' + C.seeds.map(function (s) { return '<option value="' + s + '">Track ' + s + "</option>"; }).join("") + "</optgroup>" +
+      ((C.exhibition_seeds || []).length ? '<optgroup label="Exhibition tracks (no points)">' + C.exhibition_seeds.map(function (s) { return '<option value="' + s + '">Track ' + s + "</option>"; }).join("") + "</optgroup>" : "");
+    sel.onchange = function () { setTrack(sel.value); };
+    document.getElementById("randomTrack").onclick = function () {
+      var options = all.filter(function (s) { return s !== cur.seed; });
+      setTrack(options[Math.floor(Math.random() * options.length)]);
+    };
+    cur.seed = C.seeds[0];
     [].forEach.call(document.querySelectorAll("#catSeg button"), function (b) { b.onclick = function () { setCat(b.dataset.c); }; });
     render();
+    var q = new URLSearchParams(location.search);
     setCat("fast");
+    setTrack(q.get("track") && all.indexOf(Number(q.get("track"))) !== -1 ? q.get("track") : C.seeds[0]);
   });
 })();
 </script>

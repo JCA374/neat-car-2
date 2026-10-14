@@ -215,6 +215,107 @@
    ]
   },
   {
+   "id": "neat16",
+   "model": "neat",
+   "title": "NEAT 16: the proven recipe",
+   "why": "The best NEAT recipe from the ladder (n05): 16 rays facing forward over ±120°, 2000-frame training episodes,\n+1 fitness per frame a lap beats 1000 frames, population 100. Trained from scratch for up to 8 hours, stopping\nearly if the validation lap time has not improved for 2 hours.",
+   "outcome": "",
+   "parent": "n05_more_generations",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "generations": 1000,
+    "tracks-per-generation": 3,
+    "lap-time-bonus": 1.0,
+    "max-steps": 2000,
+    "max-hours": 8,
+    "patience-hours": 2
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "585eae3",
+   "trained_on": "2026-10-13",
+   "train_seconds": 5210.1,
+   "selected": {
+    "generation": 82
+   },
+   "size": {
+    "params": 68,
+    "hidden": 5,
+    "connections": 60,
+    "label": "5 hidden, 60 links"
+   },
+   "summary": {
+    "finished": 5,
+    "lap_s": 21.5,
+    "score": 892.5,
+    "offtrack_pct": 0.0
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 19.7,
+     "frames": 985,
+     "score": 901.5,
+     "offtrack_pct": 0.0,
+     "avg_speed": 46.8,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 18.48,
+     "frames": 924,
+     "score": 907.6,
+     "offtrack_pct": 0.0,
+     "avg_speed": 47.3,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": true,
+     "lap_s": 24.22,
+     "frames": 1211,
+     "score": 878.9,
+     "offtrack_pct": 0.0,
+     "avg_speed": 47.5,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": true,
+     "lap_s": 22.74,
+     "frames": 1137,
+     "score": 886.3,
+     "offtrack_pct": 0.0,
+     "avg_speed": 48.2,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": true,
+     "lap_s": 22.34,
+     "frames": 1117,
+     "score": 888.3,
+     "offtrack_pct": 0.0,
+     "avg_speed": 47.0,
+     "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "n04_long_episodes",
    "model": "neat",
    "title": "2000-frame training episodes",
@@ -406,6 +507,107 @@
      "score": 867.9,
      "offtrack_pct": 9.5,
      "avg_speed": 45.0,
+     "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
+   "id": "neat32",
+   "model": "neat",
+   "title": "NEAT 32: twice the rays",
+   "why": "Same as NEAT 16 but with 32 forward rays over the same ±120°: twice the detail ahead, but twice the inputs to evolve\nand a slower simulation. Do more rays make a faster car, or only a slower-to-train one?",
+   "outcome": "",
+   "parent": "neat16",
+   "lidar_rays": 32,
+   "lidar_fov": 240.0,
+   "train": {
+    "generations": 1000,
+    "tracks-per-generation": 3,
+    "lap-time-bonus": 1.0,
+    "max-steps": 2000,
+    "max-hours": 8,
+    "patience-hours": 2
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "585eae3",
+   "trained_on": "2026-10-14",
+   "train_seconds": 22196.4,
+   "selected": {
+    "generation": 143
+   },
+   "size": {
+    "params": 118,
+    "hidden": 8,
+    "connections": 107,
+    "label": "8 hidden, 107 links"
+   },
+   "summary": {
+    "finished": 4,
+    "lap_s": 19.2,
+    "score": 759.7,
+    "offtrack_pct": 8.2
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 16.7,
+     "frames": 835,
+     "score": 916.5,
+     "offtrack_pct": 0.0,
+     "avg_speed": 55.9,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 18.56,
+     "frames": 928,
+     "score": 907.2,
+     "offtrack_pct": 0.0,
+     "avg_speed": 47.3,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 546,
+     "score": 182.8,
+     "offtrack_pct": 32.8,
+     "avg_speed": 58.2,
+     "reached_pct": 33.7,
+     "crashed": true
+    },
+    {
+     "seed": 34,
+     "finished": true,
+     "lap_s": 22.66,
+     "frames": 1133,
+     "score": 886.7,
+     "offtrack_pct": 8.0,
+     "avg_speed": 56.8,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": true,
+     "lap_s": 18.9,
+     "frames": 945,
+     "score": 905.5,
+     "offtrack_pct": 0.0,
+     "avg_speed": 56.6,
      "reached_pct": 100.0,
      "crashed": false
     }
@@ -1442,18 +1644,6 @@
   }
  ],
  "pending": [
-  {
-   "id": "neat16",
-   "model": "neat",
-   "title": "NEAT 16: the proven recipe",
-   "why": "The best NEAT recipe from the ladder (n05): 16 rays facing forward over ±120°, 2000-frame training episodes,\n+1 fitness per frame a lap beats 1000 frames, population 100. Trained from scratch for up to 8 hours, stopping\nearly if the validation lap time has not improved for 2 hours."
-  },
-  {
-   "id": "neat32",
-   "model": "neat",
-   "title": "NEAT 32: twice the rays",
-   "why": "Same as NEAT 16 but with 32 forward rays over the same ±120°: twice the detail ahead, but twice the inputs to evolve\nand a slower simulation. Do more rays make a faster car, or only a slower-to-train one?"
-  },
   {
    "id": "neatsmart",
    "model": "neat",

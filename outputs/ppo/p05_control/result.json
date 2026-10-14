@@ -1,0 +1,224 @@
+{
+ "id": "p05_control",
+ "model": "ppo",
+ "title": "Control: p00's recipe, only the real traction input",
+ "why": "First of three short checks to find what broke PPO. This is p00's recipe exactly (32 original rays, no stuck rule,\nno grass penalty, 1000-frame episodes, constant learning rate). The only difference from p00 is that the traction\ninput now works, which can't be undone. If this learns, the traction fix is not the problem.",
+ "parent": "p00_baseline",
+ "lidar_rays": 32,
+ "lidar_fov": null,
+ "train": {
+  "total-timesteps": 600000,
+  "num-envs": 4,
+  "n-steps": 1024,
+  "batch-size": 256,
+  "entropy-coef": 0.005,
+  "offtrack-penalty": 0.0,
+  "allow-multiple-laps": false,
+  "eval-frequency": 25000,
+  "checkpoint-frequency": 100000
+ },
+ "neat_config": {},
+ "imported": false,
+ "note": "",
+ "hardware": {
+  "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+  "threads": 8,
+  "gpu": false
+ },
+ "commit": "635bddc",
+ "trained_on": "2026-10-13",
+ "train_seconds": 196.2,
+ "process_seconds": 981.2,
+ "selected": {
+  "timestep": 125000
+ },
+ "size": {
+  "params": 153607,
+  "label": "256×256 MLP"
+ },
+ "summary": {
+  "finished": 1,
+  "lap_s": 24.2,
+  "score": 502.2,
+  "offtrack_pct": 46.2
+ },
+ "tracks": [
+  {
+   "seed": 3,
+   "finished": true,
+   "lap_s": 24.2,
+   "frames": 1210,
+   "score": 879.0,
+   "offtrack_pct": 12.3,
+   "avg_speed": 65.2,
+   "reached_pct": 100.0,
+   "crashed": false
+  },
+  {
+   "seed": 11,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 788.4,
+   "offtrack_pct": 36.8,
+   "avg_speed": 44.4,
+   "reached_pct": 98.8,
+   "crashed": false
+  },
+  {
+   "seed": 21,
+   "finished": false,
+   "lap_s": null,
+   "frames": 977,
+   "score": 83.5,
+   "offtrack_pct": 72.9,
+   "avg_speed": 59.5,
+   "reached_pct": 28.1,
+   "crashed": true
+  },
+  {
+   "seed": 34,
+   "finished": false,
+   "lap_s": null,
+   "frames": 912,
+   "score": 358.6,
+   "offtrack_pct": 43.4,
+   "avg_speed": 67.9,
+   "reached_pct": 55.0,
+   "crashed": true
+  },
+  {
+   "seed": 55,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 401.3,
+   "offtrack_pct": 65.5,
+   "avg_speed": 31.7,
+   "reached_pct": 60.1,
+   "crashed": false
+  }
+ ],
+ "curve": [
+  {
+   "steps": 25000,
+   "t": 40.1,
+   "eval": -67.9
+  },
+  {
+   "steps": 50000,
+   "t": 74.1,
+   "eval": 8.8
+  },
+  {
+   "steps": 75000,
+   "t": 114.0,
+   "eval": 452.3
+  },
+  {
+   "steps": 100000,
+   "t": 156.7,
+   "eval": 542.4
+  },
+  {
+   "steps": 125000,
+   "t": 196.2,
+   "eval": 557.8
+  },
+  {
+   "steps": 150000,
+   "t": 247.9,
+   "eval": 263.7
+  },
+  {
+   "steps": 175000,
+   "t": 294.4,
+   "eval": 265.8
+  },
+  {
+   "steps": 200000,
+   "t": 345.3,
+   "eval": 546.9
+  },
+  {
+   "steps": 225000,
+   "t": 385.1,
+   "eval": 466.5
+  },
+  {
+   "steps": 250000,
+   "t": 425.5,
+   "eval": 113.1
+  },
+  {
+   "steps": 275000,
+   "t": 465.0,
+   "eval": 131.2
+  },
+  {
+   "steps": 300000,
+   "t": 505.7,
+   "eval": 29.1
+  },
+  {
+   "steps": 325000,
+   "t": 543.3,
+   "eval": 163.0
+  },
+  {
+   "steps": 350000,
+   "t": 582.5,
+   "eval": 183.5
+  },
+  {
+   "steps": 375000,
+   "t": 628.3,
+   "eval": 205.4
+  },
+  {
+   "steps": 400000,
+   "t": 674.3,
+   "eval": 142.6
+  },
+  {
+   "steps": 425000,
+   "t": 723.4,
+   "eval": 182.1
+  },
+  {
+   "steps": 450000,
+   "t": 767.8,
+   "eval": 167.4
+  },
+  {
+   "steps": 475000,
+   "t": 803.6,
+   "eval": 132.3
+  },
+  {
+   "steps": 500000,
+   "t": 836.2,
+   "eval": 215.3
+  },
+  {
+   "steps": 525000,
+   "t": 871.0,
+   "eval": 398.4
+  },
+  {
+   "steps": 550000,
+   "t": 907.0,
+   "eval": 189.5
+  },
+  {
+   "steps": 575000,
+   "t": 941.7,
+   "eval": 218.0
+  },
+  {
+   "steps": 600000,
+   "t": 977.4,
+   "eval": 209.7
+  }
+ ]
+}

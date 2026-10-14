@@ -12,6 +12,7 @@ docs/assets/data/:
     think/<id>/<seed>.json  NEAT only: inputs, node activations and actions per frame
     championship.json       the championship cars, both categories, per-track results
     champ/<id>_<cat>.json   drives of each car's "finish" and "fast" checkpoints
+    champ/tracks/<seed>.json  exhibition tracks: road + every car's drives (random / chosen-track races)
     findings.json           experiments/findings.toml
 and docs/assets/gifs/<id>.gif.
 """
@@ -27,6 +28,7 @@ import tomllib
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from carracing.benchmark import SEEDS, track_geometry  # noqa: E402
+from carracing.exhibition import EXHIBITION_SEEDS, exhibition_path  # noqa: E402
 from carracing.steps import FPS, MODELS, all_steps, hardware, rank_key  # noqa: E402
 
 OUT = "docs/assets/data"
@@ -147,7 +149,33 @@ def championship(steps: dict, results: dict) -> dict:
                          "why": "PPO is being fixed first: no PPO step has learned to finish a track since the traction fix.",
                          "categories": None, "lineage": []})
     return {"seeds": SEEDS, "fps": FPS, "hardware": hardware(), "budget_hours": 8, "points": [25, 18, 15, 12, 10, 8],
-            "cars": cars}
+            "cars": cars, "exhibition_seeds": exhibition(steps, [c for c in cars if c["status"] == "raced"])}
+
+
+def exhibition(steps: dict, cars: list) -> list:
+    """One file per exhibition track with the road and every raced car's drives on it."""
+    per_seed = {str(seed): {} for seed in EXHIBITION_SEEDS}
+    for car in cars:
+        for cat in ("fast", "finish"):
+            path = exhibition_path(steps[car["id"]], cat)
+            if not car["categories"].get(cat) or not os.path.exists(path):
+                continue
+            with open(path) as fh:
+                for seed, entry in json.load(fh).items():
+                    if seed in per_seed:
+                        per_seed[seed].setdefault(car["id"], {})[cat] = entry
+    seeds = []
+    for seed, by_car in per_seed.items():
+        if not by_car:
+            continue
+        out = os.path.join(OUT, "champ", "tracks", f"{seed}.json")
+        track = None
+        if os.path.exists(out):  # the road never changes: reuse it instead of rebuilding the env
+            with open(out) as fh:
+                track = json.load(fh)["track"]
+        dump(out, {"track": track or track_geometry(int(seed)), "cars": by_car})
+        seeds.append(int(seed))
+    return seeds
 
 
 if __name__ == "__main__":
