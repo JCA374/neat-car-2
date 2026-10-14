@@ -232,6 +232,13 @@ def run_seeds(step: Step, args) -> dict:
     for seed in step.seeds:
         sub = dataclasses.replace(step, train={**step.train, "seed": seed}, seeds=[],
                                   out_override=os.path.join(step.out_dir, f"seed{seed}"))
+        done = os.path.join(sub.out_dir, "result.json")
+        if os.path.exists(done) and not args.benchmark_only:
+            # A finished seed from an earlier (paused) run of this step: keep it, don't retrain.
+            print(f"\n--- {step.id}: seed {seed} already done, reusing {done} ---", flush=True)
+            with open(done) as fh:
+                runs.append((seed, sub, json.load(fh)))
+            continue
         print(f"\n--- {step.id}: seed {seed} ---", flush=True)
         runs.append((seed, sub, run_one(sub, args)))
     seed, best_sub, best = max(runs, key=lambda r: lap_check_key(r[2]))
