@@ -10,6 +10,9 @@ and a slower simulation. Do more rays make a faster car, or only a slower-to-tra
 lidar_rays = 32
 lidar_fov = 240
 
+outcome = """
+More rays bought speed, slowly: its fastest checkpoint (6 h 10 min) laps in 19.2 s with a 16.7 s best, but misses one race track. Twice the inputs took about four times the training of NEAT 16 to reach its best laps.
+"""
 [train]
 generations = 1000
 tracks-per-generation = 3

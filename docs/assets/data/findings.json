@@ -51,5 +51,14 @@
    "p06_rays_only",
    "p07_stuck_only"
   ]
+ },
+ {
+  "title": "Fast and safe pull against each other",
+  "text": "In the Championship, NEAT Smart's stronger speed bonus produced the quickest laps of any car (16.4 s) but a car that crashes out on three of five tracks. NEAT 16, with the gentler bonus, laps 4 s slower but finishes everywhere. More rays (NEAT 32) also bought speed, at four times the training.",
+  "steps": [
+   "neatsmart",
+   "neat16",
+   "neat32"
+  ]
  }
 ]

@@ -11,6 +11,9 @@ run stopped at 3.5 h on a "no faster lap for 2 h" rule that a single lucky lap c
 lidar_rays = 16
 lidar_fov = 240
 
+outcome = """
+The steady one. Its fastest checkpoint came near the end of the 8 hours (generation 401) and finishes all five race tracks in 20.8 s on average, never touching the grass. Its quickest-to-finish checkpoint (13 min) is fragile: 3 of 5 race tracks.
+"""
 [train]
 generations = 1000
 tracks-per-generation = 3

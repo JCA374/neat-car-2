@@ -120,6 +120,109 @@
    ]
   },
   {
+   "id": "neat16",
+   "model": "neat",
+   "title": "NEAT 16: the proven recipe",
+   "why": "The best NEAT recipe from the ladder (n05): 16 rays facing forward over ±120°, 2000-frame training episodes,\n+1 fitness per frame a lap beats 1000 frames, population 100. Trained from scratch for 8 hours. (A first\nrun stopped at 3.5 h on a \"no faster lap for 2 h\" rule that a single lucky lap check fooled; it was continued to 8 h.)",
+   "outcome": "The steady one. Its fastest checkpoint came near the end of the 8 hours (generation 401) and finishes all five race tracks in 20.8 s on average, never touching the grass. Its quickest-to-finish checkpoint (13 min) is fragile: 3 of 5 race tracks.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
+   "parent": "n05_more_generations",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "generations": 1000,
+    "tracks-per-generation": 3,
+    "lap-time-bonus": 1.0,
+    "max-steps": 2000,
+    "max-hours": 8
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "dbbf9f3",
+   "trained_on": "2026-10-13",
+   "train_seconds": 28761.5,
+   "selected": {
+    "generation": 401
+   },
+   "size": {
+    "params": 95,
+    "hidden": 17,
+    "connections": 75,
+    "label": "17 hidden, 75 links"
+   },
+   "summary": {
+    "finished": 5,
+    "lap_s": 20.77,
+    "score": 896.2,
+    "offtrack_pct": 0.5
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 17.64,
+     "frames": 882,
+     "score": 911.8,
+     "offtrack_pct": 0.0,
+     "avg_speed": 52.7,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 18.46,
+     "frames": 923,
+     "score": 907.7,
+     "offtrack_pct": 0.0,
+     "avg_speed": 48.4,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": true,
+     "lap_s": 23.96,
+     "frames": 1198,
+     "score": 880.2,
+     "offtrack_pct": 0.0,
+     "avg_speed": 48.8,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": true,
+     "lap_s": 22.5,
+     "frames": 1125,
+     "score": 887.5,
+     "offtrack_pct": 2.3,
+     "avg_speed": 49.8,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": true,
+     "lap_s": 21.28,
+     "frames": 1064,
+     "score": 893.6,
+     "offtrack_pct": 0.0,
+     "avg_speed": 49.9,
+     "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "n00_baseline",
    "model": "neat",
    "title": "Baseline: NEAT run 1",
@@ -215,214 +318,6 @@
      "score": 893.9,
      "offtrack_pct": 0.0,
      "avg_speed": 49.5,
-     "reached_pct": 100.0,
-     "crashed": false
-    }
-   ]
-  },
-  {
-   "id": "neatsmart",
-   "model": "neat",
-   "title": "NEAT Smart: every lesson at once",
-   "why": "NEAT 16 plus three lessons from the ladder. (1) No compass inputs: cos/sin(heading) are useless on random tracks,\nand in n00 evolution had already cut cos(heading) off. (2) Five tracks per generation instead of three, so a network\ncan't win by drawing easy tracks. (3) A stronger lap-time bonus (2 per frame) to push harder for speed.",
-   "outcome": "",
-   "seed_runs": null,
-   "kept_seed": null,
-   "action_smoothing": null,
-   "parent": "neat16",
-   "lidar_rays": 16,
-   "lidar_fov": 240.0,
-   "train": {
-    "generations": 1000,
-    "tracks-per-generation": 5,
-    "lap-time-bonus": 2.0,
-    "max-steps": 2000,
-    "max-hours": 8,
-    "patience-hours": 2
-   },
-   "neat_config": {},
-   "imported": false,
-   "note": "",
-   "hardware": {
-    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
-    "threads": 8,
-    "gpu": false
-   },
-   "commit": "d17b29a",
-   "trained_on": "2026-10-14",
-   "train_seconds": 5096.4,
-   "selected": {
-    "generation": 52
-   },
-   "size": {
-    "params": 70,
-    "hidden": 3,
-    "connections": 64,
-    "label": "3 hidden, 64 links"
-   },
-   "summary": {
-    "finished": 5,
-    "lap_s": 20.94,
-    "score": 895.3,
-    "offtrack_pct": 0.3
-   },
-   "tracks": [
-    {
-     "seed": 3,
-     "finished": true,
-     "lap_s": 18.28,
-     "frames": 914,
-     "score": 908.6,
-     "offtrack_pct": 0.0,
-     "avg_speed": 49.9,
-     "reached_pct": 100.0,
-     "crashed": false
-    },
-    {
-     "seed": 11,
-     "finished": true,
-     "lap_s": 18.1,
-     "frames": 905,
-     "score": 909.5,
-     "offtrack_pct": 0.0,
-     "avg_speed": 48.0,
-     "reached_pct": 100.0,
-     "crashed": false
-    },
-    {
-     "seed": 21,
-     "finished": true,
-     "lap_s": 24.26,
-     "frames": 1213,
-     "score": 878.7,
-     "offtrack_pct": 0.0,
-     "avg_speed": 47.2,
-     "reached_pct": 100.0,
-     "crashed": false
-    },
-    {
-     "seed": 34,
-     "finished": true,
-     "lap_s": 22.48,
-     "frames": 1124,
-     "score": 887.6,
-     "offtrack_pct": 1.7,
-     "avg_speed": 49.1,
-     "reached_pct": 100.0,
-     "crashed": false
-    },
-    {
-     "seed": 55,
-     "finished": true,
-     "lap_s": 21.6,
-     "frames": 1080,
-     "score": 892.0,
-     "offtrack_pct": 0.0,
-     "avg_speed": 48.2,
-     "reached_pct": 100.0,
-     "crashed": false
-    }
-   ]
-  },
-  {
-   "id": "neat16",
-   "model": "neat",
-   "title": "NEAT 16: the proven recipe",
-   "why": "The best NEAT recipe from the ladder (n05): 16 rays facing forward over ±120°, 2000-frame training episodes,\n+1 fitness per frame a lap beats 1000 frames, population 100. Trained from scratch for up to 8 hours, stopping\nearly if the validation lap time has not improved for 2 hours.",
-   "outcome": "",
-   "seed_runs": null,
-   "kept_seed": null,
-   "action_smoothing": null,
-   "parent": "n05_more_generations",
-   "lidar_rays": 16,
-   "lidar_fov": 240.0,
-   "train": {
-    "generations": 1000,
-    "tracks-per-generation": 3,
-    "lap-time-bonus": 1.0,
-    "max-steps": 2000,
-    "max-hours": 8,
-    "patience-hours": 2
-   },
-   "neat_config": {},
-   "imported": false,
-   "note": "",
-   "hardware": {
-    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
-    "threads": 8,
-    "gpu": false
-   },
-   "commit": "585eae3",
-   "trained_on": "2026-10-13",
-   "train_seconds": 5210.1,
-   "selected": {
-    "generation": 82
-   },
-   "size": {
-    "params": 68,
-    "hidden": 5,
-    "connections": 60,
-    "label": "5 hidden, 60 links"
-   },
-   "summary": {
-    "finished": 5,
-    "lap_s": 21.5,
-    "score": 892.5,
-    "offtrack_pct": 0.0
-   },
-   "tracks": [
-    {
-     "seed": 3,
-     "finished": true,
-     "lap_s": 19.7,
-     "frames": 985,
-     "score": 901.5,
-     "offtrack_pct": 0.0,
-     "avg_speed": 46.8,
-     "reached_pct": 100.0,
-     "crashed": false
-    },
-    {
-     "seed": 11,
-     "finished": true,
-     "lap_s": 18.48,
-     "frames": 924,
-     "score": 907.6,
-     "offtrack_pct": 0.0,
-     "avg_speed": 47.3,
-     "reached_pct": 100.0,
-     "crashed": false
-    },
-    {
-     "seed": 21,
-     "finished": true,
-     "lap_s": 24.22,
-     "frames": 1211,
-     "score": 878.9,
-     "offtrack_pct": 0.0,
-     "avg_speed": 47.5,
-     "reached_pct": 100.0,
-     "crashed": false
-    },
-    {
-     "seed": 34,
-     "finished": true,
-     "lap_s": 22.74,
-     "frames": 1137,
-     "score": 886.3,
-     "offtrack_pct": 0.0,
-     "avg_speed": 48.2,
-     "reached_pct": 100.0,
-     "crashed": false
-    },
-    {
-     "seed": 55,
-     "finished": true,
-     "lap_s": 22.34,
-     "frames": 1117,
-     "score": 888.3,
-     "offtrack_pct": 0.0,
-     "avg_speed": 47.0,
      "reached_pct": 100.0,
      "crashed": false
     }
@@ -636,7 +531,7 @@
    "model": "neat",
    "title": "NEAT 32: twice the rays",
    "why": "Same as NEAT 16 but with 32 forward rays over the same ±120°: twice the detail ahead, but twice the inputs to evolve\nand a slower simulation. Do more rays make a faster car, or only a slower-to-train one?",
-   "outcome": "",
+   "outcome": "More rays bought speed, slowly: its fastest checkpoint (6 h 10 min) laps in 19.2 s with a 16.7 s best, but misses one race track. Twice the inputs took about four times the training of NEAT 16 to reach its best laps.",
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
@@ -942,6 +837,366 @@
    ]
   },
   {
+   "id": "neatsmart",
+   "model": "neat",
+   "title": "NEAT Smart: every lesson at once",
+   "why": "NEAT 16 plus three lessons from the ladder. (1) No compass inputs: cos/sin(heading) are useless on random tracks,\nand in n00 evolution had already cut cos(heading) off. (2) Five tracks per generation instead of three, so a network\ncan't win by drawing easy tracks. (3) A stronger lap-time bonus (2 per frame) to push harder for speed.",
+   "outcome": "Two very different cars. After only 18 minutes it already finished all five race tracks (27 s laps), the best quickest-to-finish car. Its fastest checkpoint laps validation in 18.5 s and sets the quickest race laps of any car (16.4-16.6 s), but crashes out on 3 of 5 race tracks: the stronger speed bonus made it fast but fragile.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": 0.0,
+   "parent": "neat16",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "generations": 1000,
+    "tracks-per-generation": 5,
+    "lap-time-bonus": 2.0,
+    "max-steps": 2000,
+    "max-hours": 8
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "dbbf9f3",
+   "trained_on": "2026-10-14",
+   "train_seconds": 19651.4,
+   "selected": {
+    "generation": 159
+   },
+   "size": {
+    "params": 69,
+    "hidden": 7,
+    "connections": 59,
+    "label": "7 hidden, 59 links"
+   },
+   "summary": {
+    "finished": 2,
+    "lap_s": 16.49,
+    "score": 641.1,
+    "offtrack_pct": 32.9
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 16.62,
+     "frames": 831,
+     "score": 916.9,
+     "offtrack_pct": 3.0,
+     "avg_speed": 56.5,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 16.36,
+     "frames": 818,
+     "score": 918.2,
+     "offtrack_pct": 1.5,
+     "avg_speed": 53.6,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 146.2,
+     "offtrack_pct": 80.5,
+     "avg_speed": 22.1,
+     "reached_pct": 34.6,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 467.7,
+     "offtrack_pct": 65.5,
+     "avg_speed": 28.6,
+     "reached_pct": 66.8,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 1084,
+     "score": 756.3,
+     "offtrack_pct": 14.2,
+     "avg_speed": 54.8,
+     "reached_pct": 96.5,
+     "crashed": true
+    }
+   ]
+  },
+  {
+   "id": "p11_normalize_reward",
+   "model": "ppo",
+   "title": "Normalise the reward",
+   "why": "Tile rewards (+3.7), the time penalty (-0.1 per frame) and the end of a lap sit on very different scales, which\nmakes PPO's value estimates jumpy. Here the reward is scaled by a running estimate of the return's spread\n(VecNormalize, rewards only). Everything else as p10.",
+   "outcome": "",
+   "seed_runs": [
+    {
+     "seed": 0,
+     "train_seconds": 629.0,
+     "selected": {
+      "timestep": 650000
+     },
+     "validation": {
+      "finished": 1,
+      "mean_lap_s": 15.74
+     },
+     "summary": {
+      "finished": 0,
+      "lap_s": null,
+      "score": 40.3,
+      "offtrack_pct": 90.8
+     },
+     "tracks": [
+      {
+       "seed": 3,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 264.9,
+       "offtrack_pct": 85.5,
+       "avg_speed": 32.0,
+       "reached_pct": 46.5,
+       "crashed": false
+      },
+      {
+       "seed": 11,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -14.7,
+       "offtrack_pct": 93.0,
+       "avg_speed": 21.3,
+       "reached_pct": 18.5,
+       "crashed": false
+      },
+      {
+       "seed": 21,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -90.5,
+       "offtrack_pct": 93.5,
+       "avg_speed": 16.9,
+       "reached_pct": 10.9,
+       "crashed": false
+      },
+      {
+       "seed": 34,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 129.2,
+       "offtrack_pct": 87.7,
+       "avg_speed": 26.5,
+       "reached_pct": 32.9,
+       "crashed": false
+      },
+      {
+       "seed": 55,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -87.5,
+       "offtrack_pct": 94.5,
+       "avg_speed": 16.8,
+       "reached_pct": 11.3,
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "seed": 1,
+     "train_seconds": 269.4,
+     "selected": {
+      "timestep": 275000
+     },
+     "validation": {
+      "finished": 3,
+      "mean_lap_s": 19.527
+     },
+     "summary": {
+      "finished": 2,
+      "lap_s": 17.9,
+      "score": 572.0,
+      "offtrack_pct": 43.0
+     },
+     "tracks": [
+      {
+       "seed": 3,
+       "finished": true,
+       "lap_s": 18.28,
+       "frames": 914,
+       "score": 908.6,
+       "offtrack_pct": 0.0,
+       "avg_speed": 50.2,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 11,
+       "finished": true,
+       "lap_s": 17.52,
+       "frames": 876,
+       "score": 912.4,
+       "offtrack_pct": 1.3,
+       "avg_speed": 50.1,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 21,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 137.3,
+       "offtrack_pct": 79.8,
+       "avg_speed": 24.8,
+       "reached_pct": 33.7,
+       "crashed": false
+      },
+      {
+       "seed": 34,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 458.4,
+       "offtrack_pct": 65.2,
+       "avg_speed": 30.7,
+       "reached_pct": 65.8,
+       "crashed": false
+      },
+      {
+       "seed": 55,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 443.1,
+       "offtrack_pct": 68.6,
+       "avg_speed": 30.1,
+       "reached_pct": 64.3,
+       "crashed": false
+      }
+     ]
+    }
+   ],
+   "kept_seed": 1,
+   "action_smoothing": 0.1,
+   "parent": "p10_fair_rules",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "entropy-coef": 0.005,
+    "normalize-reward": true,
+    "total-timesteps": 1000000,
+    "num-envs": 8,
+    "n-steps": 1024,
+    "batch-size": 256,
+    "offtrack-penalty": 0.0,
+    "allow-multiple-laps": false,
+    "max-episode-steps": 2000,
+    "eval-frequency": 50000,
+    "checkpoint-frequency": 0,
+    "seed": 1
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "dbbf9f3",
+   "trained_on": "2026-10-14",
+   "train_seconds": 269.4,
+   "selected": {
+    "timestep": 275000
+   },
+   "size": {
+    "params": 145415,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 2,
+    "lap_s": 17.9,
+    "score": 572.0,
+    "offtrack_pct": 43.0
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 18.28,
+     "frames": 914,
+     "score": 908.6,
+     "offtrack_pct": 0.0,
+     "avg_speed": 50.2,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 17.52,
+     "frames": 876,
+     "score": 912.4,
+     "offtrack_pct": 1.3,
+     "avg_speed": 50.1,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 137.3,
+     "offtrack_pct": 79.8,
+     "avg_speed": 24.8,
+     "reached_pct": 33.7,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 458.4,
+     "offtrack_pct": 65.2,
+     "avg_speed": 30.7,
+     "reached_pct": 65.8,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 443.1,
+     "offtrack_pct": 68.6,
+     "avg_speed": 30.1,
+     "reached_pct": 64.3,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "p00_baseline",
    "model": "ppo",
    "title": "Baseline: PPO, stopped at its peak",
@@ -1145,6 +1400,262 @@
      "offtrack_pct": 65.5,
      "avg_speed": 31.7,
      "reached_pct": 60.1,
+     "crashed": false
+    }
+   ]
+  },
+  {
+   "id": "p10_fair_rules",
+   "model": "ppo",
+   "title": "PPO under NEAT's rules",
+   "why": "Until now PPO was not judged like NEAT. It trained on 1000-frame episodes (laps over 20 s never finished),\nkept whichever checkpoint scored best on 3 random tracks, used 4 of the 8 CPU threads, and drove without\nNEAT's action smoothing. Here it follows the shared rulebook: 2000-frame episodes, training tracks from the\nsame pool, the same lap check on the 5 validation tracks to choose the kept model, the same 0.1 smoothing,\nand 8 parallel envs. Run with two seeds so luck shows. Otherwise p06's recipe.",
+   "outcome": "0/5 on both seeds; no lap check ever finished a validation track. With 2000-frame episodes and the shared rules, p06's recipe learned little (training reward 100-220). Equal rules alone don't fix PPO: the recipe has to change too.",
+   "seed_runs": [
+    {
+     "seed": 0,
+     "train_seconds": 19.1,
+     "selected": {
+      "timestep": 25000
+     },
+     "validation": {
+      "finished": 0,
+      "mean_lap_s": null
+     },
+     "summary": {
+      "finished": 0,
+      "lap_s": null,
+      "score": -76.1,
+      "offtrack_pct": 91.6
+     },
+     "tracks": [
+      {
+       "seed": 3,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -85.6,
+       "offtrack_pct": 91.5,
+       "avg_speed": 36.3,
+       "reached_pct": 11.4,
+       "crashed": false
+      },
+      {
+       "seed": 11,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -118.9,
+       "offtrack_pct": 94.7,
+       "avg_speed": 32.4,
+       "reached_pct": 8.1,
+       "crashed": false
+      },
+      {
+       "seed": 21,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -69.8,
+       "offtrack_pct": 90.5,
+       "avg_speed": 37.1,
+       "reached_pct": 13.0,
+       "crashed": false
+      },
+      {
+       "seed": 34,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -57.1,
+       "offtrack_pct": 90.0,
+       "avg_speed": 36.0,
+       "reached_pct": 14.3,
+       "crashed": false
+      },
+      {
+       "seed": 55,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -48.9,
+       "offtrack_pct": 91.3,
+       "avg_speed": 37.6,
+       "reached_pct": 15.1,
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "seed": 1,
+     "train_seconds": 22.6,
+     "selected": {
+      "timestep": 25000
+     },
+     "validation": {
+      "finished": 0,
+      "mean_lap_s": null
+     },
+     "summary": {
+      "finished": 0,
+      "lap_s": null,
+      "score": -135.0,
+      "offtrack_pct": 93.6
+     },
+     "tracks": [
+      {
+       "seed": 3,
+       "finished": false,
+       "lap_s": null,
+       "frames": 1317,
+       "score": -113.5,
+       "offtrack_pct": 90.4,
+       "avg_speed": 37.4,
+       "reached_pct": 11.8,
+       "crashed": true
+      },
+      {
+       "seed": 11,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -130.5,
+       "offtrack_pct": 95.6,
+       "avg_speed": 26.0,
+       "reached_pct": 6.9,
+       "crashed": false
+      },
+      {
+       "seed": 21,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -152.7,
+       "offtrack_pct": 95.5,
+       "avg_speed": 30.7,
+       "reached_pct": 4.7,
+       "crashed": false
+      },
+      {
+       "seed": 34,
+       "finished": false,
+       "lap_s": null,
+       "frames": 1363,
+       "score": -149.2,
+       "offtrack_pct": 90.8,
+       "avg_speed": 38.2,
+       "reached_pct": 8.7,
+       "crashed": true
+      },
+      {
+       "seed": 55,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -129.3,
+       "offtrack_pct": 95.6,
+       "avg_speed": 32.2,
+       "reached_pct": 7.1,
+       "crashed": false
+      }
+     ]
+    }
+   ],
+   "kept_seed": 0,
+   "action_smoothing": 0.1,
+   "parent": "p06_rays_only",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "entropy-coef": 0.005,
+    "total-timesteps": 1000000,
+    "num-envs": 8,
+    "n-steps": 1024,
+    "batch-size": 256,
+    "offtrack-penalty": 0.0,
+    "allow-multiple-laps": false,
+    "max-episode-steps": 2000,
+    "eval-frequency": 50000,
+    "checkpoint-frequency": 0,
+    "seed": 0
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "dbbf9f3",
+   "trained_on": "2026-10-14",
+   "train_seconds": 19.1,
+   "selected": {
+    "timestep": 25000
+   },
+   "size": {
+    "params": 145415,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 0,
+    "lap_s": null,
+    "score": -76.1,
+    "offtrack_pct": 91.6
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -85.6,
+     "offtrack_pct": 91.5,
+     "avg_speed": 36.3,
+     "reached_pct": 11.4,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -118.9,
+     "offtrack_pct": 94.7,
+     "avg_speed": 32.4,
+     "reached_pct": 8.1,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -69.8,
+     "offtrack_pct": 90.5,
+     "avg_speed": 37.1,
+     "reached_pct": 13.0,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -57.1,
+     "offtrack_pct": 90.0,
+     "avg_speed": 36.0,
+     "reached_pct": 14.3,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -48.9,
+     "offtrack_pct": 91.3,
+     "avg_speed": 37.6,
+     "reached_pct": 15.1,
      "crashed": false
     }
    ]
@@ -2009,18 +2520,6 @@
   }
  ],
  "pending": [
-  {
-   "id": "p10_fair_rules",
-   "model": "ppo",
-   "title": "PPO under NEAT's rules",
-   "why": "Until now PPO was not judged like NEAT. It trained on 1000-frame episodes (laps over 20 s never finished),\nkept whichever checkpoint scored best on 3 random tracks, used 4 of the 8 CPU threads, and drove without\nNEAT's action smoothing. Here it follows the shared rulebook: 2000-frame episodes, training tracks from the\nsame pool, the same lap check on the 5 validation tracks to choose the kept model, the same 0.1 smoothing,\nand 8 parallel envs. Run with two seeds so luck shows. Otherwise p06's recipe."
-  },
-  {
-   "id": "p11_normalize_reward",
-   "model": "ppo",
-   "title": "Normalise the reward",
-   "why": "Tile rewards (+3.7), the time penalty (-0.1 per frame) and the end of a lap sit on very different scales, which\nmakes PPO's value estimates jumpy. Here the reward is scaled by a running estimate of the return's spread\n(VecNormalize, rewards only). Everything else as p10."
-  },
   {
    "id": "p12_calm_exploration",
    "model": "ppo",

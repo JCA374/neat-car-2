@@ -30,7 +30,9 @@ def record(step: Step, categories=("fast", "finish")) -> Dict[str, int]:
         if not os.path.exists(model):
             continue
         path = exhibition_path(step, cat)
-        data = json.load(open(path)) if os.path.exists(path) else {}
+        # Re-drive everything if the checkpoint changed since these drives were recorded.
+        fresh = os.path.exists(path) and os.path.getmtime(path) >= os.path.getmtime(model)
+        data = json.load(open(path)) if fresh else {}
         todo = [s for s in EXHIBITION_SEEDS if str(s) not in data]
         if not todo:
             continue

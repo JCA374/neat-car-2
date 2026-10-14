@@ -28,7 +28,7 @@
    "label": "NEAT 16",
    "title": "NEAT 16: the proven recipe",
    "why": "The best NEAT recipe from the ladder (n05): 16 rays facing forward over ±120°, 2000-frame training episodes,\n+1 fitness per frame a lap beats 1000 frames, population 100. Trained from scratch for 8 hours. (A first\nrun stopped at 3.5 h on a \"no faster lap for 2 h\" rule that a single lucky lap check fooled; it was continued to 8 h.)",
-   "outcome": "",
+   "outcome": "The steady one. Its fastest checkpoint came near the end of the 8 hours (generation 401) and finishes all five race tracks in 20.8 s on average, never touching the grass. Its quickest-to-finish checkpoint (13 min) is fragile: 3 of 5 race tracks.",
    "color": "--c1",
    "lineage": [
     "n00_baseline",
@@ -120,78 +120,78 @@
     },
     "fast": {
      "selected": {
-      "generation": 82
+      "generation": 401
      },
-     "train_seconds": 5210.1,
+     "train_seconds": 28761.5,
      "validation": {
       "finished": 5,
-      "mean_lap_s": 20.892
+      "mean_lap_s": 20.0
      },
      "size": {
-      "params": 68,
-      "hidden": 5,
-      "connections": 60,
-      "label": "5 hidden, 60 links"
+      "params": 95,
+      "hidden": 17,
+      "connections": 75,
+      "label": "17 hidden, 75 links"
      },
      "summary": {
       "finished": 5,
-      "lap_s": 21.5,
-      "score": 892.5,
-      "offtrack_pct": 0.0
+      "lap_s": 20.77,
+      "score": 896.2,
+      "offtrack_pct": 0.5
      },
      "tracks": [
       {
        "seed": 3,
        "finished": true,
-       "lap_s": 19.7,
-       "frames": 985,
-       "score": 901.5,
+       "lap_s": 17.64,
+       "frames": 882,
+       "score": 911.8,
        "offtrack_pct": 0.0,
-       "avg_speed": 46.8,
+       "avg_speed": 52.7,
        "reached_pct": 100.0,
        "crashed": false
       },
       {
        "seed": 11,
        "finished": true,
-       "lap_s": 18.48,
-       "frames": 924,
-       "score": 907.6,
+       "lap_s": 18.46,
+       "frames": 923,
+       "score": 907.7,
        "offtrack_pct": 0.0,
-       "avg_speed": 47.3,
+       "avg_speed": 48.4,
        "reached_pct": 100.0,
        "crashed": false
       },
       {
        "seed": 21,
        "finished": true,
-       "lap_s": 24.22,
-       "frames": 1211,
-       "score": 878.9,
+       "lap_s": 23.96,
+       "frames": 1198,
+       "score": 880.2,
        "offtrack_pct": 0.0,
-       "avg_speed": 47.5,
+       "avg_speed": 48.8,
        "reached_pct": 100.0,
        "crashed": false
       },
       {
        "seed": 34,
        "finished": true,
-       "lap_s": 22.74,
-       "frames": 1137,
-       "score": 886.3,
-       "offtrack_pct": 0.0,
-       "avg_speed": 48.2,
+       "lap_s": 22.5,
+       "frames": 1125,
+       "score": 887.5,
+       "offtrack_pct": 2.3,
+       "avg_speed": 49.8,
        "reached_pct": 100.0,
        "crashed": false
       },
       {
        "seed": 55,
        "finished": true,
-       "lap_s": 22.34,
-       "frames": 1117,
-       "score": 888.3,
+       "lap_s": 21.28,
+       "frames": 1064,
+       "score": 893.6,
        "offtrack_pct": 0.0,
-       "avg_speed": 47.0,
+       "avg_speed": 49.9,
        "reached_pct": 100.0,
        "crashed": false
       }
@@ -199,10 +199,10 @@
     }
    },
    "size": {
-    "params": 68,
-    "hidden": 5,
-    "connections": 60,
-    "label": "5 hidden, 60 links"
+    "params": 95,
+    "hidden": 17,
+    "connections": 75,
+    "label": "17 hidden, 75 links"
    },
    "lap_checks": [
     {
@@ -1221,33 +1221,1407 @@
     },
     {
      "at": 169,
-     "t": 12205.3,
+     "t": 12213.3,
      "finished": 5,
      "lap": 21.14
     },
     {
      "at": 170,
-     "t": 12281.9,
+     "t": 12299.3,
      "finished": 5,
      "lap": 21.14
     },
     {
      "at": 171,
-     "t": 12348.1,
+     "t": 12373.2,
      "finished": 5,
-     "lap": 21.14
+     "lap": 22.144
     },
     {
      "at": 172,
-     "t": 12403.5,
+     "t": 12445.3,
      "finished": 5,
      "lap": 21.14
     },
     {
      "at": 173,
-     "t": 12489.8,
+     "t": 12523.8,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 174,
+     "t": 12601.7,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 175,
+     "t": 12695.7,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 176,
+     "t": 12821.5,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 177,
+     "t": 12930.6,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 178,
+     "t": 13020.9,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 179,
+     "t": 13101.7,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 180,
+     "t": 13198.3,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 181,
+     "t": 13277.5,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 182,
+     "t": 13368.2,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 183,
+     "t": 13462.3,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 184,
+     "t": 13552.2,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 185,
+     "t": 13646.7,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 186,
+     "t": 13737.9,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 187,
+     "t": 13831.0,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 188,
+     "t": 13920.1,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 189,
+     "t": 14006.5,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 190,
+     "t": 14106.6,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 191,
+     "t": 14199.3,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 192,
+     "t": 14303.1,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 193,
+     "t": 14414.3,
+     "finished": 5,
+     "lap": 20.172
+    },
+    {
+     "at": 194,
+     "t": 14499.6,
+     "finished": 5,
+     "lap": 20.172
+    },
+    {
+     "at": 195,
+     "t": 14581.5,
+     "finished": 5,
+     "lap": 20.172
+    },
+    {
+     "at": 196,
+     "t": 14669.8,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 197,
+     "t": 14772.0,
+     "finished": 5,
+     "lap": 21.14
+    },
+    {
+     "at": 198,
+     "t": 14878.4,
+     "finished": 5,
+     "lap": 20.092
+    },
+    {
+     "at": 199,
+     "t": 14965.0,
+     "finished": 5,
+     "lap": 20.092
+    },
+    {
+     "at": 200,
+     "t": 15039.4,
+     "finished": 5,
+     "lap": 20.092
+    },
+    {
+     "at": 201,
+     "t": 15132.1,
+     "finished": 5,
+     "lap": 20.092
+    },
+    {
+     "at": 202,
+     "t": 15201.5,
+     "finished": 5,
+     "lap": 20.092
+    },
+    {
+     "at": 203,
+     "t": 15271.6,
+     "finished": 5,
+     "lap": 20.092
+    },
+    {
+     "at": 204,
+     "t": 15358.0,
+     "finished": 3,
+     "lap": 18.68
+    },
+    {
+     "at": 205,
+     "t": 15432.0,
+     "finished": 5,
+     "lap": 20.092
+    },
+    {
+     "at": 206,
+     "t": 15510.4,
+     "finished": 5,
+     "lap": 20.092
+    },
+    {
+     "at": 207,
+     "t": 15589.1,
+     "finished": 4,
+     "lap": 19.635
+    },
+    {
+     "at": 208,
+     "t": 15666.9,
+     "finished": 5,
+     "lap": 20.092
+    },
+    {
+     "at": 209,
+     "t": 15730.5,
+     "finished": 4,
+     "lap": 19.635
+    },
+    {
+     "at": 210,
+     "t": 15808.5,
+     "finished": 5,
+     "lap": 20.092
+    },
+    {
+     "at": 211,
+     "t": 15874.8,
+     "finished": 5,
+     "lap": 20.092
+    },
+    {
+     "at": 212,
+     "t": 15938.3,
+     "finished": 5,
+     "lap": 20.092
+    },
+    {
+     "at": 213,
+     "t": 16000.3,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 214,
+     "t": 16063.7,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 215,
+     "t": 16137.2,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 216,
+     "t": 16212.3,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 217,
+     "t": 16277.7,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 218,
+     "t": 16337.5,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 219,
+     "t": 16407.1,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 220,
+     "t": 16490.7,
      "finished": 2,
-     "lap": 18.93
+     "lap": 20.39
+    },
+    {
+     "at": 221,
+     "t": 16556.3,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 222,
+     "t": 16631.3,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 223,
+     "t": 16699.3,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 224,
+     "t": 16768.3,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 225,
+     "t": 16833.9,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 226,
+     "t": 16909.0,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 227,
+     "t": 16978.9,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 228,
+     "t": 17062.6,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 229,
+     "t": 17143.2,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 230,
+     "t": 17219.1,
+     "finished": 3,
+     "lap": 18.853
+    },
+    {
+     "at": 231,
+     "t": 17298.2,
+     "finished": 3,
+     "lap": 18.853
+    },
+    {
+     "at": 232,
+     "t": 17376.7,
+     "finished": 3,
+     "lap": 18.853
+    },
+    {
+     "at": 233,
+     "t": 17453.3,
+     "finished": 3,
+     "lap": 18.853
+    },
+    {
+     "at": 234,
+     "t": 17545.6,
+     "finished": 3,
+     "lap": 18.853
+    },
+    {
+     "at": 235,
+     "t": 17620.2,
+     "finished": 3,
+     "lap": 18.853
+    },
+    {
+     "at": 236,
+     "t": 17677.9,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 237,
+     "t": 17739.2,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 238,
+     "t": 17802.9,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 239,
+     "t": 17879.7,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 240,
+     "t": 17939.2,
+     "finished": 5,
+     "lap": 21.204
+    },
+    {
+     "at": 241,
+     "t": 18002.9,
+     "finished": 5,
+     "lap": 21.204
+    },
+    {
+     "at": 242,
+     "t": 18080.3,
+     "finished": 3,
+     "lap": 20.547
+    },
+    {
+     "at": 243,
+     "t": 18135.9,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 244,
+     "t": 18201.1,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 245,
+     "t": 18265.5,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 246,
+     "t": 18336.6,
+     "finished": 5,
+     "lap": 20.94
+    },
+    {
+     "at": 247,
+     "t": 18411.7,
+     "finished": 2,
+     "lap": 19.26
+    },
+    {
+     "at": 248,
+     "t": 18472.0,
+     "finished": 2,
+     "lap": 19.26
+    },
+    {
+     "at": 249,
+     "t": 18546.4,
+     "finished": 2,
+     "lap": 19.26
+    },
+    {
+     "at": 250,
+     "t": 18614.7,
+     "finished": 5,
+     "lap": 20.94
+    },
+    {
+     "at": 251,
+     "t": 18678.7,
+     "finished": 5,
+     "lap": 20.94
+    },
+    {
+     "at": 252,
+     "t": 18736.5,
+     "finished": 5,
+     "lap": 21.204
+    },
+    {
+     "at": 253,
+     "t": 18788.6,
+     "finished": 5,
+     "lap": 20.936
+    },
+    {
+     "at": 254,
+     "t": 18844.8,
+     "finished": 5,
+     "lap": 21.204
+    },
+    {
+     "at": 255,
+     "t": 18920.9,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 256,
+     "t": 18992.7,
+     "finished": 5,
+     "lap": 21.204
+    },
+    {
+     "at": 257,
+     "t": 19051.3,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 258,
+     "t": 19129.5,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 259,
+     "t": 19207.9,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 260,
+     "t": 19286.5,
+     "finished": 5,
+     "lap": 21.204
+    },
+    {
+     "at": 261,
+     "t": 19365.7,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 262,
+     "t": 19446.8,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 263,
+     "t": 19512.1,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 264,
+     "t": 19592.9,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 265,
+     "t": 19670.9,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 266,
+     "t": 19738.8,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 267,
+     "t": 19807.0,
+     "finished": 5,
+     "lap": 21.204
+    },
+    {
+     "at": 268,
+     "t": 19874.3,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 269,
+     "t": 19951.2,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 270,
+     "t": 20019.1,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 271,
+     "t": 20109.3,
+     "finished": 5,
+     "lap": 20.304
+    },
+    {
+     "at": 272,
+     "t": 20184.4,
+     "finished": 5,
+     "lap": 20.304
+    },
+    {
+     "at": 273,
+     "t": 20251.7,
+     "finished": 5,
+     "lap": 20.304
+    },
+    {
+     "at": 274,
+     "t": 20321.9,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 275,
+     "t": 20402.0,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 276,
+     "t": 20477.3,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 277,
+     "t": 20552.8,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 278,
+     "t": 20630.3,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 279,
+     "t": 20698.0,
+     "finished": 5,
+     "lap": 21.204
+    },
+    {
+     "at": 280,
+     "t": 20770.4,
+     "finished": 5,
+     "lap": 21.204
+    },
+    {
+     "at": 281,
+     "t": 20844.2,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 282,
+     "t": 20931.6,
+     "finished": 5,
+     "lap": 21.204
+    },
+    {
+     "at": 283,
+     "t": 21010.1,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 284,
+     "t": 21077.7,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 285,
+     "t": 21153.1,
+     "finished": 4,
+     "lap": 20.69
+    },
+    {
+     "at": 286,
+     "t": 21234.1,
+     "finished": 5,
+     "lap": 20.932
+    },
+    {
+     "at": 287,
+     "t": 21304.6,
+     "finished": 4,
+     "lap": 21.845
+    },
+    {
+     "at": 288,
+     "t": 21381.7,
+     "finished": 4,
+     "lap": 20.69
+    },
+    {
+     "at": 289,
+     "t": 21459.9,
+     "finished": 3,
+     "lap": 21.16
+    },
+    {
+     "at": 290,
+     "t": 21529.6,
+     "finished": 4,
+     "lap": 20.69
+    },
+    {
+     "at": 291,
+     "t": 21590.9,
+     "finished": 4,
+     "lap": 20.69
+    },
+    {
+     "at": 292,
+     "t": 21656.5,
+     "finished": 3,
+     "lap": 23.207
+    },
+    {
+     "at": 293,
+     "t": 21711.9,
+     "finished": 4,
+     "lap": 20.69
+    },
+    {
+     "at": 294,
+     "t": 21778.1,
+     "finished": 4,
+     "lap": 20.69
+    },
+    {
+     "at": 295,
+     "t": 21840.6,
+     "finished": 4,
+     "lap": 20.69
+    },
+    {
+     "at": 296,
+     "t": 21918.2,
+     "finished": 4,
+     "lap": 20.69
+    },
+    {
+     "at": 297,
+     "t": 21990.4,
+     "finished": 2,
+     "lap": 18.12
+    },
+    {
+     "at": 298,
+     "t": 22059.5,
+     "finished": 2,
+     "lap": 18.12
+    },
+    {
+     "at": 299,
+     "t": 22127.5,
+     "finished": 2,
+     "lap": 18.12
+    },
+    {
+     "at": 300,
+     "t": 22197.8,
+     "finished": 2,
+     "lap": 18.12
+    },
+    {
+     "at": 301,
+     "t": 22261.0,
+     "finished": 2,
+     "lap": 18.12
+    },
+    {
+     "at": 302,
+     "t": 22327.9,
+     "finished": 4,
+     "lap": 21.825
+    },
+    {
+     "at": 303,
+     "t": 22388.2,
+     "finished": 4,
+     "lap": 21.825
+    },
+    {
+     "at": 304,
+     "t": 22449.1,
+     "finished": 5,
+     "lap": 21.62
+    },
+    {
+     "at": 305,
+     "t": 22524.5,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 306,
+     "t": 22584.2,
+     "finished": 5,
+     "lap": 21.62
+    },
+    {
+     "at": 307,
+     "t": 22646.6,
+     "finished": 5,
+     "lap": 21.62
+    },
+    {
+     "at": 308,
+     "t": 22720.3,
+     "finished": 4,
+     "lap": 21.825
+    },
+    {
+     "at": 309,
+     "t": 22798.5,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 310,
+     "t": 22858.9,
+     "finished": 3,
+     "lap": 23.207
+    },
+    {
+     "at": 311,
+     "t": 22917.8,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 312,
+     "t": 22975.1,
+     "finished": 3,
+     "lap": 23.207
+    },
+    {
+     "at": 313,
+     "t": 23025.4,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 314,
+     "t": 23068.6,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 315,
+     "t": 23121.1,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 316,
+     "t": 23170.8,
+     "finished": 1,
+     "lap": 19.14
+    },
+    {
+     "at": 317,
+     "t": 23220.4,
+     "finished": 5,
+     "lap": 23.172
+    },
+    {
+     "at": 318,
+     "t": 23279.7,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 319,
+     "t": 23341.0,
+     "finished": 5,
+     "lap": 22.824
+    },
+    {
+     "at": 320,
+     "t": 23394.9,
+     "finished": 3,
+     "lap": 21.873
+    },
+    {
+     "at": 321,
+     "t": 23445.2,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 322,
+     "t": 23496.6,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 323,
+     "t": 23534.7,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 324,
+     "t": 23569.7,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 325,
+     "t": 23623.0,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 326,
+     "t": 23675.6,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 327,
+     "t": 23737.9,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 328,
+     "t": 23795.0,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 329,
+     "t": 23853.3,
+     "finished": 5,
+     "lap": 22.028
+    },
+    {
+     "at": 330,
+     "t": 23910.3,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 331,
+     "t": 23976.8,
+     "finished": 5,
+     "lap": 22.028
+    },
+    {
+     "at": 332,
+     "t": 24037.7,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 333,
+     "t": 24097.2,
+     "finished": 5,
+     "lap": 22.028
+    },
+    {
+     "at": 334,
+     "t": 24168.8,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 335,
+     "t": 24232.1,
+     "finished": 5,
+     "lap": 22.028
+    },
+    {
+     "at": 336,
+     "t": 24304.3,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 337,
+     "t": 24383.3,
+     "finished": 5,
+     "lap": 22.028
+    },
+    {
+     "at": 338,
+     "t": 24454.0,
+     "finished": 5,
+     "lap": 22.6
+    },
+    {
+     "at": 339,
+     "t": 24524.1,
+     "finished": 5,
+     "lap": 20.944
+    },
+    {
+     "at": 340,
+     "t": 24590.7,
+     "finished": 5,
+     "lap": 20.944
+    },
+    {
+     "at": 341,
+     "t": 24674.7,
+     "finished": 5,
+     "lap": 21.48
+    },
+    {
+     "at": 342,
+     "t": 24742.0,
+     "finished": 5,
+     "lap": 20.944
+    },
+    {
+     "at": 343,
+     "t": 24802.5,
+     "finished": 5,
+     "lap": 20.944
+    },
+    {
+     "at": 344,
+     "t": 24868.7,
+     "finished": 5,
+     "lap": 22.028
+    },
+    {
+     "at": 345,
+     "t": 24937.6,
+     "finished": 5,
+     "lap": 20.944
+    },
+    {
+     "at": 346,
+     "t": 25004.9,
+     "finished": 5,
+     "lap": 22.028
+    },
+    {
+     "at": 347,
+     "t": 25078.1,
+     "finished": 5,
+     "lap": 22.472
+    },
+    {
+     "at": 348,
+     "t": 25139.5,
+     "finished": 3,
+     "lap": 20.687
+    },
+    {
+     "at": 349,
+     "t": 25195.4,
+     "finished": 5,
+     "lap": 22.472
+    },
+    {
+     "at": 350,
+     "t": 25255.4,
+     "finished": 5,
+     "lap": 22.472
+    },
+    {
+     "at": 351,
+     "t": 25311.7,
+     "finished": 5,
+     "lap": 23.836
+    },
+    {
+     "at": 352,
+     "t": 25360.2,
+     "finished": 5,
+     "lap": 22.472
+    },
+    {
+     "at": 353,
+     "t": 25416.3,
+     "finished": 5,
+     "lap": 22.472
+    },
+    {
+     "at": 354,
+     "t": 25475.3,
+     "finished": 5,
+     "lap": 22.472
+    },
+    {
+     "at": 355,
+     "t": 25536.5,
+     "finished": 5,
+     "lap": 22.472
+    },
+    {
+     "at": 356,
+     "t": 25600.8,
+     "finished": 5,
+     "lap": 22.472
+    },
+    {
+     "at": 357,
+     "t": 25668.0,
+     "finished": 5,
+     "lap": 22.472
+    },
+    {
+     "at": 358,
+     "t": 25724.9,
+     "finished": 5,
+     "lap": 22.472
+    },
+    {
+     "at": 359,
+     "t": 25768.3,
+     "finished": 5,
+     "lap": 22.472
+    },
+    {
+     "at": 360,
+     "t": 25820.7,
+     "finished": 5,
+     "lap": 24.268
+    },
+    {
+     "at": 361,
+     "t": 25863.7,
+     "finished": 5,
+     "lap": 24.268
+    },
+    {
+     "at": 362,
+     "t": 25910.4,
+     "finished": 5,
+     "lap": 21.928
+    },
+    {
+     "at": 363,
+     "t": 25965.6,
+     "finished": 5,
+     "lap": 21.928
+    },
+    {
+     "at": 364,
+     "t": 26026.6,
+     "finished": 5,
+     "lap": 21.928
+    },
+    {
+     "at": 365,
+     "t": 26093.6,
+     "finished": 5,
+     "lap": 21.928
+    },
+    {
+     "at": 366,
+     "t": 26155.8,
+     "finished": 5,
+     "lap": 21.928
+    },
+    {
+     "at": 367,
+     "t": 26227.9,
+     "finished": 5,
+     "lap": 21.928
+    },
+    {
+     "at": 368,
+     "t": 26290.8,
+     "finished": 5,
+     "lap": 21.928
+    },
+    {
+     "at": 369,
+     "t": 26374.1,
+     "finished": 5,
+     "lap": 21.928
+    },
+    {
+     "at": 370,
+     "t": 26432.1,
+     "finished": 5,
+     "lap": 24.268
+    },
+    {
+     "at": 371,
+     "t": 26518.1,
+     "finished": 5,
+     "lap": 24.268
+    },
+    {
+     "at": 372,
+     "t": 26593.7,
+     "finished": 5,
+     "lap": 24.268
+    },
+    {
+     "at": 373,
+     "t": 26670.0,
+     "finished": 5,
+     "lap": 23.348
+    },
+    {
+     "at": 374,
+     "t": 26761.7,
+     "finished": 5,
+     "lap": 23.348
+    },
+    {
+     "at": 375,
+     "t": 26832.2,
+     "finished": 5,
+     "lap": 23.348
+    },
+    {
+     "at": 376,
+     "t": 26915.9,
+     "finished": 5,
+     "lap": 23.348
+    },
+    {
+     "at": 377,
+     "t": 26998.7,
+     "finished": 5,
+     "lap": 23.348
+    },
+    {
+     "at": 378,
+     "t": 27068.2,
+     "finished": 5,
+     "lap": 23.348
+    },
+    {
+     "at": 379,
+     "t": 27151.0,
+     "finished": 5,
+     "lap": 23.348
+    },
+    {
+     "at": 380,
+     "t": 27231.1,
+     "finished": 5,
+     "lap": 22.716
+    },
+    {
+     "at": 381,
+     "t": 27299.3,
+     "finished": 3,
+     "lap": 20.013
+    },
+    {
+     "at": 382,
+     "t": 27374.4,
+     "finished": 5,
+     "lap": 22.716
+    },
+    {
+     "at": 383,
+     "t": 27451.8,
+     "finished": 3,
+     "lap": 20.013
+    },
+    {
+     "at": 384,
+     "t": 27534.7,
+     "finished": 3,
+     "lap": 20.013
+    },
+    {
+     "at": 385,
+     "t": 27600.2,
+     "finished": 3,
+     "lap": 20.593
+    },
+    {
+     "at": 386,
+     "t": 27668.9,
+     "finished": 3,
+     "lap": 20.593
+    },
+    {
+     "at": 387,
+     "t": 27734.6,
+     "finished": 2,
+     "lap": 17.82
+    },
+    {
+     "at": 388,
+     "t": 27795.9,
+     "finished": 3,
+     "lap": 20.593
+    },
+    {
+     "at": 389,
+     "t": 27859.0,
+     "finished": 5,
+     "lap": 24.612
+    },
+    {
+     "at": 390,
+     "t": 27932.3,
+     "finished": 2,
+     "lap": 18.8
+    },
+    {
+     "at": 391,
+     "t": 27994.1,
+     "finished": 3,
+     "lap": 20.013
+    },
+    {
+     "at": 392,
+     "t": 28047.1,
+     "finished": 5,
+     "lap": 24.612
+    },
+    {
+     "at": 393,
+     "t": 28102.0,
+     "finished": 3,
+     "lap": 20.013
+    },
+    {
+     "at": 394,
+     "t": 28191.0,
+     "finished": 5,
+     "lap": 24.612
+    },
+    {
+     "at": 395,
+     "t": 28307.2,
+     "finished": 5,
+     "lap": 24.612
+    },
+    {
+     "at": 396,
+     "t": 28378.3,
+     "finished": 5,
+     "lap": 24.612
+    },
+    {
+     "at": 397,
+     "t": 28455.5,
+     "finished": 5,
+     "lap": 22.448
+    },
+    {
+     "at": 398,
+     "t": 28542.0,
+     "finished": 5,
+     "lap": 21.828
+    },
+    {
+     "at": 399,
+     "t": 28618.4,
+     "finished": 5,
+     "lap": 21.828
+    },
+    {
+     "at": 400,
+     "t": 28689.9,
+     "finished": 5,
+     "lap": 21.828
+    },
+    {
+     "at": 401,
+     "t": 28761.5,
+     "finished": 5,
+     "lap": 20.0
+    },
+    {
+     "at": 402,
+     "t": 28826.7,
+     "finished": 5,
+     "lap": 20.0
     }
    ],
    "trained_on": "2026-10-13"
@@ -1258,7 +2632,7 @@
    "label": "NEAT 32",
    "title": "NEAT 32: twice the rays",
    "why": "Same as NEAT 16 but with 32 forward rays over the same ±120°: twice the detail ahead, but twice the inputs to evolve\nand a slower simulation. Do more rays make a faster car, or only a slower-to-train one?",
-   "outcome": "",
+   "outcome": "More rays bought speed, slowly: its fastest checkpoint (6 h 10 min) laps in 19.2 s with a 16.7 s best, but misses one race track. Twice the inputs took about four times the training of NEAT 16 to reach its best laps.",
    "color": "--c3",
    "lineage": [
     "n00_baseline",
@@ -2567,7 +3941,7 @@
    "label": "NEAT Smart",
    "title": "NEAT Smart: every lesson at once",
    "why": "NEAT 16 plus three lessons from the ladder. (1) No compass inputs: cos/sin(heading) are useless on random tracks,\nand in n00 evolution had already cut cos(heading) off. (2) Five tracks per generation instead of three, so a network\ncan't win by drawing easy tracks. (3) A stronger lap-time bonus (2 per frame) to push harder for speed.",
-   "outcome": "",
+   "outcome": "Two very different cars. After only 18 minutes it already finished all five race tracks (27 s laps), the best quickest-to-finish car. Its fastest checkpoint laps validation in 18.5 s and sets the quickest race laps of any car (16.4-16.6 s), but crashes out on 3 of 5 race tracks: the stronger speed bonus made it fast but fragile.",
    "color": "--c7",
    "lineage": [
     "n00_baseline",
@@ -2660,89 +4034,89 @@
     },
     "fast": {
      "selected": {
-      "generation": 52
+      "generation": 159
      },
-     "train_seconds": 5096.4,
+     "train_seconds": 19651.4,
      "validation": {
       "finished": 5,
-      "mean_lap_s": 20.148
+      "mean_lap_s": 18.5
      },
      "size": {
-      "params": 70,
-      "hidden": 3,
-      "connections": 64,
-      "label": "3 hidden, 64 links"
+      "params": 69,
+      "hidden": 7,
+      "connections": 59,
+      "label": "7 hidden, 59 links"
      },
      "summary": {
-      "finished": 5,
-      "lap_s": 20.94,
-      "score": 895.3,
-      "offtrack_pct": 0.3
+      "finished": 2,
+      "lap_s": 16.49,
+      "score": 641.1,
+      "offtrack_pct": 32.9
      },
      "tracks": [
       {
        "seed": 3,
        "finished": true,
-       "lap_s": 18.28,
-       "frames": 914,
-       "score": 908.6,
-       "offtrack_pct": 0.0,
-       "avg_speed": 49.9,
+       "lap_s": 16.62,
+       "frames": 831,
+       "score": 916.9,
+       "offtrack_pct": 3.0,
+       "avg_speed": 56.5,
        "reached_pct": 100.0,
        "crashed": false
       },
       {
        "seed": 11,
        "finished": true,
-       "lap_s": 18.1,
-       "frames": 905,
-       "score": 909.5,
-       "offtrack_pct": 0.0,
-       "avg_speed": 48.0,
+       "lap_s": 16.36,
+       "frames": 818,
+       "score": 918.2,
+       "offtrack_pct": 1.5,
+       "avg_speed": 53.6,
        "reached_pct": 100.0,
        "crashed": false
       },
       {
        "seed": 21,
-       "finished": true,
-       "lap_s": 24.26,
-       "frames": 1213,
-       "score": 878.7,
-       "offtrack_pct": 0.0,
-       "avg_speed": 47.2,
-       "reached_pct": 100.0,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 146.2,
+       "offtrack_pct": 80.5,
+       "avg_speed": 22.1,
+       "reached_pct": 34.6,
        "crashed": false
       },
       {
        "seed": 34,
-       "finished": true,
-       "lap_s": 22.48,
-       "frames": 1124,
-       "score": 887.6,
-       "offtrack_pct": 1.7,
-       "avg_speed": 49.1,
-       "reached_pct": 100.0,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 467.7,
+       "offtrack_pct": 65.5,
+       "avg_speed": 28.6,
+       "reached_pct": 66.8,
        "crashed": false
       },
       {
        "seed": 55,
-       "finished": true,
-       "lap_s": 21.6,
-       "frames": 1080,
-       "score": 892.0,
-       "offtrack_pct": 0.0,
-       "avg_speed": 48.2,
-       "reached_pct": 100.0,
-       "crashed": false
+       "finished": false,
+       "lap_s": null,
+       "frames": 1084,
+       "score": 756.3,
+       "offtrack_pct": 14.2,
+       "avg_speed": 54.8,
+       "reached_pct": 96.5,
+       "crashed": true
       }
      ]
     }
    },
    "size": {
-    "params": 70,
-    "hidden": 3,
-    "connections": 64,
-    "label": "3 hidden, 64 links"
+    "params": 69,
+    "hidden": 7,
+    "connections": 59,
+    "label": "7 hidden, 59 links"
    },
    "lap_checks": [
     {
@@ -3359,21 +4733,759 @@
     },
     {
      "at": 102,
-     "t": 12079.2,
+     "t": 12060.2,
      "finished": 5,
      "lap": 21.192
     },
     {
      "at": 103,
-     "t": 12266.8,
+     "t": 12185.3,
      "finished": 5,
      "lap": 21.192
     },
     {
      "at": 104,
-     "t": 12436.6,
+     "t": 12339.6,
      "finished": 4,
-     "lap": 20.475
+     "lap": 20.75
+    },
+    {
+     "at": 105,
+     "t": 12468.2,
+     "finished": 5,
+     "lap": 21.192
+    },
+    {
+     "at": 106,
+     "t": 12620.1,
+     "finished": 4,
+     "lap": 20.75
+    },
+    {
+     "at": 107,
+     "t": 12771.9,
+     "finished": 5,
+     "lap": 19.8
+    },
+    {
+     "at": 108,
+     "t": 12928.5,
+     "finished": 5,
+     "lap": 21.12
+    },
+    {
+     "at": 109,
+     "t": 13075.9,
+     "finished": 4,
+     "lap": 21.395
+    },
+    {
+     "at": 110,
+     "t": 13216.9,
+     "finished": 4,
+     "lap": 21.395
+    },
+    {
+     "at": 111,
+     "t": 13345.4,
+     "finished": 4,
+     "lap": 21.395
+    },
+    {
+     "at": 112,
+     "t": 13482.1,
+     "finished": 4,
+     "lap": 21.395
+    },
+    {
+     "at": 113,
+     "t": 13629.5,
+     "finished": 5,
+     "lap": 21.108
+    },
+    {
+     "at": 114,
+     "t": 13763.0,
+     "finished": 5,
+     "lap": 21.88
+    },
+    {
+     "at": 115,
+     "t": 13889.2,
+     "finished": 4,
+     "lap": 21.0
+    },
+    {
+     "at": 116,
+     "t": 14017.7,
+     "finished": 5,
+     "lap": 20.868
+    },
+    {
+     "at": 117,
+     "t": 14161.3,
+     "finished": 5,
+     "lap": 20.868
+    },
+    {
+     "at": 118,
+     "t": 14311.7,
+     "finished": 5,
+     "lap": 20.868
+    },
+    {
+     "at": 119,
+     "t": 14468.4,
+     "finished": 5,
+     "lap": 20.868
+    },
+    {
+     "at": 120,
+     "t": 14594.8,
+     "finished": 5,
+     "lap": 20.556
+    },
+    {
+     "at": 121,
+     "t": 14749.4,
+     "finished": 1,
+     "lap": 17.32
+    },
+    {
+     "at": 122,
+     "t": 14867.7,
+     "finished": 1,
+     "lap": 17.32
+    },
+    {
+     "at": 123,
+     "t": 14997.6,
+     "finished": 5,
+     "lap": 20.556
+    },
+    {
+     "at": 124,
+     "t": 15141.0,
+     "finished": 4,
+     "lap": 20.415
+    },
+    {
+     "at": 125,
+     "t": 15280.3,
+     "finished": 5,
+     "lap": 20.556
+    },
+    {
+     "at": 126,
+     "t": 15403.5,
+     "finished": 5,
+     "lap": 20.304
+    },
+    {
+     "at": 127,
+     "t": 15533.4,
+     "finished": 5,
+     "lap": 20.868
+    },
+    {
+     "at": 128,
+     "t": 15664.0,
+     "finished": 5,
+     "lap": 20.304
+    },
+    {
+     "at": 129,
+     "t": 15788.2,
+     "finished": 5,
+     "lap": 20.304
+    },
+    {
+     "at": 130,
+     "t": 15918.2,
+     "finished": 5,
+     "lap": 20.304
+    },
+    {
+     "at": 131,
+     "t": 16049.1,
+     "finished": 5,
+     "lap": 20.304
+    },
+    {
+     "at": 132,
+     "t": 16177.6,
+     "finished": 5,
+     "lap": 20.304
+    },
+    {
+     "at": 133,
+     "t": 16295.9,
+     "finished": 5,
+     "lap": 20.304
+    },
+    {
+     "at": 134,
+     "t": 16432.9,
+     "finished": 1,
+     "lap": 16.7
+    },
+    {
+     "at": 135,
+     "t": 16565.6,
+     "finished": 3,
+     "lap": 19.087
+    },
+    {
+     "at": 136,
+     "t": 16709.6,
+     "finished": 5,
+     "lap": 20.304
+    },
+    {
+     "at": 137,
+     "t": 16849.8,
+     "finished": 3,
+     "lap": 19.307
+    },
+    {
+     "at": 138,
+     "t": 16994.5,
+     "finished": 5,
+     "lap": 20.304
+    },
+    {
+     "at": 139,
+     "t": 17132.6,
+     "finished": 5,
+     "lap": 20.304
+    },
+    {
+     "at": 140,
+     "t": 17261.1,
+     "finished": 5,
+     "lap": 20.304
+    },
+    {
+     "at": 141,
+     "t": 17394.9,
+     "finished": 5,
+     "lap": 20.304
+    },
+    {
+     "at": 142,
+     "t": 17512.0,
+     "finished": 4,
+     "lap": 20.23
+    },
+    {
+     "at": 143,
+     "t": 17633.3,
+     "finished": 4,
+     "lap": 20.54
+    },
+    {
+     "at": 144,
+     "t": 17764.3,
+     "finished": 3,
+     "lap": 18.553
+    },
+    {
+     "at": 145,
+     "t": 17900.8,
+     "finished": 2,
+     "lap": 18.06
+    },
+    {
+     "at": 146,
+     "t": 18042.9,
+     "finished": 2,
+     "lap": 18.06
+    },
+    {
+     "at": 147,
+     "t": 18167.2,
+     "finished": 4,
+     "lap": 19.025
+    },
+    {
+     "at": 148,
+     "t": 18302.1,
+     "finished": 4,
+     "lap": 19.74
+    },
+    {
+     "at": 149,
+     "t": 18431.1,
+     "finished": 4,
+     "lap": 19.74
+    },
+    {
+     "at": 150,
+     "t": 18556.9,
+     "finished": 4,
+     "lap": 20.56
+    },
+    {
+     "at": 151,
+     "t": 18710.3,
+     "finished": 4,
+     "lap": 19.74
+    },
+    {
+     "at": 152,
+     "t": 18828.1,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 153,
+     "t": 18945.9,
+     "finished": 4,
+     "lap": 19.74
+    },
+    {
+     "at": 154,
+     "t": 19055.5,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 155,
+     "t": 19174.6,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 156,
+     "t": 19290.7,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 157,
+     "t": 19408.2,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 158,
+     "t": 19513.5,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 159,
+     "t": 19651.4,
+     "finished": 5,
+     "lap": 18.5
+    },
+    {
+     "at": 160,
+     "t": 19794.6,
+     "finished": 5,
+     "lap": 18.5
+    },
+    {
+     "at": 161,
+     "t": 19919.8,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 162,
+     "t": 20028.8,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 163,
+     "t": 20170.2,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 164,
+     "t": 20312.6,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 165,
+     "t": 20440.6,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 166,
+     "t": 20570.1,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 167,
+     "t": 20694.8,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 168,
+     "t": 20812.4,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 169,
+     "t": 20919.8,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 170,
+     "t": 21057.2,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 171,
+     "t": 21192.9,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 172,
+     "t": 21335.4,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 173,
+     "t": 21461.5,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 174,
+     "t": 21570.9,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 175,
+     "t": 21715.5,
+     "finished": 5,
+     "lap": 20.376
+    },
+    {
+     "at": 176,
+     "t": 21867.1,
+     "finished": 3,
+     "lap": 19.153
+    },
+    {
+     "at": 177,
+     "t": 22005.0,
+     "finished": 3,
+     "lap": 19.153
+    },
+    {
+     "at": 178,
+     "t": 22161.2,
+     "finished": 3,
+     "lap": 19.153
+    },
+    {
+     "at": 179,
+     "t": 22286.3,
+     "finished": 5,
+     "lap": 19.868
+    },
+    {
+     "at": 180,
+     "t": 22406.9,
+     "finished": 5,
+     "lap": 19.868
+    },
+    {
+     "at": 181,
+     "t": 22533.6,
+     "finished": 5,
+     "lap": 19.868
+    },
+    {
+     "at": 182,
+     "t": 22698.1,
+     "finished": 3,
+     "lap": 19.153
+    },
+    {
+     "at": 183,
+     "t": 22825.9,
+     "finished": 4,
+     "lap": 18.465
+    },
+    {
+     "at": 184,
+     "t": 22942.0,
+     "finished": 4,
+     "lap": 18.465
+    },
+    {
+     "at": 185,
+     "t": 23076.8,
+     "finished": 4,
+     "lap": 18.465
+    },
+    {
+     "at": 186,
+     "t": 23197.9,
+     "finished": 4,
+     "lap": 18.465
+    },
+    {
+     "at": 187,
+     "t": 23335.0,
+     "finished": 4,
+     "lap": 18.465
+    },
+    {
+     "at": 188,
+     "t": 23458.1,
+     "finished": 5,
+     "lap": 19.868
+    },
+    {
+     "at": 189,
+     "t": 23605.8,
+     "finished": 5,
+     "lap": 19.536
+    },
+    {
+     "at": 190,
+     "t": 23727.7,
+     "finished": 5,
+     "lap": 19.536
+    },
+    {
+     "at": 191,
+     "t": 23853.6,
+     "finished": 5,
+     "lap": 19.868
+    },
+    {
+     "at": 192,
+     "t": 23987.8,
+     "finished": 5,
+     "lap": 19.536
+    },
+    {
+     "at": 193,
+     "t": 24135.1,
+     "finished": 5,
+     "lap": 19.536
+    },
+    {
+     "at": 194,
+     "t": 24262.5,
+     "finished": 5,
+     "lap": 19.908
+    },
+    {
+     "at": 195,
+     "t": 24391.2,
+     "finished": 5,
+     "lap": 19.908
+    },
+    {
+     "at": 196,
+     "t": 24501.8,
+     "finished": 5,
+     "lap": 19.908
+    },
+    {
+     "at": 197,
+     "t": 24624.6,
+     "finished": 5,
+     "lap": 19.908
+    },
+    {
+     "at": 198,
+     "t": 24766.6,
+     "finished": 5,
+     "lap": 19.908
+    },
+    {
+     "at": 199,
+     "t": 24914.4,
+     "finished": 5,
+     "lap": 19.868
+    },
+    {
+     "at": 200,
+     "t": 25043.6,
+     "finished": 5,
+     "lap": 19.908
+    },
+    {
+     "at": 201,
+     "t": 25176.8,
+     "finished": 5,
+     "lap": 19.432
+    },
+    {
+     "at": 202,
+     "t": 25301.8,
+     "finished": 5,
+     "lap": 19.432
+    },
+    {
+     "at": 203,
+     "t": 25451.2,
+     "finished": 5,
+     "lap": 19.432
+    },
+    {
+     "at": 204,
+     "t": 25584.2,
+     "finished": 5,
+     "lap": 19.432
+    },
+    {
+     "at": 205,
+     "t": 25727.9,
+     "finished": 5,
+     "lap": 19.432
+    },
+    {
+     "at": 206,
+     "t": 25872.1,
+     "finished": 5,
+     "lap": 19.432
+    },
+    {
+     "at": 207,
+     "t": 26004.5,
+     "finished": 5,
+     "lap": 19.908
+    },
+    {
+     "at": 208,
+     "t": 26153.5,
+     "finished": 5,
+     "lap": 19.908
+    },
+    {
+     "at": 209,
+     "t": 26308.1,
+     "finished": 4,
+     "lap": 19.035
+    },
+    {
+     "at": 210,
+     "t": 26457.8,
+     "finished": 5,
+     "lap": 19.908
+    },
+    {
+     "at": 211,
+     "t": 26598.0,
+     "finished": 4,
+     "lap": 19.43
+    },
+    {
+     "at": 212,
+     "t": 26742.7,
+     "finished": 3,
+     "lap": 17.78
+    },
+    {
+     "at": 213,
+     "t": 26877.6,
+     "finished": 3,
+     "lap": 17.78
+    },
+    {
+     "at": 214,
+     "t": 26992.2,
+     "finished": 3,
+     "lap": 17.78
+    },
+    {
+     "at": 215,
+     "t": 27118.6,
+     "finished": 5,
+     "lap": 21.516
+    },
+    {
+     "at": 216,
+     "t": 27258.8,
+     "finished": 5,
+     "lap": 18.78
+    },
+    {
+     "at": 217,
+     "t": 27418.1,
+     "finished": 3,
+     "lap": 18.873
+    },
+    {
+     "at": 218,
+     "t": 27569.0,
+     "finished": 5,
+     "lap": 22.592
+    },
+    {
+     "at": 219,
+     "t": 27777.4,
+     "finished": 3,
+     "lap": 18.36
+    },
+    {
+     "at": 220,
+     "t": 27949.2,
+     "finished": 5,
+     "lap": 21.516
+    },
+    {
+     "at": 221,
+     "t": 28092.5,
+     "finished": 5,
+     "lap": 18.78
+    },
+    {
+     "at": 222,
+     "t": 28228.4,
+     "finished": 3,
+     "lap": 18.533
+    },
+    {
+     "at": 223,
+     "t": 28367.1,
+     "finished": 5,
+     "lap": 18.78
+    },
+    {
+     "at": 224,
+     "t": 28495.0,
+     "finished": 5,
+     "lap": 18.78
+    },
+    {
+     "at": 225,
+     "t": 28613.8,
+     "finished": 5,
+     "lap": 18.78
+    },
+    {
+     "at": 226,
+     "t": 28743.2,
+     "finished": 5,
+     "lap": 20.324
+    },
+    {
+     "at": 227,
+     "t": 28857.5,
+     "finished": 5,
+     "lap": 18.78
     }
    ],
    "trained_on": "2026-10-14"

@@ -1,0 +1,607 @@
+{
+ "id": "p10_fair_rules",
+ "model": "ppo",
+ "title": "PPO under NEAT's rules",
+ "why": "Until now PPO was not judged like NEAT. It trained on 1000-frame episodes (laps over 20 s never finished),\nkept whichever checkpoint scored best on 3 random tracks, used 4 of the 8 CPU threads, and drove without\nNEAT's action smoothing. Here it follows the shared rulebook: 2000-frame episodes, training tracks from the\nsame pool, the same lap check on the 5 validation tracks to choose the kept model, the same 0.1 smoothing,\nand 8 parallel envs. Run with two seeds so luck shows. Otherwise p06's recipe.",
+ "parent": "p06_rays_only",
+ "lidar_rays": 16,
+ "lidar_fov": 240.0,
+ "drop_heading": false,
+ "action_smoothing": 0.1,
+ "train": {
+  "entropy-coef": 0.005,
+  "total-timesteps": 1000000,
+  "num-envs": 8,
+  "n-steps": 1024,
+  "batch-size": 256,
+  "offtrack-penalty": 0.0,
+  "allow-multiple-laps": false,
+  "max-episode-steps": 2000,
+  "eval-frequency": 50000,
+  "checkpoint-frequency": 0,
+  "seed": 0
+ },
+ "neat_config": {},
+ "imported": false,
+ "note": "",
+ "hardware": {
+  "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+  "threads": 8,
+  "gpu": false
+ },
+ "commit": "dbbf9f3",
+ "trained_on": "2026-10-14",
+ "train_seconds": 19.1,
+ "process_seconds": 852.5,
+ "selected": {
+  "timestep": 25000
+ },
+ "size": {
+  "params": 145415,
+  "label": "256×256 MLP"
+ },
+ "summary": {
+  "finished": 0,
+  "lap_s": null,
+  "score": -76.1,
+  "offtrack_pct": 91.6
+ },
+ "tracks": [
+  {
+   "seed": 3,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": -85.6,
+   "offtrack_pct": 91.5,
+   "avg_speed": 36.3,
+   "reached_pct": 11.4,
+   "crashed": false
+  },
+  {
+   "seed": 11,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": -118.9,
+   "offtrack_pct": 94.7,
+   "avg_speed": 32.4,
+   "reached_pct": 8.1,
+   "crashed": false
+  },
+  {
+   "seed": 21,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": -69.8,
+   "offtrack_pct": 90.5,
+   "avg_speed": 37.1,
+   "reached_pct": 13.0,
+   "crashed": false
+  },
+  {
+   "seed": 34,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": -57.1,
+   "offtrack_pct": 90.0,
+   "avg_speed": 36.0,
+   "reached_pct": 14.3,
+   "crashed": false
+  },
+  {
+   "seed": 55,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": -48.9,
+   "offtrack_pct": 91.3,
+   "avg_speed": 37.6,
+   "reached_pct": 15.1,
+   "crashed": false
+  }
+ ],
+ "curve": [
+  {
+   "steps": 50000,
+   "t": 51.9,
+   "eval": -124.5
+  },
+  {
+   "steps": 100000,
+   "t": 89.0,
+   "eval": -94.8
+  },
+  {
+   "steps": 150000,
+   "t": 135.2,
+   "eval": 14.7
+  },
+  {
+   "steps": 200000,
+   "t": 180.4,
+   "eval": 78.7
+  },
+  {
+   "steps": 250000,
+   "t": 225.3,
+   "eval": -12.1
+  },
+  {
+   "steps": 300000,
+   "t": 268.0,
+   "eval": -88.8
+  },
+  {
+   "steps": 350000,
+   "t": 310.6,
+   "eval": -50.2
+  },
+  {
+   "steps": 400000,
+   "t": 349.9,
+   "eval": 79.2
+  },
+  {
+   "steps": 450000,
+   "t": 391.1,
+   "eval": -26.5
+  },
+  {
+   "steps": 500000,
+   "t": 430.1,
+   "eval": 77.3
+  },
+  {
+   "steps": 550000,
+   "t": 471.8,
+   "eval": 23.9
+  },
+  {
+   "steps": 600000,
+   "t": 519.5,
+   "eval": -90.3
+  },
+  {
+   "steps": 650000,
+   "t": 562.9,
+   "eval": 125.3
+  },
+  {
+   "steps": 700000,
+   "t": 607.7,
+   "eval": -12.8
+  },
+  {
+   "steps": 750000,
+   "t": 649.5,
+   "eval": 88.1
+  },
+  {
+   "steps": 800000,
+   "t": 691.6,
+   "eval": 36.1
+  },
+  {
+   "steps": 850000,
+   "t": 733.3,
+   "eval": -75.9
+  },
+  {
+   "steps": 900000,
+   "t": 771.3,
+   "eval": 166.3
+  },
+  {
+   "steps": 950000,
+   "t": 808.9,
+   "eval": 103.6
+  },
+  {
+   "steps": 1000000,
+   "t": 847.9,
+   "eval": 63.5
+  }
+ ],
+ "championship": false,
+ "categories": null,
+ "lap_checks": [
+  {
+   "at": 25000,
+   "t": 19.1,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 50000,
+   "t": 44.5,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 75000,
+   "t": 62.4,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 100000,
+   "t": 82.4,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 125000,
+   "t": 102.0,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 150000,
+   "t": 128.2,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 175000,
+   "t": 148.7,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 200000,
+   "t": 175.7,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 225000,
+   "t": 195.4,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 250000,
+   "t": 220.2,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 275000,
+   "t": 237.6,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 300000,
+   "t": 262.8,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 325000,
+   "t": 280.7,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 350000,
+   "t": 304.4,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 375000,
+   "t": 321.9,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 400000,
+   "t": 344.5,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 425000,
+   "t": 362.5,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 450000,
+   "t": 386.3,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 475000,
+   "t": 404.2,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 500000,
+   "t": 427.2,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 525000,
+   "t": 445.2,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 550000,
+   "t": 468.5,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 575000,
+   "t": 485.6,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 600000,
+   "t": 513.4,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 625000,
+   "t": 532.9,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 650000,
+   "t": 557.7,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 675000,
+   "t": 576.3,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 700000,
+   "t": 602.5,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 725000,
+   "t": 620.5,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 750000,
+   "t": 644.1,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 775000,
+   "t": 662.2,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 800000,
+   "t": 686.0,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 825000,
+   "t": 702.8,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 850000,
+   "t": 727.0,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 875000,
+   "t": 744.0,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 900000,
+   "t": 765.4,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 925000,
+   "t": 781.9,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 950000,
+   "t": 803.8,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 975000,
+   "t": 822.8,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 1000000,
+   "t": 844.9,
+   "finished": 0,
+   "lap": null
+  }
+ ],
+ "validation": {
+  "finished": 0,
+  "mean_lap_s": null
+ },
+ "kept_seed": 0,
+ "seed_runs": [
+  {
+   "seed": 0,
+   "train_seconds": 19.1,
+   "selected": {
+    "timestep": 25000
+   },
+   "validation": {
+    "finished": 0,
+    "mean_lap_s": null
+   },
+   "summary": {
+    "finished": 0,
+    "lap_s": null,
+    "score": -76.1,
+    "offtrack_pct": 91.6
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -85.6,
+     "offtrack_pct": 91.5,
+     "avg_speed": 36.3,
+     "reached_pct": 11.4,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -118.9,
+     "offtrack_pct": 94.7,
+     "avg_speed": 32.4,
+     "reached_pct": 8.1,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -69.8,
+     "offtrack_pct": 90.5,
+     "avg_speed": 37.1,
+     "reached_pct": 13.0,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -57.1,
+     "offtrack_pct": 90.0,
+     "avg_speed": 36.0,
+     "reached_pct": 14.3,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -48.9,
+     "offtrack_pct": 91.3,
+     "avg_speed": 37.6,
+     "reached_pct": 15.1,
+     "crashed": false
+    }
+   ]
+  },
+  {
+   "seed": 1,
+   "train_seconds": 22.6,
+   "selected": {
+    "timestep": 25000
+   },
+   "validation": {
+    "finished": 0,
+    "mean_lap_s": null
+   },
+   "summary": {
+    "finished": 0,
+    "lap_s": null,
+    "score": -135.0,
+    "offtrack_pct": 93.6
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": false,
+     "lap_s": null,
+     "frames": 1317,
+     "score": -113.5,
+     "offtrack_pct": 90.4,
+     "avg_speed": 37.4,
+     "reached_pct": 11.8,
+     "crashed": true
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -130.5,
+     "offtrack_pct": 95.6,
+     "avg_speed": 26.0,
+     "reached_pct": 6.9,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -152.7,
+     "offtrack_pct": 95.5,
+     "avg_speed": 30.7,
+     "reached_pct": 4.7,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 1363,
+     "score": -149.2,
+     "offtrack_pct": 90.8,
+     "avg_speed": 38.2,
+     "reached_pct": 8.7,
+     "crashed": true
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -129.3,
+     "offtrack_pct": 95.6,
+     "avg_speed": 32.2,
+     "reached_pct": 7.1,
+     "crashed": false
+    }
+   ]
+  }
+ ]
+}

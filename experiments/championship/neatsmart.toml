@@ -12,6 +12,9 @@ lidar_rays = 16
 lidar_fov = 240
 drop_heading = true
 
+outcome = """
+Two very different cars. After only 18 minutes it already finished all five race tracks (27 s laps), the best quickest-to-finish car. Its fastest checkpoint laps validation in 18.5 s and sets the quickest race laps of any car (16.4-16.6 s), but crashes out on 3 of 5 race tracks: the stronger speed bonus made it fast but fragile.
+"""
 [train]
 generations = 1000
 tracks-per-generation = 5

@@ -30,3 +30,8 @@ steps = ["n03_sparse_start", "n01_lap_time"]
 title = "PPO breaks easily on rewards"
 text = "A per-frame grass penalty made PPO creep at walking pace. Ending episodes early when the car stopped making progress was worse: three one-change checks showed it is the culprit, because PPO never got to practise getting back on the road. Without it, and with forward rays, PPO finishes 3 of 5 tracks and sets the fastest lap of any model (16.8 s)."
 steps = ["p01_lap_time", "p05_control", "p06_rays_only", "p07_stuck_only"]
+
+[[finding]]
+title = "Fast and safe pull against each other"
+text = "In the Championship, NEAT Smart's stronger speed bonus produced the quickest laps of any car (16.4 s) but a car that crashes out on three of five tracks. NEAT 16, with the gentler bonus, laps 4 s slower but finishes everywhere. More rays (NEAT 32) also bought speed, at four times the training."
+steps = ["neatsmart", "neat16", "neat32"]
