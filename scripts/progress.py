@@ -54,8 +54,9 @@ def neat_detail(step, rows: int) -> list:
     per_gen = fit["time_s"].diff().tail(5).mean() if done > 1 else elapsed
     budget = step.train.get("max-hours")
     if budget:  # championship car: the time budget is the limit, not the generation count
+        patience = step.train.get("patience-hours")
         lines = [f"  Time budget {bar(elapsed / (budget * 3600))}  {fmt_duration(elapsed)} of {budget:g} h"
-                 f" (stops early after {step.train.get('patience-hours', '-')} h without a faster lap)",
+                 + (f" (stops early after {patience} h without a faster lap)" if patience else ""),
                  f"  Generation {done}   ~{per_gen / 60:.1f} min/generation"]
     else:
         lines = [f"  Generations {bar(done / total)}  {done}/{total}",
