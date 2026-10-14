@@ -16,4 +16,3 @@ tracks-per-generation = 3
 lap-time-bonus = 1.0
 max-steps = 2000
 max-hours = 8
-patience-hours = 2

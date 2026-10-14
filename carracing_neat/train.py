@@ -423,6 +423,10 @@ def main(argv=None):
     evaluator = SharedTrackEvaluator(pop, settings, args.num_workers, args.tracks_per_generation, args.seed)
 
     clock = CSVReporter(fitness_log)
+    if args.max_hours and clock.elapsed() >= args.max_hours * 3600:
+        print(f"Time budget of {args.max_hours:g} h already used ({clock.elapsed() / 3600:.2f} h); nothing to train.")
+        evaluator.close()
+        return 0
     validation = ValidationReporter(evaluator, args.checkpoint_dir, validation_log, args.validate_every,
                                     clock=clock, laps_csv=laps_log)
     reporters = [
