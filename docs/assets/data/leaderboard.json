@@ -23,6 +23,9 @@
    "title": "200 generations instead of 100",
    "why": "n04's best network came from generation 98 of 100, so evolution was probably still improving when it stopped.\nSame recipe as n04 with twice the generations, from a fresh start so the training time stays honest. Shows how\nmuch faster the car gets for the extra training time.",
    "outcome": "",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": "n04_long_episodes",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -122,6 +125,9 @@
    "title": "Baseline: NEAT run 1",
    "why": "Population 100, every genome drives the same 3 random tracks per generation, fitness = raw game score,\nchampion picked on 5 held-out tracks. Starts as a plain 40→3 network. Its output decoding applied tanh twice,\nso gas was capped at 0.88 and the brake never released below 0.12: a car with the handbrake on.",
    "outcome": "Finishes all five tracks without touching the grass, but slowly: gas capped at 0.88 and the brake always partly on. The reference everything else is measured against.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": null,
    "lidar_rays": 32,
    "lidar_fov": null,
@@ -215,11 +221,118 @@
    ]
   },
   {
+   "id": "neatsmart",
+   "model": "neat",
+   "title": "NEAT Smart: every lesson at once",
+   "why": "NEAT 16 plus three lessons from the ladder. (1) No compass inputs: cos/sin(heading) are useless on random tracks,\nand in n00 evolution had already cut cos(heading) off. (2) Five tracks per generation instead of three, so a network\ncan't win by drawing easy tracks. (3) A stronger lap-time bonus (2 per frame) to push harder for speed.",
+   "outcome": "",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
+   "parent": "neat16",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "generations": 1000,
+    "tracks-per-generation": 5,
+    "lap-time-bonus": 2.0,
+    "max-steps": 2000,
+    "max-hours": 8,
+    "patience-hours": 2
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "d17b29a",
+   "trained_on": "2026-10-14",
+   "train_seconds": 5096.4,
+   "selected": {
+    "generation": 52
+   },
+   "size": {
+    "params": 70,
+    "hidden": 3,
+    "connections": 64,
+    "label": "3 hidden, 64 links"
+   },
+   "summary": {
+    "finished": 5,
+    "lap_s": 20.94,
+    "score": 895.3,
+    "offtrack_pct": 0.3
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 18.28,
+     "frames": 914,
+     "score": 908.6,
+     "offtrack_pct": 0.0,
+     "avg_speed": 49.9,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 18.1,
+     "frames": 905,
+     "score": 909.5,
+     "offtrack_pct": 0.0,
+     "avg_speed": 48.0,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": true,
+     "lap_s": 24.26,
+     "frames": 1213,
+     "score": 878.7,
+     "offtrack_pct": 0.0,
+     "avg_speed": 47.2,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": true,
+     "lap_s": 22.48,
+     "frames": 1124,
+     "score": 887.6,
+     "offtrack_pct": 1.7,
+     "avg_speed": 49.1,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": true,
+     "lap_s": 21.6,
+     "frames": 1080,
+     "score": 892.0,
+     "offtrack_pct": 0.0,
+     "avg_speed": 48.2,
+     "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "neat16",
    "model": "neat",
    "title": "NEAT 16: the proven recipe",
    "why": "The best NEAT recipe from the ladder (n05): 16 rays facing forward over ±120°, 2000-frame training episodes,\n+1 fitness per frame a lap beats 1000 frames, population 100. Trained from scratch for up to 8 hours, stopping\nearly if the validation lap time has not improved for 2 hours.",
    "outcome": "",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": "n05_more_generations",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -321,6 +434,9 @@
    "title": "2000-frame training episodes",
    "why": "Training episodes stopped at 1000 frames (20 s), but n02 needs 19-28 s per lap, so on long tracks a lap was never\nfinished during training and finishing it was never rewarded. The benchmark allows 2000 frames. Here training\nand validation get 2000 frames too. Cars that stop making progress are still cut off after 100 frames, so the extra\ntime is only spent on cars that keep driving. Everything else as n02.",
    "outcome": "Finishes all five tracks about 1 s per lap faster than n02 (22.1 s vs 23.2 s), with a smaller network (4 hidden, 62 links) and almost no time on the grass. The longer episodes cost training time: 1 h 45 min instead of 47 min. The best generation was 98 of 100, so it was probably still improving.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": "n02_forward_rays",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -420,6 +536,9 @@
    "title": "16 forward rays instead of 32 all around",
    "why": "The original lidar fans 32 rays over 324° centred on the car's right side: 13 point backwards and there is a\n36° blind gap on the left. In n00 the forward rays (about ±45°) carried most of the signal, and the side and\nback rays barely changed. Here: 16 rays over ±120° around the nose. Half the inputs, no blind spot, and a\nsmaller network to evolve. Everything else as n01.",
    "outcome": "Finishes all five tracks with half the inputs and in 47 minutes, a fifth of n00's training time. Laps are slower than n00 (23.2 s vs 20.9 s): it runs wide onto the grass on tracks 21 and 55 and loses 4-5 s there. Training episodes stop at 1000 frames (20 s), so a lap that long never finished during training.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": "n01_lap_time",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -518,6 +637,9 @@
    "title": "NEAT 32: twice the rays",
    "why": "Same as NEAT 16 but with 32 forward rays over the same ±120°: twice the detail ahead, but twice the inputs to evolve\nand a slower simulation. Do more rays make a faster car, or only a slower-to-train one?",
    "outcome": "",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": "neat16",
    "lidar_rays": 32,
    "lidar_fov": 240.0,
@@ -619,6 +741,9 @@
    "title": "Check: control + 16 forward rays",
    "why": "Second check: the control recipe with only the 16 forward rays added. If p05 learns and this doesn't, the ray\nchange is what hurts PPO.",
    "outcome": "The best PPO model yet: 3/5 tracks, 18.4 s mean lap, and 16.8 s on track 3, the fastest lap any model has driven. No grass on the tracks it finishes. Forward rays help PPO as much as NEAT: best evaluation 896 vs 558 for the control.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": "p05_control",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -721,6 +846,9 @@
    "title": "Fixed controls + reward lap time",
    "why": "Same recipe as the baseline, but with the corrected output decoding (full gas, brake can release),\nspeciation on, and +1 fitness per frame a lap finishes under 1000 frames, so faster laps clearly win.\nFresh start, so the training time is honest.",
    "outcome": "Faster where it finishes: 17.3 s on track 3, the quickest NEAT lap so far. But it takes corners at 55-60 and on tracks 21 and 34 it leaves the road and never finds its way back. Its fitness only saw 1000-frame episodes, so long tracks were never finished in training.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": "n00_baseline",
    "lidar_rays": 32,
    "lidar_fov": null,
@@ -819,6 +947,9 @@
    "title": "Baseline: PPO, stopped at its peak",
    "why": "Stable-Baselines3 PPO, two 256-unit layers, 4 parallel envs, stopped at 450k steps because longer runs\ncollapsed. It was trained while the traction input was stuck at 1.0, so the off-track penalty never fired\nand the network never learned what grass is.",
    "outcome": "Fast when it gets it right (18.1 s on track 55), but it spends a lot of time on the grass and runs out of time on four of the five tracks.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": null,
    "lidar_rays": 32,
    "lidar_fov": null,
@@ -919,6 +1050,9 @@
    "title": "Control: p00's recipe, only the real traction input",
    "why": "First of three short checks to find what broke PPO. This is p00's recipe exactly (32 original rays, no stuck rule,\nno grass penalty, 1000-frame episodes, constant learning rate). The only difference from p00 is that the traction\ninput now works, which can't be undone. If this learns, the traction fix is not the problem.",
    "outcome": "It learns, unlike p01-p04: training reward reached about 465 with full-length episodes, so the traction fix is not what broke PPO. But only 1/5 finished (track 3, 24.2 s), and the kept checkpoint came early (125k steps). Its training time is slightly inflated: test runs shared the CPU while it trained.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": "p00_baseline",
    "lidar_rays": 32,
    "lidar_fov": null,
@@ -1021,6 +1155,9 @@
    "title": "No grass penalty: end the episode when stuck",
    "why": "p01 and p02 failed because the per-frame grass penalty (up to 3.75 per frame for 1500 frames) swamped the tile\nrewards, and the policy learned to creep. Here there is no grass penalty at all. Instead, as in NEAT, an episode\nends after 100 frames without reaching a new tile, and the time penalty for the rest of the episode is charged,\nso getting lost or parking never pays. Grass is then only bad because it leads nowhere. Everything else as p02.",
    "outcome": "Better than p01/p02: it no longer creeps, driving at speed 28-36 and covering 32-60% of each track. But it spends 73-86% of the time on the grass and never finishes. Training reward rose early, then flattened at about 200; the kept checkpoint is from 100k of 1M steps. Several settings changed at once since the recipe that worked (p00), so the next step goes back to it.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": "p02_forward_rays",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -1128,6 +1265,9 @@
    "title": "Check: control + stuck rule",
    "why": "Third check: the control recipe with only the stuck rule added (end the episode after 100 frames without a new\ntile). If p05 learns and this doesn't, cutting episodes short is what hurts PPO: the car gets little practice\nrecovering from the grass.",
    "outcome": "The culprit. With the stuck rule, episodes last about 350 frames instead of 1000, the car spends 82-92% of the time on grass and finishes nothing. Cutting a lost car off early means PPO never practises getting back on the road, and that recovery is what it needs to learn. The stuck rule is dropped for PPO.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": "p05_control",
    "lidar_rays": 32,
    "lidar_fov": null,
@@ -1231,6 +1371,9 @@
    "title": "16 forward rays instead of 32 all around",
    "why": "Same sensor change as NEAT n02. In p00 the 9 rays within ±45° of the nose carried 48% of the policy's lidar\nsensitivity, and the 15 backward rays still carried 32%: likely noise it reacts to. 16 rays over ±120° remove the\nbackward rays and the blind spot on the left, and simulate about 25% faster, so the same number of steps trains\nin less time. Everything else as p01.",
    "outcome": "Failed the same way as p01, so the sensor change could not show its effect. The reward has to be fixed first (next PPO step).",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": "p01_lap_time",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -1338,6 +1481,9 @@
    "title": "Back to p00's recipe, plus forward rays and the stuck rule",
    "why": "p01-p03 never learned to drive, and each one changed several settings at once compared with p00, the only PPO run\nthat learned. Here p00's recipe is restored as it was: constant learning rate, no KL early stop, 1000-frame\nepisodes, no lap-time bonus, no grass penalty. Only three things differ from p00: the 16 forward rays, the stuck\nrule from p03, and the real traction input (p00 only ever saw 1.0). If this learns, the lap-time bonus comes back\nas its own step.",
    "outcome": "",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": "p00_baseline",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -1436,11 +1582,120 @@
    ]
   },
   {
+   "id": "p08_longer",
+   "model": "ppo",
+   "title": "Train longer, with the learning rate easing off",
+   "why": "p06 was still noisy after 600k steps. Here it trains for 1.5M steps, with the learning rate decaying to zero over the\nrun so the policy settles instead of collapsing late (as p00's longer run did). Everything else as p06.",
+   "outcome": "Worse than p06: 0/5 tracks. Its evaluation reward never got above about 420 (p06 reached 896). Apart from the longer run, only the learning-rate schedule differs, and the two runs split apart within minutes: a single PPO run depends a lot on luck. This led to the fair-rules rework (p10), with two seeds for every PPO step from now on.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
+   "parent": "p06_rays_only",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "total-timesteps": 1500000,
+    "lr-schedule": "linear",
+    "num-envs": 4,
+    "n-steps": 1024,
+    "batch-size": 256,
+    "entropy-coef": 0.005,
+    "offtrack-penalty": 0.0,
+    "allow-multiple-laps": false,
+    "eval-frequency": 25000,
+    "checkpoint-frequency": 100000
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "d17b29a",
+   "trained_on": "2026-10-14",
+   "train_seconds": 788.6,
+   "selected": {
+    "timestep": 775000
+   },
+   "size": {
+    "params": 145415,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 0,
+    "lap_s": null,
+    "score": 245.1,
+    "offtrack_pct": 82.5
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 368.3,
+     "offtrack_pct": 81.1,
+     "avg_speed": 38.4,
+     "reached_pct": 56.8,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -10.8,
+     "offtrack_pct": 92.7,
+     "avg_speed": 46.1,
+     "reached_pct": 18.9,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 184.6,
+     "offtrack_pct": 84.0,
+     "avg_speed": 36.9,
+     "reached_pct": 38.5,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 352.8,
+     "offtrack_pct": 79.3,
+     "avg_speed": 36.2,
+     "reached_pct": 55.3,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 330.5,
+     "offtrack_pct": 75.6,
+     "avg_speed": 48.5,
+     "reached_pct": 53.1,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "p01_lap_time",
    "model": "ppo",
    "title": "Real traction + reward lap time",
    "why": "The fixed traction input with a mild off-track penalty (the strict 15 × 0.99 recipe taught the car to park),\nlearning-rate decay against the late collapse, and +1 reward per frame a lap finishes under 1000 frames.",
    "outcome": "Failed. The off-track penalty (up to 3.75 per frame, and episodes don't end on grass) swamped the tile rewards: evaluation rewards of -2000 to -5000, and the policy learned to creep at walking pace. Training was fast (1M steps in 27 minutes) but learned nothing useful.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": "p00_baseline",
    "lidar_rays": 32,
    "lidar_fov": null,
@@ -1543,11 +1798,121 @@
    ]
   },
   {
+   "id": "p09_pick_by_laps",
+   "model": "ppo",
+   "title": "Keep the checkpoint that laps best",
+   "why": "PPO kept its checkpoint by the reward on 3 random tracks, and p05/p06 kept surprisingly early ones. Here every 25k\nsteps the policy drives the 5 validation tracks (the same check NEAT uses), and the checkpoint with the most finished\nlaps and the fastest mean lap is kept. Training is the same as p08.",
+   "outcome": "Training is identical to p08 (same seed), so it is the same weak policy: its best lap check finished 1 of 5 validation tracks, and 0/5 on the benchmark. Picking the checkpoint by laps can't rescue a policy that never learned to finish, but it is the fairer rule, so every step from p10 on uses it.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
+   "parent": "p08_longer",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "total-timesteps": 1500000,
+    "lr-schedule": "linear",
+    "lap-check-frequency": 25000,
+    "num-envs": 4,
+    "n-steps": 1024,
+    "batch-size": 256,
+    "entropy-coef": 0.005,
+    "offtrack-penalty": 0.0,
+    "allow-multiple-laps": false,
+    "eval-frequency": 25000,
+    "checkpoint-frequency": 100000
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "d17b29a",
+   "trained_on": "2026-10-14",
+   "train_seconds": 1358.8,
+   "selected": {
+    "timestep": 1200000
+   },
+   "size": {
+    "params": 145415,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 0,
+    "lap_s": null,
+    "score": 201.7,
+    "offtrack_pct": 80.0
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 364.6,
+     "offtrack_pct": 78.5,
+     "avg_speed": 33.2,
+     "reached_pct": 56.5,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -10.8,
+     "offtrack_pct": 92.7,
+     "avg_speed": 19.7,
+     "reached_pct": 18.9,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 81.1,
+     "offtrack_pct": 87.7,
+     "avg_speed": 26.6,
+     "reached_pct": 28.1,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 1508,
+     "score": 519.5,
+     "offtrack_pct": 57.7,
+     "avg_speed": 54.8,
+     "reached_pct": 77.0,
+     "crashed": true
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 54.0,
+     "offtrack_pct": 83.2,
+     "avg_speed": 38.5,
+     "reached_pct": 25.4,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "n03_sparse_start",
    "model": "neat",
    "title": "Start unconnected: evolve which inputs to use",
    "why": "Every earlier NEAT run started with all inputs wired to all outputs, and evolution never fully cut a single ray.\nHere every network starts with no connections at all, and only gains them by mutation, so inputs that don't\nhelp are simply never wired in. The NEAT page then shows which rays evolution chose. Everything else as n02.",
    "outcome": "Evolution wired up only 8 connections and 1 hidden node, the simplest driver yet, and it gets round 98-99% of three tracks. But it cuts across the grass, gets lost, and never crosses the finish line. Too simple, or 100 generations was not enough to grow.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": null,
    "parent": "n02_forward_rays",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -1645,22 +2010,28 @@
  ],
  "pending": [
   {
-   "id": "neatsmart",
-   "model": "neat",
-   "title": "NEAT Smart: every lesson at once",
-   "why": "NEAT 16 plus three lessons from the ladder. (1) No compass inputs: cos/sin(heading) are useless on random tracks,\nand in n00 evolution had already cut cos(heading) off. (2) Five tracks per generation instead of three, so a network\ncan't win by drawing easy tracks. (3) A stronger lap-time bonus (2 per frame) to push harder for speed."
+   "id": "p10_fair_rules",
+   "model": "ppo",
+   "title": "PPO under NEAT's rules",
+   "why": "Until now PPO was not judged like NEAT. It trained on 1000-frame episodes (laps over 20 s never finished),\nkept whichever checkpoint scored best on 3 random tracks, used 4 of the 8 CPU threads, and drove without\nNEAT's action smoothing. Here it follows the shared rulebook: 2000-frame episodes, training tracks from the\nsame pool, the same lap check on the 5 validation tracks to choose the kept model, the same 0.1 smoothing,\nand 8 parallel envs. Run with two seeds so luck shows. Otherwise p06's recipe."
   },
   {
-   "id": "p08_longer",
+   "id": "p11_normalize_reward",
    "model": "ppo",
-   "title": "Train longer, with the learning rate easing off",
-   "why": "p06 was still noisy after 600k steps. Here it trains for 1.5M steps, with the learning rate decaying to zero over the\nrun so the policy settles instead of collapsing late (as p00's longer run did). Everything else as p06."
+   "title": "Normalise the reward",
+   "why": "Tile rewards (+3.7), the time penalty (-0.1 per frame) and the end of a lap sit on very different scales, which\nmakes PPO's value estimates jumpy. Here the reward is scaled by a running estimate of the return's spread\n(VecNormalize, rewards only). Everything else as p10."
   },
   {
-   "id": "p09_pick_by_laps",
+   "id": "p12_calm_exploration",
    "model": "ppo",
-   "title": "Keep the checkpoint that laps best",
-   "why": "PPO kept its checkpoint by the reward on 3 random tracks, and p05/p06 kept surprisingly early ones. Here every 25k\nsteps the policy drives the 5 validation tracks (the same check NEAT uses), and the checkpoint with the most finished\nlaps and the fastest mean lap is kept. Training is the same as p08."
+   "title": "Calmer exploration (gSDE)",
+   "why": "PPO starts with action noise of standard deviation 1.0 on a steering range of -1 to 1: early on the car can\nhardly drive straight. Here the noise starts much smaller (log std -2) and is state-dependent and smooth over\n4 frames (gSDE), as in the RL Zoo's CarRacing recipe. Everything else as p11."
+  },
+  {
+   "id": "p13_zoo_settings",
+   "model": "ppo",
+   "title": "RL Zoo's PPO settings for CarRacing",
+   "why": "The update settings known to work for PPO on CarRacing (RL Baselines3 Zoo): shorter rollouts (512 steps per env),\nsmaller batches (128), a lower learning rate (1e-4) easing off over the run, no entropy bonus, and one 256-unit\nlayer. Everything else as p12."
   }
  ]
 }

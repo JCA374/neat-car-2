@@ -60,6 +60,8 @@ class CarRacingStateWrapper(gym.Wrapper):
         lap_time_bonus: float = 0.0,
         lap_time_budget: int = 1000,
         stuck_patience: Optional[int] = None,
+        track_seeds: Optional[str] = None,
+        action_smoothing: float = 0.0,
     ) -> None:
         super().__init__(env)
         self.lidar_rays = lidar_rays
@@ -72,6 +74,12 @@ class CarRacingStateWrapper(gym.Wrapper):
         self.lap_time_bonus = lap_time_bonus
         self.lap_time_budget = lap_time_budget
         self.stuck_patience = stuck_patience
+        # "train": every reset without an explicit track draws one from rules.TRAIN_SEED_RANGE
+        # (a seed passed to reset only seeds that draw), so training never sees a reserved track.
+        self.track_seeds = track_seeds
+        self._track_rng: Optional[np.random.Generator] = None
+        self.action_smoothing = action_smoothing
+        self._prev_action = np.zeros(3, dtype=np.float32)
 
         self.lidar_angles = lidar_angles(lidar_rays, lidar_fov)
         # cos/sin(heading) is the car's absolute compass direction: no use on a random track.
@@ -101,7 +109,15 @@ class CarRacingStateWrapper(gym.Wrapper):
     # Gym API
     # ---------------------------------------------------------------------- #
     def reset(self, **kwargs):
+        if self.track_seeds == "train":
+            from carracing.rules import training_seed
+
+            if kwargs.get("seed") is not None or self._track_rng is None:
+                self._track_rng = np.random.default_rng(kwargs.get("seed"))
+            kwargs["seed"] = training_seed(self._track_rng)
+        self._prev_action = np.zeros(3, dtype=np.float32)
         obs, info = self.env.reset(**kwargs)
+        info["track_seed"] = kwargs.get("seed")
         self._extract_road_geometry()
         self._laps_completed = 0
         self._steps = 0
@@ -112,6 +128,10 @@ class CarRacingStateWrapper(gym.Wrapper):
         return state, info
 
     def step(self, action):
+        if self.action_smoothing:
+            from carracing.rules import smooth
+
+            action = self._prev_action = smooth(action, self._prev_action, self.action_smoothing)
         # Cast to float64 to satisfy Box2D bindings.
         action = np.asarray(action, dtype=np.float64)
         obs, reward, terminated, truncated, info = self.env.step(action)
@@ -349,6 +369,8 @@ def make_env(
     lidar_fov: Optional[float] = None,
     stuck_patience: Optional[int] = None,
     drop_heading: bool = False,
+    track_seeds: Optional[str] = None,
+    action_smoothing: float = 0.0,
     **kwargs,
 ) -> CarRacingStateWrapper:
     """
@@ -416,4 +438,6 @@ def make_env(
         lap_time_bonus=lap_time_bonus,
         stuck_patience=stuck_patience,
         drop_heading=drop_heading,
+        track_seeds=track_seeds,
+        action_smoothing=action_smoothing,
     )

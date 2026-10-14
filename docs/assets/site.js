@@ -63,6 +63,7 @@
       chips.push(v === true ? k : k + "=" + (Array.isArray(v) ? v.join(",") : v));
     });
     Object.keys(step.neat_config || {}).forEach(function (k) { chips.push(k.split(".")[1] + "=" + step.neat_config[k]); });
+    if (step.action_smoothing) chips.unshift("action-smoothing=" + step.action_smoothing);
     if (step.lidar_fov != null) chips.unshift("lidar-fov=±" + step.lidar_fov / 2 + "°");
     if (step.lidar_rays !== 32) chips.unshift("lidar-rays=" + step.lidar_rays);
     return chips.map(function (c) { return "<span>" + Site.esc(c) + "</span>"; }).join("");
@@ -95,6 +96,11 @@
         '<div class="tile"><div class="num">' + Site.fmt(s.size.params, 0) + '</div><div class="lbl">parameters · ' + Site.esc(s.size.label) + "</div>" + delta(s.size.params, p && p.size.params, "", true) + "</div>" +
         "</div>" +
         '<div class="laps">' + laps + "</div>" +
+        (s.seed_runs && s.seed_runs.length > 1 ? '<p class="small muted" style="margin:8px 0 0">Trained with ' + s.seed_runs.length +
+          " seeds (kept the best on validation): " + s.seed_runs.map(function (r) {
+            return "seed " + r.seed + (r.seed === s.kept_seed ? " (kept)" : "") + " → " + r.summary.finished + "/5" +
+              (r.summary.lap_s ? ", " + r.summary.lap_s.toFixed(1) + " s" : "") + ", " + Site.dur(r.train_seconds);
+          }).join(" · ") + "</p>" : "") +
         (s.outcome ? '<div class="outcome"><strong>Outcome:</strong> ' + Site.esc(s.outcome) + "</div>" : "") +
         '<div class="kv">' + settingChips(s) + "</div>" +
         (s.note ? '<p class="small faint" style="margin:8px 0 0">' + Site.esc(s.note) + "</p>" : "") +

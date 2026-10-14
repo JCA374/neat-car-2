@@ -167,3 +167,36 @@ def test_budget_reporter_stops_on_time_and_patience():
     late = BudgetReporter(clock, validation, max_hours=0.5, patience_hours=None)
     with _pytest.raises(TrainingBudgetReached):
         late.post_evaluate(None, None, None, None)
+
+
+def test_rulebook_is_shared():
+    from carracing import benchmark, rules
+    from carracing_neat import train as neat_train
+    from carracing_ppo import train as ppo_train
+
+    assert benchmark.SEEDS == rules.BENCHMARK_SEEDS and benchmark.MAX_FRAMES == rules.MAX_FRAMES == 2000
+    assert neat_train.VALIDATION_SEEDS == rules.VALIDATION_SEEDS == benchmark.VALIDATION_SEEDS
+    assert neat_train.LAP_FRAMES == rules.MAX_FRAMES
+    args = ppo_train.parse_args([])
+    assert args.max_episode_steps == rules.MAX_FRAMES  # PPO trains on 2000-frame episodes, like NEAT
+    assert args.track_seeds == "train" and args.lap_check_frequency == rules.LAP_CHECK_PPO_STEPS
+    for gen in range(30):
+        assert not rules.RESERVED_SEEDS & set(neat_train.generation_seeds(gen, 3, base_seed=0))
+
+
+def test_training_tracks_never_reserved_and_smoothing_matches_neat():
+    from carracing import rules
+    from carracing_neat.eval import decode_action
+
+    env = make_env(track_seeds="train")
+    seen = set()
+    for i in range(20):
+        _, info = env.reset(seed=3) if i == 0 else env.reset()  # an explicit seed only seeds the draw
+        seen.add(info["track_seed"])
+    assert len(seen) > 15 and not seen & rules.RESERVED_SEEDS
+    assert all(rules.TRAIN_SEED_RANGE[0] <= s < rules.TRAIN_SEED_RANGE[1] for s in seen)
+    # PPO's env-side smoothing is the same blend NEAT's decoder applies.
+    prev = np.array([0.2, 0.5, 0.0], dtype=np.float32)
+    raw = np.array([1.0, 0.0, 1.0], dtype=np.float32)
+    neat = decode_action([1.0, -1.0, 1.0], prev, rules.ACTION_SMOOTHING)
+    assert np.allclose(rules.smooth(raw, prev, rules.ACTION_SMOOTHING), neat)

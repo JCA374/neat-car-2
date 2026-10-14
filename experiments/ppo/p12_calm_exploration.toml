@@ -1,0 +1,29 @@
+id = "p12_calm_exploration"
+model = "ppo"
+parent = "p11_normalize_reward"
+title = "Calmer exploration (gSDE)"
+why = """
+PPO starts with action noise of standard deviation 1.0 on a steering range of -1 to 1: early on the car can
+hardly drive straight. Here the noise starts much smaller (log std -2) and is state-dependent and smooth over
+4 frames (gSDE), as in the RL Zoo's CarRacing recipe. Everything else as p11.
+"""
+lidar_rays = 16
+lidar_fov = 240
+action_smoothing = 0.1
+seeds = [0, 1]
+
+[train]
+entropy-coef = 0.005
+normalize-reward = true
+use-sde = true
+sde-sample-freq = 4
+log-std-init = -2.0
+total-timesteps = 1000000
+num-envs = 8
+n-steps = 1024
+batch-size = 256
+offtrack-penalty = 0.0
+allow-multiple-laps = false
+max-episode-steps = 2000
+eval-frequency = 50000
+checkpoint-frequency = 0

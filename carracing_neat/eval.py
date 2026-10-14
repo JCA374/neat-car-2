@@ -12,6 +12,7 @@ import neat
 import numpy as np
 
 from carracing.env import CarRacingStateWrapper, make_env
+from carracing.rules import ACTION_SMOOTHING
 
 # Cache one environment per OS process to avoid repeated construction overhead.
 _WORKER_ENVS: Dict[Tuple, CarRacingStateWrapper] = {}
@@ -26,7 +27,7 @@ class EvalSettings:
     """
 
     max_steps: int = 1000
-    action_smoothing: float = 0.1
+    action_smoothing: float = ACTION_SMOOTHING
     offtrack_penalty: float = 0.0
     traction_threshold: float = 0.95
     domain_randomize: bool = False

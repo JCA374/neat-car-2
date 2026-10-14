@@ -1,0 +1,26 @@
+id = "p11_normalize_reward"
+model = "ppo"
+parent = "p10_fair_rules"
+title = "Normalise the reward"
+why = """
+Tile rewards (+3.7), the time penalty (-0.1 per frame) and the end of a lap sit on very different scales, which
+makes PPO's value estimates jumpy. Here the reward is scaled by a running estimate of the return's spread
+(VecNormalize, rewards only). Everything else as p10.
+"""
+lidar_rays = 16
+lidar_fov = 240
+action_smoothing = 0.1
+seeds = [0, 1]
+
+[train]
+entropy-coef = 0.005
+normalize-reward = true
+total-timesteps = 1000000
+num-envs = 8
+n-steps = 1024
+batch-size = 256
+offtrack-penalty = 0.0
+allow-multiple-laps = false
+max-episode-steps = 2000
+eval-frequency = 50000
+checkpoint-frequency = 0

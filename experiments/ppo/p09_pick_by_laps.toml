@@ -10,6 +10,9 @@ laps and the fastest mean lap is kept. Training is the same as p08.
 lidar_rays = 16
 lidar_fov = 240
 
+outcome = """
+Training is identical to p08 (same seed), so it is the same weak policy: its best lap check finished 1 of 5 validation tracks, and 0/5 on the benchmark. Picking the checkpoint by laps can't rescue a policy that never learned to finish, but it is the fairer rule, so every step from p10 on uses it.
+"""
 [train]
 total-timesteps = 1500000
 lr-schedule = "linear"

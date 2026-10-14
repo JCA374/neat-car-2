@@ -15,8 +15,9 @@ import tomllib
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
+from carracing.rules import FPS  # noqa: F401  (re-exported: CarRacing runs at 50 frames per second)
+
 MODELS = ("neat", "ppo")
-FPS = 50  # CarRacing runs at 50 frames per second
 
 
 @dataclass
@@ -31,6 +32,8 @@ class Step:
     lidar_fov: Optional[float] = None  # None = original 324-degree layout
     drop_heading: bool = False         # leave cos/sin(heading) out of the state
     championship: bool = False         # pick two checkpoints from the lap check: first to finish, fastest
+    action_smoothing: float = 0.0      # PPO: blend with the previous action (NEAT does this in its decoder)
+    seeds: List[int] = field(default_factory=list)  # PPO: train once per seed, keep the best on validation
     # Compatibility with models trained before Oct 12 2026 (n00/p00 only).
     legacy_decode: bool = False
     legacy_traction: bool = False
@@ -38,10 +41,11 @@ class Step:
     neat_config: Dict = field(default_factory=dict)  # "Section.key" -> value overrides of neat.cfg
     imported: Dict = field(default_factory=dict)     # [import]: existing artefacts instead of training
     path: str = ""
+    out_override: str = ""             # set for one seed's run of a multi-seed step
 
     @property
     def out_dir(self) -> str:
-        return os.path.join("outputs", self.model, self.id)
+        return self.out_override or os.path.join("outputs", self.model, self.id)
 
     def env_kwargs(self) -> Dict:
         """The sensor settings this step's model was trained with (for make_env)."""
@@ -54,6 +58,8 @@ class Step:
             flags += ["--lidar-fov", str(self.lidar_fov)]
         if self.drop_heading:
             flags.append("--drop-heading")
+        if self.model == "ppo" and self.action_smoothing:
+            flags += ["--action-smoothing", str(self.action_smoothing)]
         return flags
 
     @property
@@ -85,6 +91,8 @@ def load_step(path: str) -> Step:
         lidar_fov=float(raw["lidar_fov"]) if "lidar_fov" in raw else None,
         drop_heading=bool(raw.get("drop_heading", False)),
         championship=bool(raw.get("championship", False)),
+        action_smoothing=float(raw.get("action_smoothing", 0.0)),
+        seeds=[int(s) for s in raw.get("seeds", [])],
         legacy_decode=bool(raw.get("legacy_decode", False)),
         legacy_traction=bool(raw.get("legacy_traction", False)),
         train=dict(raw.get("train", {})), neat_config=dict(raw.get("neat_config", {})),

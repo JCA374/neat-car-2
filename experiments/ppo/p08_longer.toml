@@ -9,6 +9,9 @@ run so the policy settles instead of collapsing late (as p00's longer run did). 
 lidar_rays = 16
 lidar_fov = 240
 
+outcome = """
+Worse than p06: 0/5 tracks. Its evaluation reward never got above about 420 (p06 reached 896). Apart from the longer run, only the learning-rate schedule differs, and the two runs split apart within minutes: a single PPO run depends a lot on luck. This led to the fair-rules rework (p10), with two seeds for every PPO step from now on.
+"""
 [train]
 total-timesteps = 1500000
 lr-schedule = "linear"

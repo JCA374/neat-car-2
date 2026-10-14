@@ -1,0 +1,27 @@
+id = "p10_fair_rules"
+model = "ppo"
+parent = "p06_rays_only"
+title = "PPO under NEAT's rules"
+why = """
+Until now PPO was not judged like NEAT. It trained on 1000-frame episodes (laps over 20 s never finished),
+kept whichever checkpoint scored best on 3 random tracks, used 4 of the 8 CPU threads, and drove without
+NEAT's action smoothing. Here it follows the shared rulebook: 2000-frame episodes, training tracks from the
+same pool, the same lap check on the 5 validation tracks to choose the kept model, the same 0.1 smoothing,
+and 8 parallel envs. Run with two seeds so luck shows. Otherwise p06's recipe.
+"""
+lidar_rays = 16
+lidar_fov = 240
+action_smoothing = 0.1
+seeds = [0, 1]
+
+[train]
+entropy-coef = 0.005
+total-timesteps = 1000000
+num-envs = 8
+n-steps = 1024
+batch-size = 256
+offtrack-penalty = 0.0
+allow-multiple-laps = false
+max-episode-steps = 2000
+eval-frequency = 50000
+checkpoint-frequency = 0

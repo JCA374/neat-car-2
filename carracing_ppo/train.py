@@ -8,12 +8,15 @@ import os
 import time
 from typing import List, Optional, Sequence
 
+import numpy as np
+
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import BaseCallback, CallbackList, CheckpointCallback, EvalCallback
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
+from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecNormalize
 
 from carracing.env import make_env
+from carracing.rules import LAP_CHECK_PPO_STEPS, MAX_FRAMES, smooth
 
 
 def _parse_hidden_sizes(sizes: str) -> List[int]:
@@ -92,12 +95,20 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "--max-episode-steps",
         type=int,
-        default=None,
-        help="Override CarRacing's 1000-step limit (a lap takes ~850 steps).",
+        default=MAX_FRAMES,
+        help="Frames per training episode (rulebook: the same 2000 as lap checks and the benchmark).",
     )
+    parser.add_argument("--track-seeds", choices=("train", "any"), default="train",
+                        help="'train': draw tracks from the rulebook's training range (never a reserved track).")
+    parser.add_argument("--action-smoothing", type=float, default=0.0,
+                        help="Blend each action with the previous one (rulebook: 0.1, as NEAT does).")
+    parser.add_argument("--normalize-reward", action="store_true", help="VecNormalize the reward (not the observations).")
+    parser.add_argument("--use-sde", action="store_true", help="generalised State-Dependent Exploration (gSDE).")
+    parser.add_argument("--sde-sample-freq", type=int, default=-1, help="gSDE: resample the noise every N steps.")
+    parser.add_argument("--log-std-init", type=float, default=0.0, help="Initial log std of the action noise.")
     parser.add_argument("--lidar-rays", type=int, default=32, help="Lidar distances in the state (8 + this inputs).")
     parser.add_argument("--drop-heading", action="store_true", help="Leave cos/sin(heading) out of the state.")
-    parser.add_argument("--lap-check-frequency", type=int, default=0,
+    parser.add_argument("--lap-check-frequency", type=int, default=LAP_CHECK_PPO_STEPS,
                         help="Every N steps: lap check on the validation tracks + checkpoint (0 = off).")
     parser.add_argument("--max-hours", type=float, default=None, help="Stop after this much training (needs lap checks).")
     parser.add_argument("--patience-hours", type=float, default=None,
@@ -174,6 +185,8 @@ def _env_kwargs(args: argparse.Namespace) -> dict:
         "drop_heading": args.drop_heading,
         "stuck_patience": args.stuck_patience,
         "lap_time_bonus": args.lap_time_bonus,
+        "track_seeds": None if args.track_seeds == "any" else args.track_seeds,
+        "action_smoothing": args.action_smoothing,
     }
 
 
@@ -202,14 +215,19 @@ def _make_vector_envs(
 class _Driver:
     """Deterministic policy wrapper in the shape carracing.benchmark.drive expects."""
 
-    def __init__(self, model) -> None:
+    def __init__(self, model, action_smoothing: float = 0.0) -> None:
         self.model = model
+        self.smoothing = action_smoothing
+        self.reset()
 
     def reset(self) -> None:
-        pass
+        self.prev = np.zeros(3, dtype=np.float32)
 
     def __call__(self, obs):
-        return self.model.predict(obs, deterministic=True)[0]
+        action = self.model.predict(obs, deterministic=True)[0]
+        if self.smoothing:
+            action = self.prev = smooth(action, self.prev, self.smoothing)
+        return action
 
 
 class LapCheckCallback(BaseCallback):
@@ -218,12 +236,14 @@ class LapCheckCallback(BaseCallback):
     The check runs inside the training clock, so it counts as training time (as in NEAT)."""
 
     def __init__(self, frequency: int, checkpoint_dir: str, log_dir: str, env_kwargs: dict,
-                 max_hours: Optional[float] = None, patience_hours: Optional[float] = None) -> None:
+                 max_hours: Optional[float] = None, patience_hours: Optional[float] = None,
+                 action_smoothing: float = 0.0) -> None:
         super().__init__()
         self.frequency = frequency
         self.checkpoint_dir = checkpoint_dir
         self.csv_path = os.path.join(log_dir, "validation_laps.csv")
         self.env_kwargs = env_kwargs
+        self.action_smoothing = action_smoothing
         self.max_s = max_hours * 3600 if max_hours else None
         self.patience_s = patience_hours * 3600 if patience_hours else None
         self.next_check = frequency
@@ -241,7 +261,7 @@ class LapCheckCallback(BaseCallback):
         if self.num_timesteps < self.next_check:
             return True
         self.next_check += self.frequency
-        laps = lap_check(_Driver(self.model), self.env_kwargs)
+        laps = lap_check(_Driver(self.model, self.action_smoothing), self.env_kwargs)
         self.model.save(os.path.join(self.checkpoint_dir, f"val_{self.num_timesteps}.zip"))
         now = time.time() - self.start
         with open(self.csv_path, "a", newline="") as fh:
@@ -289,7 +309,7 @@ def _build_callbacks(
     if args.lap_check_frequency and args.lap_check_frequency > 0:
         env_kwargs = {"lidar_rays": args.lidar_rays, "lidar_fov": args.lidar_fov, "drop_heading": args.drop_heading}
         callbacks.append(LapCheckCallback(args.lap_check_frequency, args.checkpoint_dir, args.log_dir, env_kwargs,
-                                          args.max_hours, args.patience_hours))
+                                          args.max_hours, args.patience_hours, args.action_smoothing))
     if not callbacks:
         return None
     return CallbackList(callbacks)
@@ -322,7 +342,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         env_kwargs, 1, args.seed + 42, os.path.join(args.log_dir, "eval_monitor"), DummyVecEnv
     )
 
-    policy_kwargs = dict(net_arch=dict(pi=args.policy_hidden_sizes, vf=args.policy_hidden_sizes))
+    if args.normalize_reward:
+        # Scale rewards by a running estimate of the return's spread; observations are already in [-1, 1].
+        train_env = VecNormalize(train_env, norm_obs=False, norm_reward=True, gamma=args.gamma)
+        eval_env = VecNormalize(eval_env, norm_obs=False, norm_reward=False, training=False)
+
+    policy_kwargs = dict(net_arch=dict(pi=args.policy_hidden_sizes, vf=args.policy_hidden_sizes),
+                         log_std_init=args.log_std_init)
 
     if args.resume and os.path.exists(args.resume):
         print(f"Resuming PPO from {args.resume}")
@@ -344,6 +370,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             max_grad_norm=args.max_grad_norm,
             tensorboard_log=args.log_dir,
             policy_kwargs=policy_kwargs,
+            use_sde=args.use_sde,
+            sde_sample_freq=args.sde_sample_freq,
             seed=args.seed,
             verbose=1,
         )

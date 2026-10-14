@@ -18,11 +18,9 @@ import numpy as np
 from carracing_neat.eval import EvalSettings, evaluate_genome, load_config, run_episode
 from carracing.env import make_env
 
-# Held-out tracks for picking the best genome. Kept apart from the
-# carracing/benchmark.py tracks so the page's benchmark stays unseen.
-VALIDATION_SEEDS = [101, 202, 303, 404, 505]
-LAP_FRAMES = 2000  # same frame limit as the benchmark
-RESERVED_SEEDS = set(VALIDATION_SEEDS) | {3, 11, 21, 34, 55}
+# Shared with PPO and the benchmark: see carracing/rules.py.
+from carracing.rules import MAX_FRAMES as LAP_FRAMES  # noqa: E402
+from carracing.rules import RESERVED_SEEDS, TRAIN_SEED_RANGE, VALIDATION_SEEDS  # noqa: E402
 
 
 def generation_seeds(generation: int, count: int, base_seed: int) -> List[int]:
@@ -30,7 +28,7 @@ def generation_seeds(generation: int, count: int, base_seed: int) -> List[int]:
     rng = np.random.default_rng(base_seed + generation)
     seeds: List[int] = []
     while len(seeds) < count:
-        seed = int(rng.integers(1_000, 1_000_000))
+        seed = int(rng.integers(*TRAIN_SEED_RANGE))
         if seed not in RESERVED_SEEDS and seed not in seeds:
             seeds.append(seed)
     return seeds

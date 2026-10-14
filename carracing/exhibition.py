@@ -12,9 +12,9 @@ import os
 from typing import Dict
 
 from carracing.benchmark import drive, load_policy
+from carracing.rules import EXHIBITION_SEEDS
 from carracing.steps import Step
 
-EXHIBITION_SEEDS = list(range(700, 725))
 POSITION_KEYS = ("every", "finish", "x", "y", "a", "v", "tiles", "grass")
 
 

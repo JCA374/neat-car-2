@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import configparser
 import csv
+import dataclasses
 import datetime as dt
 import glob
 import json
@@ -215,6 +216,39 @@ def benchmark(step: Step, model_path: str = None, gif: str = "lap.gif") -> tuple
     return tracks, drives, policy.size()
 
 
+def lap_check_key(result: dict) -> tuple:
+    """How good a run's kept checkpoint was on the validation tracks (never the benchmark)."""
+    v = result.get("validation") or {}
+    return v.get("finished", -1), -(v.get("mean_lap_s") or 1e9)
+
+
+def run_seeds(step: Step, args) -> dict:
+    """Train one run per seed in outputs/<model>/<id>/seed<k>/, keep the best on validation.
+
+    The step's own files (model, drives, GIF, result) are the kept seed's; result["seed_runs"]
+    reports every seed's benchmark too, so luck is visible on the page.
+    """
+    runs = []
+    for seed in step.seeds:
+        sub = dataclasses.replace(step, train={**step.train, "seed": seed}, seeds=[],
+                                  out_override=os.path.join(step.out_dir, f"seed{seed}"))
+        print(f"\n--- {step.id}: seed {seed} ---", flush=True)
+        runs.append((seed, sub, run_one(sub, args)))
+    seed, best_sub, best = max(runs, key=lambda r: lap_check_key(r[2]))
+    for name in (os.path.basename(step.model_path), "drives.json", "lap.gif"):
+        src = os.path.join(best_sub.out_dir, name)
+        if os.path.exists(src):
+            shutil.copyfile(src, os.path.join(step.out_dir, name))
+    result = {**best, "kept_seed": seed, "seed_runs": [
+        {"seed": s, "train_seconds": r["train_seconds"], "selected": r["selected"], "validation": r.get("validation"),
+         "summary": r["summary"], "tracks": r["tracks"]} for s, _, r in runs]}
+    with open(os.path.join(step.out_dir, "result.json"), "w") as fh:
+        json.dump(result, fh, indent=1, ensure_ascii=False)
+    print(f"{step.id}: kept seed {seed} (best on validation); seeds " +
+          ", ".join(f"{s}: {r['summary']['finished']}/5" for s, _, r in runs), flush=True)
+    return result
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("step", help="experiments/<model>/<id>.toml")
@@ -223,6 +257,17 @@ def main() -> None:
     args = parser.parse_args()
 
     step = load_step(args.step)
+    os.makedirs(step.out_dir, exist_ok=True)
+    if step.seeds and not step.championship:
+        run_seeds(step, args)
+    else:
+        run_one(step, args)
+    if not args.no_site:
+        subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "build_site.py")], check=True)
+
+
+def run_one(step: Step, args) -> dict:
+    """Train (unless imported / --benchmark-only), select, benchmark and write result.json for one run."""
     os.makedirs(step.out_dir, exist_ok=True)
     if step.model == "neat":
         write_neat_config(step)
@@ -251,7 +296,7 @@ def main() -> None:
         picked = select_categories(step)["fast"]
         shutil.copyfile(picked["src"], step.model_path)
         tracks, drives, size = categories["fast"]["tracks"], json.load(open(os.path.join(step.out_dir, "drives_fast.json"))), categories["fast"]["size"]
-    elif step.train.get("lap-check-frequency"):
+    elif step.train.get("lap-check-frequency") or (step.model == "ppo" and read_lap_checks(step)):
         # Pick by lap check on the validation tracks (as championship cars do), not by PPO's eval reward.
         picked = select_categories(step)["fast"]
         shutil.copyfile(picked["src"], step.model_path)
@@ -267,7 +312,8 @@ def main() -> None:
     previous = json.load(open(result_path)) if os.path.exists(result_path) else {}
     result = {
         "id": step.id, "model": step.model, "title": step.title, "why": step.why, "parent": step.parent,
-        "lidar_rays": step.lidar_rays, "lidar_fov": step.lidar_fov, "drop_heading": step.drop_heading, "train": step.train, "neat_config": step.neat_config,
+        "lidar_rays": step.lidar_rays, "lidar_fov": step.lidar_fov, "drop_heading": step.drop_heading,
+        "action_smoothing": step.action_smoothing, "train": step.train, "neat_config": step.neat_config,
         "imported": bool(step.imported), "note": step.imported.get("note", ""),
         "hardware": step.imported.get("hardware") or previous.get("hardware") or hardware(),
         "commit": step.imported.get("commit") or (git_commit() if process_seconds else previous.get("commit", git_commit())),
@@ -276,7 +322,7 @@ def main() -> None:
         "process_seconds": process_seconds or previous.get("process_seconds"),
         "selected": picked["selected"], "size": size, "summary": summarise(tracks), "tracks": tracks, **curves,
         "championship": step.championship, "categories": categories or None,
-        "lap_checks": read_lap_checks(step),
+        "lap_checks": read_lap_checks(step), "validation": picked.get("validation"),
     }
     with open(result_path, "w") as fh:
         json.dump(result, fh, indent=1, ensure_ascii=False)
@@ -285,9 +331,7 @@ def main() -> None:
     s = result["summary"]
     print(f"{step.id}: finished {s['finished']}/5, mean lap {s['lap_s']} s, trained {fmt_duration(result['train_seconds'])}, "
           f"size {size['label']}. Wrote {result_path}")
-
-    if not args.no_site:
-        subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "build_site.py")], check=True)
+    return result
 
 
 if __name__ == "__main__":

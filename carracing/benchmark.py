@@ -14,12 +14,11 @@ from typing import Dict, List, Optional
 import numpy as np
 
 from carracing.env import make_env
-from carracing.steps import FPS, Step
+from carracing.rules import BENCHMARK_SEEDS, FPS, MAX_FRAMES, VALIDATION_SEEDS, smooth
+from carracing.steps import Step
 
-SEEDS = [3, 11, 21, 34, 55]   # never used for training or validation
-VALIDATION_SEEDS = [101, 202, 303, 404, 505]  # model selection only (NEAT and PPO lap checks)
+SEEDS = BENCHMARK_SEEDS       # never used for training or validation
 GIF_SEED = SEEDS[0]
-MAX_FRAMES = 2000
 RECORD_EVERY = 2              # keep every 2nd frame in recordings (25 fps on the page)
 
 
@@ -28,21 +27,27 @@ def _r(v: float, nd: int = 1) -> float:
 
 
 class PPOPolicy:
-    def __init__(self, path: str, legacy_traction: bool = False) -> None:
+    def __init__(self, path: str, legacy_traction: bool = False, action_smoothing: float = 0.0) -> None:
         from stable_baselines3 import PPO
 
         self.model = PPO.load(path, device="cpu")
         # Trained before the traction fix: these models only ever saw state[7] == 1.0.
         self.legacy_traction = legacy_traction
+        # Same smoothing the training env applied (rules.ACTION_SMOOTHING for new steps).
+        self.smoothing = action_smoothing
+        self.reset()
 
     def reset(self) -> None:
-        pass
+        self.prev = np.zeros(3, dtype=np.float32)
 
     def __call__(self, obs: np.ndarray) -> np.ndarray:
         if self.legacy_traction:
             obs = obs.copy()
             obs[7] = 1.0
-        return self.model.predict(obs, deterministic=True)[0]
+        action = self.model.predict(obs, deterministic=True)[0]
+        if self.smoothing:
+            action = self.prev = smooth(action, self.prev, self.smoothing)
+        return action
 
     def size(self) -> Dict:
         n = sum(p.numel() for p in self.model.policy.parameters())
@@ -83,7 +88,7 @@ def load_policy(step: Step, model_path: Optional[str] = None):
     path = model_path or step.model_path
     if step.model == "neat":
         return NEATPolicy(path, os.path.join(step.out_dir, "neat.cfg"), step.legacy_decode)
-    return PPOPolicy(path, step.legacy_traction)
+    return PPOPolicy(path, step.legacy_traction, step.action_smoothing)
 
 
 def drive(policy, seed: int, env_kwargs: Optional[Dict] = None, gif: bool = False, activations: bool = False,

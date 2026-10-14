@@ -32,7 +32,7 @@ from carracing.exhibition import EXHIBITION_SEEDS, exhibition_path  # noqa: E402
 from carracing.steps import FPS, MODELS, all_steps, hardware, rank_key  # noqa: E402
 
 OUT = "docs/assets/data"
-HEADLINE = ("id", "model", "title", "why", "outcome", "parent", "lidar_rays", "lidar_fov", "train", "neat_config", "imported", "note",
+HEADLINE = ("id", "model", "title", "why", "outcome", "seed_runs", "kept_seed", "action_smoothing", "parent", "lidar_rays", "lidar_fov", "train", "neat_config", "imported", "note",
             "hardware", "commit", "trained_on", "train_seconds", "selected", "size", "summary", "tracks")
 # Championship cars: fixed colour per car (categorical tokens) and the PPO cars still to come.
 CAR_COLORS = {"neat16": "--c1", "neat32": "--c3", "neatsmart": "--c7", "ppo16": "--c2", "ppo32": "--c4", "pposmart": "--c5"}

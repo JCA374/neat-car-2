@@ -1,0 +1,32 @@
+id = "p13_zoo_settings"
+model = "ppo"
+parent = "p12_calm_exploration"
+title = "RL Zoo's PPO settings for CarRacing"
+why = """
+The update settings known to work for PPO on CarRacing (RL Baselines3 Zoo): shorter rollouts (512 steps per env),
+smaller batches (128), a lower learning rate (1e-4) easing off over the run, no entropy bonus, and one 256-unit
+layer. Everything else as p12.
+"""
+lidar_rays = 16
+lidar_fov = 240
+action_smoothing = 0.1
+seeds = [0, 1]
+
+[train]
+entropy-coef = 0.0
+normalize-reward = true
+use-sde = true
+sde-sample-freq = 4
+log-std-init = -2.0
+learning-rate = 0.0001
+lr-schedule = "linear"
+policy-hidden-sizes = [256]
+total-timesteps = 1000000
+num-envs = 8
+n-steps = 512
+batch-size = 128
+offtrack-penalty = 0.0
+allow-multiple-laps = false
+max-episode-steps = 2000
+eval-frequency = 50000
+checkpoint-frequency = 0
