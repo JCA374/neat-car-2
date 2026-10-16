@@ -46,3 +46,12 @@ pytest tests/
 - `index.html` (overview: champions, lap vs training-time scatter, leaderboard), `neat.html` (ladder, curves, network explorer, watch-it-think), `ppo.html` (ladder, curves), `race.html` (ghost race of any steps).
 - Shared `assets/site.css` (tokens, dark mode) and `assets/site.js` (helpers, `Site.ladder`). Chart.js comes from the jsDelivr CDN.
 - The data is generated, so never hand-edit `docs/assets/data/`.
+
+## Skills (`.claude/skills/`)
+
+- `neat-step` / `ppo-step`: design, run and assess a ladder step (PPO screens recipes in `scripts/ppo_lab.py` first; `ppo-step/references/ppo-lessons.md` lists the dead ends).
+- `train-queue`: start, watch, pause and continue training, one CPU job at a time.
+- `site`: change and check `docs/`. `publish`: tests, rebuild, commit, push to `main`, verify Pages (only when asked).
+- `championship`: 8 h cars, the two categories, exhibition races.
+- `car-analysis`: why a car crashes or is slow (validation tracks only), as a report with a proposed next step.
+- `_shared/rules.md`: the rulebook checklist every skill follows.
