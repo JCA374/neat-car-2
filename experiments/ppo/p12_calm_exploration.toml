@@ -12,6 +12,10 @@ lidar_fov = 240
 action_smoothing = 0.1
 seeds = [0, 1]
 
+outcome = """
+Seed 0 0/5, seed 1 1/5 (17.7 s), with 99-100% of the lap on three more tracks. Smoother driving, but no more finishes than p11.
+"""
+
 [train]
 entropy-coef = 0.005
 normalize-reward = true

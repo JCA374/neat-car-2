@@ -32,7 +32,7 @@ from carracing.exhibition import EXHIBITION_SEEDS, exhibition_path  # noqa: E402
 from carracing.steps import FPS, MODELS, all_steps, hardware, rank_key  # noqa: E402
 
 OUT = "docs/assets/data"
-HEADLINE = ("id", "model", "title", "why", "outcome", "seed_runs", "kept_seed", "action_smoothing", "parent", "lidar_rays", "lidar_fov", "train", "neat_config", "imported", "note",
+HEADLINE = ("id", "model", "title", "why", "outcome", "seed_runs", "kept_seed", "action_smoothing", "controls", "action_repeat", "parent", "lidar_rays", "lidar_fov", "train", "neat_config", "imported", "note",
             "hardware", "commit", "trained_on", "train_seconds", "selected", "size", "summary", "tracks")
 # Championship cars: fixed colour per car (categorical tokens) and the PPO cars still to come.
 CAR_COLORS = {"neat16": "--c1", "neat32": "--c3", "neatsmart": "--c7", "ppo16": "--c2", "ppo32": "--c4", "pposmart": "--c5"}
@@ -59,15 +59,17 @@ def main() -> None:
         path = os.path.join(step.out_dir, "result.json")
         if not os.path.exists(path):
             print(f"pending {step.id}: no {path} yet (run scripts/run_step.py {step.path})")
-            pending.append({"id": step.id, "model": step.model, "title": step.title, "why": step.why})
+            if not step.championship:  # championship cars show on the Championship page (queued)
+                pending.append({"id": step.id, "model": step.model, "title": step.title, "why": step.why})
             continue
         with open(path) as fh:
             result = json.load(fh)
         result["outcome"] = step.outcome  # from the TOML, so it can be written after the run
+        result["controls"], result["action_repeat"] = step.controls, step.action_repeat
         results.append(result)
 
         dump(os.path.join(OUT, "steps", f"{step.id}.json"),
-             {k: result[k] for k in ("id", "curve", "generations", "inputs", "outputs") if k in result})
+             {k: result[k] for k in ("id", "curve", "lap_checks", "generations", "inputs", "outputs") if k in result})
         with open(os.path.join(step.out_dir, "drives.json")) as fh:
             drives = json.load(fh)
         dump(os.path.join(OUT, "drives", f"{step.id}.json"),
@@ -98,6 +100,10 @@ def main() -> None:
     with open("experiments/findings.toml", "rb") as fh:
         dump(os.path.join(OUT, "findings.json"), tomllib.load(fh)["finding"], pretty=True)
 
+    lab = ppo_lab()
+    if lab:
+        dump(os.path.join(OUT, "ppo_lab.json"), lab, pretty=True)
+
     tracks_path = os.path.join(OUT, "tracks.json")
     if not os.path.exists(tracks_path):
         dump(tracks_path, [track_geometry(seed) for seed in SEEDS])
@@ -108,6 +114,28 @@ def main() -> None:
         lap = f"{s['lap_s']:6.2f} s" if s["lap_s"] is not None else "   -    "
         print(f"  {i}. {r['id']:<22} {s['finished']}/5 finished  mean lap {lap}  "
               f"trained {r['train_seconds'] / 60:6.0f} min  {r['size']['label']}")
+
+
+def ppo_lab() -> list:
+    """The PPO lab's screening runs (scripts/ppo_lab.py): one entry per recipe, every seed's lap checks."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import ppo_lab as lab
+
+    rows = lab.write_summary()
+    rounds = {name: rnd for rnd, spec in lab.ROUNDS.items() for name in spec["recipes"]}
+    out = {}
+    for r in rows:
+        if r["recipe"] not in lab.RECIPES or not r["done"]:
+            continue
+        flags = lab.RECIPES[r["recipe"]]
+        entry = out.setdefault(r["recipe"], {
+            "recipe": r["recipe"], "round": rounds[r["recipe"]], "controls": flags["controls"],
+            "repeat": flags["action-repeat"], "gamma": flags.get("gamma", 0.99),
+            "log_std_init": flags.get("log-std-init", 0.0), "fixed_track": "track-seeds" in flags, "seeds": []})
+        entry["seeds"].append({k: r[k] for k in ("seed", "best_finished", "best_lap", "best_at_min", "final_finished",
+                                                 "first_5of5_min", "train_lap_pct", "std")})
+    order = list(lab.RECIPES)
+    return sorted(out.values(), key=lambda e: order.index(e["recipe"]))
 
 
 def lineage(step_id: str, steps: dict) -> list:

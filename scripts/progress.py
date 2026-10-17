@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from carracing.steps import all_steps, fmt_duration  # noqa: E402
 
 QUEUE = "outputs/queue.json"
+LAB_STATUS = "outputs/ppo/lab/status.json"
 
 
 def _read(path: str) -> pd.DataFrame:
@@ -92,15 +93,32 @@ def ppo_detail(step, rows: int) -> list:
     if not episodes or sum(len(e) for e in episodes) == 0:
         return ["  Waiting for the first episodes ..."]
     ep = pd.concat(episodes).sort_values("t")
+    repeat = step.action_repeat  # Monitor lengths count decisions; one decision = `repeat` frames
     total = int(step.train.get("total-timesteps", 500_000))
-    done = int(ep["l"].sum())
+    done = int(ep["l"].sum()) * repeat
     elapsed = float(ep["t"].iloc[-1])
-    lines = [f"  Timesteps {bar(done / total)}  {done / 1000:,.0f}k/{total / 1000:,.0f}k",
-             f"  Training time {fmt_duration(elapsed)}   {done / max(elapsed, 1):.0f} steps/s   ETA {eta(done, total, elapsed)}"]
+    budget = step.train.get("max-hours")
+    val = _read(os.path.join(logs, "validation_laps.csv"))
+    if not val.empty and float(val["time_s"].iloc[-1]) > elapsed:
+        # A resumed run: the Monitor CSVs restart, the lap checks carry the whole run's frames and time.
+        done, elapsed = int(val["timestep"].iloc[-1]), float(val["time_s"].iloc[-1])
+    if budget:  # championship car: the time budget is the limit
+        lines = [f"  Time budget {bar(elapsed / (budget * 3600))}  {fmt_duration(elapsed)} of {budget:g} h",
+                 f"  {done / 1e6:.2f}M frames   {done / max(elapsed, 1):.0f} frames/s"]
+    else:
+        lines = [f"  Frames {bar(done / total)}  {done / 1000:,.0f}k/{total / 1000:,.0f}k",
+                 f"  Training time {fmt_duration(elapsed)}   {done / max(elapsed, 1):.0f} frames/s   "
+                 f"ETA {eta(done, total, elapsed)}"]
+    if not val.empty:
+        best = val.sort_values(["finished", "mean_lap_s"], ascending=[False, True]).iloc[0]
+        five = val[val["finished"] == 5]
+        lines.append(f"  Lap checks: {len(val)}, latest {int(val['finished'].iloc[-1])}/5, best {int(best['finished'])}/5"
+                     + (f" in {best['mean_lap_s']:.2f} s" if best["finished"] else "")
+                     + (f", first 5/5 after {fmt_duration(five['time_s'].iloc[0])}" if len(five) else ""))
     recent = ep.tail(40)
     laps = f", {100 * (recent['laps_completed'] > 0).mean():.0f}% finished a lap" if "laps_completed" in recent else ""
     lines.append(f"  Last {len(recent)} training episodes: mean reward {recent['r'].mean():.1f}, "
-                 f"mean length {recent['l'].mean():.0f} frames{laps}")
+                 f"mean length {recent['l'].mean() * repeat:.0f} frames{laps}")
     npz = os.path.join(logs, "evaluations.npz")
     if os.path.exists(npz):
         ev = np.load(npz)
@@ -113,9 +131,36 @@ def ppo_detail(step, rows: int) -> list:
     return lines
 
 
+def lab_lines(lab: dict, rows: int) -> list:
+    """The PPO lab (scripts/ppo_lab.py): its grid of trials and the running one's lap checks."""
+    alive = lab["finished"] is None and _alive(lab["pid"])
+    lines = [f"PPO lab {lab['round']} ({lab['frames'] / 1000:,.0f}k frames per trial)"
+             + ("" if alive else ("  (finished)" if lab["finished"] else "  (not running)"))]
+    running = None
+    for e in lab["trials"]:
+        if e["state"] == "running" and not alive:
+            e["state"] = "stopped"
+        took = fmt_duration((e["ended"] or time.time()) - e["started"]) if e["started"] else ""
+        mark = {"running": ">", "done": "✓", "queued": " "}.get(e["state"], "!")
+        lines.append(f"  {mark} {e['recipe']:<20} seed {e['seed']}  {e['state']:<8} {took:>10}")
+        if e["state"] == "running":
+            running = e
+    if running:
+        val = _read(f"outputs/ppo/lab/{running['recipe']}/seed{running['seed']}/logs/validation_laps.csv")
+        lines += ["", f"  {running['recipe']} seed {running['seed']}: lap checks on the 5 validation tracks"]
+        lines += ["  waiting for the first lap check ..."] if val.empty else \
+            ["  " + l for l in val.tail(rows).to_string(index=False).splitlines()]
+    return lines + [""]
+
+
 def render(step_id: str | None, rows: int) -> str:
     steps = {s.id: s for s in all_steps()}
     lines = [f"Training progress   {time.strftime('%H:%M:%S')}", ""]
+    if os.path.exists(LAB_STATUS) and step_id is None:
+        lab = json.load(open(LAB_STATUS))
+        if lab["finished"] is None or not os.path.exists(QUEUE) or \
+                os.path.getmtime(LAB_STATUS) > os.path.getmtime(QUEUE):
+            return "\n".join(lines + lab_lines(lab, rows))
     queue = json.load(open(QUEUE)) if os.path.exists(QUEUE) else None
     current = step_id
     if queue:

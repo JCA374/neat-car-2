@@ -2,9 +2,9 @@
 # (scripts/build_site.py -> docs/assets/data/findings.json). Each finding links to the steps that show it.
 
 [[finding]]
-title = "NEAT is the reliable one on a laptop CPU"
-text = "Every NEAT step from n02 on finishes all five tracks. PPO's best so far finishes three, but when it does it is fast. NEAT evaluates 100 small networks in parallel on all cores; PPO trains one big network and is very sensitive to how the reward is shaped."
-steps = ["n02_forward_rays", "n05_more_generations", "p06_rays_only"]
+title = "Both learn to drive on a laptop CPU, in very different ways"
+text = "Every NEAT step from n02 on finishes all five tracks. PPO only got there once it decided every 4 frames instead of every frame: p15 finishes all five on both seeds in about an hour, 1.5 s per lap behind NEAT's best. NEAT evaluates 100 small networks in parallel on all cores; PPO trains one big network from every step of driving."
+steps = ["n05_more_generations", "p14_raw3_r4_g995", "p15_raw3_r4_g995_32rays"]
 
 [[finding]]
 title = "Look forward, not around"
@@ -27,9 +27,14 @@ text = "Starting with no connections at all evolved a tiny 8-link network that g
 steps = ["n03_sparse_start", "n01_lap_time"]
 
 [[finding]]
+title = "PPO needed fewer decisions, not a better reward"
+text = "Eleven steps of reward and hyperparameter changes got PPO to 3/5 at best, and under the fair rules to 2/5. A quick lab (600k-frame runs, 3 seeds each) then showed that PPO deciding every frame fails with any controls, while deciding every 4 frames and holding the controls in between finished all five validation tracks within 6 minutes. 2000 decisions per lap were too many to tell which steering choice earned which tile. Planning further ahead (gamma 0.995) made it hold on every seed."
+steps = ["p11_normalize_reward", "p13_zoo_settings", "p14_raw3_r4_g995"]
+
+[[finding]]
 title = "PPO breaks easily on rewards"
-text = "A per-frame grass penalty made PPO creep at walking pace. Ending episodes early when the car stopped making progress was worse: three one-change checks showed it is the culprit, because PPO never got to practise getting back on the road. Without it, and with forward rays, PPO finishes 3 of 5 tracks and sets the fastest lap of any model (16.8 s)."
-steps = ["p01_lap_time", "p05_control", "p06_rays_only", "p07_stuck_only"]
+text = "A per-frame grass penalty made PPO creep at walking pace. Ending episodes early when the car stopped making progress was worse, because PPO never got to practise getting back on the road. A lap-time bonus also made it less reliable (p16), as it did for NEAT Smart."
+steps = ["p01_lap_time", "p07_stuck_only", "p16_raw3_r4_g995_lap_bonus"]
 
 [[finding]]
 title = "Fast and safe pull against each other"

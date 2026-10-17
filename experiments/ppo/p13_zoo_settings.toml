@@ -12,6 +12,10 @@ lidar_fov = 240
 action_smoothing = 0.1
 seeds = [0, 1]
 
+outcome = """
+0/5 on both seeds (best lap check 1/5). Settings that work for PPO on CarRacing's pixels did not carry over to our compact state. The PPO lab came next: the problem turned out to be how often PPO decides, not its hyperparameters.
+"""
+
 [train]
 entropy-coef = 0.0
 normalize-reward = true

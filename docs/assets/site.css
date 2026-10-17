@@ -180,3 +180,12 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border
   .chart-wrap { height: 280px; }
   .ladder .grid img { max-width: 360px; }
 }
+
+/* PPO lab: x/5 per seed as five small squares */
+.meter { display: inline-flex; align-items: center; gap: 2px; margin-right: 10px; white-space: nowrap; }
+.meter b { width: 8px; height: 12px; border-radius: 2px; background: var(--surface-2); border: 1px solid var(--border); display: inline-block; }
+.meter b.on { background: var(--ppo); border-color: var(--ppo); }
+.meter span { margin-left: 5px; color: var(--text-2); font-size: 0.82rem; }
+tr.winner td { background: var(--surface-2); }
+td.meters .meter { display: flex; margin: 0 0 3px; }
+td.nowrap { white-space: nowrap; }

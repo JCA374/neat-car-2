@@ -1,0 +1,611 @@
+{
+ "id": "p12_calm_exploration",
+ "model": "ppo",
+ "title": "Calmer exploration (gSDE)",
+ "why": "PPO starts with action noise of standard deviation 1.0 on a steering range of -1 to 1: early on the car can\nhardly drive straight. Here the noise starts much smaller (log std -2) and is state-dependent and smooth over\n4 frames (gSDE), as in the RL Zoo's CarRacing recipe. Everything else as p11.",
+ "parent": "p11_normalize_reward",
+ "lidar_rays": 16,
+ "lidar_fov": 240.0,
+ "drop_heading": false,
+ "action_smoothing": 0.1,
+ "train": {
+  "entropy-coef": 0.005,
+  "normalize-reward": true,
+  "use-sde": true,
+  "sde-sample-freq": 4,
+  "log-std-init": -2.0,
+  "total-timesteps": 1000000,
+  "num-envs": 8,
+  "n-steps": 1024,
+  "batch-size": 256,
+  "offtrack-penalty": 0.0,
+  "allow-multiple-laps": false,
+  "max-episode-steps": 2000,
+  "eval-frequency": 50000,
+  "checkpoint-frequency": 0,
+  "seed": 1
+ },
+ "neat_config": {},
+ "imported": false,
+ "note": "",
+ "hardware": {
+  "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+  "threads": 8,
+  "gpu": false
+ },
+ "commit": "eed4c43",
+ "trained_on": "2026-10-14",
+ "train_seconds": 72.7,
+ "process_seconds": 1119.1,
+ "selected": {
+  "timestep": 75000
+ },
+ "size": {
+  "params": 146180,
+  "label": "256×256 MLP"
+ },
+ "summary": {
+  "finished": 1,
+  "lap_s": 17.74,
+  "score": 684.6,
+  "offtrack_pct": 31.4
+ },
+ "tracks": [
+  {
+   "seed": 3,
+   "finished": true,
+   "lap_s": 17.74,
+   "frames": 887,
+   "score": 911.3,
+   "offtrack_pct": 0.0,
+   "avg_speed": 52.2,
+   "reached_pct": 100.0,
+   "crashed": false
+  },
+  {
+   "seed": 11,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 796.1,
+   "offtrack_pct": 42.8,
+   "avg_speed": 47.4,
+   "reached_pct": 99.6,
+   "crashed": false
+  },
+  {
+   "seed": 21,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 134.3,
+   "offtrack_pct": 77.5,
+   "avg_speed": 38.0,
+   "reached_pct": 33.4,
+   "crashed": false
+  },
+  {
+   "seed": 34,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 790.7,
+   "offtrack_pct": 22.6,
+   "avg_speed": 56.0,
+   "reached_pct": 99.1,
+   "crashed": false
+  },
+  {
+   "seed": 55,
+   "finished": false,
+   "lap_s": null,
+   "frames": 2000,
+   "score": 790.4,
+   "offtrack_pct": 14.2,
+   "avg_speed": 58.0,
+   "reached_pct": 99.0,
+   "crashed": false
+  }
+ ],
+ "curve": [
+  {
+   "steps": 50000,
+   "t": 57.0,
+   "eval": 583.8
+  },
+  {
+   "steps": 100000,
+   "t": 108.0,
+   "eval": 284.6
+  },
+  {
+   "steps": 150000,
+   "t": 158.6,
+   "eval": 179.4
+  },
+  {
+   "steps": 200000,
+   "t": 213.4,
+   "eval": 264.1
+  },
+  {
+   "steps": 250000,
+   "t": 267.6,
+   "eval": 89.8
+  },
+  {
+   "steps": 300000,
+   "t": 322.5,
+   "eval": 171.1
+  },
+  {
+   "steps": 350000,
+   "t": 379.5,
+   "eval": 92.8
+  },
+  {
+   "steps": 400000,
+   "t": 434.7,
+   "eval": 235.1
+  },
+  {
+   "steps": 450000,
+   "t": 490.6,
+   "eval": 326.2
+  },
+  {
+   "steps": 500000,
+   "t": 547.2,
+   "eval": 273.1
+  },
+  {
+   "steps": 550000,
+   "t": 604.4,
+   "eval": 385.2
+  },
+  {
+   "steps": 600000,
+   "t": 663.1,
+   "eval": 82.9
+  },
+  {
+   "steps": 650000,
+   "t": 718.8,
+   "eval": 308.4
+  },
+  {
+   "steps": 700000,
+   "t": 770.7,
+   "eval": 156.8
+  },
+  {
+   "steps": 750000,
+   "t": 824.6,
+   "eval": 138.5
+  },
+  {
+   "steps": 800000,
+   "t": 881.7,
+   "eval": 348.8
+  },
+  {
+   "steps": 850000,
+   "t": 942.0,
+   "eval": 161.5
+  },
+  {
+   "steps": 900000,
+   "t": 998.2,
+   "eval": 307.8
+  },
+  {
+   "steps": 950000,
+   "t": 1057.4,
+   "eval": 347.5
+  },
+  {
+   "steps": 1000000,
+   "t": 1113.1,
+   "eval": 252.7
+  }
+ ],
+ "championship": false,
+ "categories": null,
+ "lap_checks": [
+  {
+   "at": 25000,
+   "t": 20.3,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 50000,
+   "t": 50.0,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 75000,
+   "t": 72.7,
+   "finished": 1,
+   "lap": 17.12
+  },
+  {
+   "at": 100000,
+   "t": 100.8,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 125000,
+   "t": 125.7,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 150000,
+   "t": 151.9,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 175000,
+   "t": 176.0,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 200000,
+   "t": 206.6,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 225000,
+   "t": 229.9,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 250000,
+   "t": 261.6,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 275000,
+   "t": 286.0,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 300000,
+   "t": 315.5,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 325000,
+   "t": 339.3,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 350000,
+   "t": 371.0,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 375000,
+   "t": 395.5,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 400000,
+   "t": 427.6,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 425000,
+   "t": 450.3,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 450000,
+   "t": 483.6,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 475000,
+   "t": 508.3,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 500000,
+   "t": 543.1,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 525000,
+   "t": 567.8,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 550000,
+   "t": 601.5,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 575000,
+   "t": 625.9,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 600000,
+   "t": 655.6,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 625000,
+   "t": 680.6,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 650000,
+   "t": 711.1,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 675000,
+   "t": 734.8,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 700000,
+   "t": 763.5,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 725000,
+   "t": 786.8,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 750000,
+   "t": 817.5,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 775000,
+   "t": 841.1,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 800000,
+   "t": 873.7,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 825000,
+   "t": 902.9,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 850000,
+   "t": 934.1,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 875000,
+   "t": 960.0,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 900000,
+   "t": 991.6,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 925000,
+   "t": 1017.2,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 950000,
+   "t": 1049.5,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 975000,
+   "t": 1077.3,
+   "finished": 0,
+   "lap": null
+  },
+  {
+   "at": 1000000,
+   "t": 1108.4,
+   "finished": 0,
+   "lap": null
+  }
+ ],
+ "validation": {
+  "finished": 1,
+  "mean_lap_s": 17.12
+ },
+ "kept_seed": 1,
+ "seed_runs": [
+  {
+   "seed": 0,
+   "train_seconds": 20.6,
+   "selected": {
+    "timestep": 25000
+   },
+   "validation": {
+    "finished": 0,
+    "mean_lap_s": null
+   },
+   "summary": {
+    "finished": 0,
+    "lap_s": null,
+    "score": -162.2,
+    "offtrack_pct": 96.4
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -159.4,
+     "offtrack_pct": 96.5,
+     "avg_speed": 10.4,
+     "reached_pct": 4.1,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -153.7,
+     "offtrack_pct": 96.0,
+     "avg_speed": 17.7,
+     "reached_pct": 4.6,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -167.5,
+     "offtrack_pct": 96.5,
+     "avg_speed": 10.5,
+     "reached_pct": 3.3,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -165.8,
+     "offtrack_pct": 96.5,
+     "avg_speed": 10.4,
+     "reached_pct": 3.4,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": -164.6,
+     "offtrack_pct": 96.5,
+     "avg_speed": 10.4,
+     "reached_pct": 3.5,
+     "crashed": false
+    }
+   ]
+  },
+  {
+   "seed": 1,
+   "train_seconds": 72.7,
+   "selected": {
+    "timestep": 75000
+   },
+   "validation": {
+    "finished": 1,
+    "mean_lap_s": 17.12
+   },
+   "summary": {
+    "finished": 1,
+    "lap_s": 17.74,
+    "score": 684.6,
+    "offtrack_pct": 31.4
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 17.74,
+     "frames": 887,
+     "score": 911.3,
+     "offtrack_pct": 0.0,
+     "avg_speed": 52.2,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 796.1,
+     "offtrack_pct": 42.8,
+     "avg_speed": 47.4,
+     "reached_pct": 99.6,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 134.3,
+     "offtrack_pct": 77.5,
+     "avg_speed": 38.0,
+     "reached_pct": 33.4,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 790.7,
+     "offtrack_pct": 22.6,
+     "avg_speed": 56.0,
+     "reached_pct": 99.1,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 790.4,
+     "offtrack_pct": 14.2,
+     "avg_speed": 58.0,
+     "reached_pct": 99.0,
+     "crashed": false
+    }
+   ]
+  }
+ ]
+}

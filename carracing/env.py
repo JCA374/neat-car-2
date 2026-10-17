@@ -109,7 +109,9 @@ class CarRacingStateWrapper(gym.Wrapper):
     # Gym API
     # ---------------------------------------------------------------------- #
     def reset(self, **kwargs):
-        if self.track_seeds == "train":
+        if self.track_seeds not in (None, "train"):
+            kwargs["seed"] = int(self.track_seeds)  # one fixed training track (the PPO lab's sanity check)
+        elif self.track_seeds == "train":
             from carracing.rules import training_seed
 
             if kwargs.get("seed") is not None or self._track_rng is None:
@@ -371,8 +373,10 @@ def make_env(
     drop_heading: bool = False,
     track_seeds: Optional[str] = None,
     action_smoothing: float = 0.0,
+    controls: str = "raw3",
+    action_repeat: int = 1,
     **kwargs,
-) -> CarRacingStateWrapper:
+) -> gym.Env:
     """
     Convenience helper to construct a wrapped CarRacing environment.
 
@@ -407,6 +411,8 @@ def make_env(
         End the episode (with the remaining time penalty) after this many frames without a new tile.
     lap_time_bonus: float
         Reward per frame a finished lap comes in under 1000 frames (0 = off).
+    controls, action_repeat:
+        Training only: the model's action interface and decision rate (carracing/controls.py).
     kwargs:
         Passed through to gymnasium.make("CarRacing-v2", ...).
     """
@@ -427,7 +433,7 @@ def make_env(
         env.unwrapped._render = lambda mode, *a, **k: blank if mode == "state_pixels" else None
     if seed is not None:
         env.reset(seed=seed)
-    return CarRacingStateWrapper(
+    wrapped = CarRacingStateWrapper(
         env,
         offtrack_penalty=offtrack_penalty,
         traction_threshold=traction_threshold,
@@ -441,3 +447,8 @@ def make_env(
         track_seeds=track_seeds,
         action_smoothing=action_smoothing,
     )
+    if controls != "raw3" or action_repeat > 1:
+        from carracing.controls import ControlsWrapper
+
+        wrapped = ControlsWrapper(wrapped, controls, action_repeat)
+    return wrapped

@@ -63,6 +63,8 @@
       chips.push(v === true ? k : k + "=" + (Array.isArray(v) ? v.join(",") : v));
     });
     Object.keys(step.neat_config || {}).forEach(function (k) { chips.push(k.split(".")[1] + "=" + step.neat_config[k]); });
+    if (step.action_repeat > 1) chips.unshift("decides every " + step.action_repeat + " frames");
+    if (step.controls && step.controls !== "raw3") chips.unshift("controls=" + step.controls);
     if (step.action_smoothing) chips.unshift("action-smoothing=" + step.action_smoothing);
     if (step.lidar_fov != null) chips.unshift("lidar-fov=±" + step.lidar_fov / 2 + "°");
     if (step.lidar_rays !== 32) chips.unshift("lidar-rays=" + step.lidar_rays);

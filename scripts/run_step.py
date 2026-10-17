@@ -79,6 +79,8 @@ def train(step: Step) -> float:
         cmd = [sys.executable, "-m", "carracing_neat.train", "--config", os.path.join(step.out_dir, "neat.cfg")]
     else:
         cmd = [sys.executable, "-m", "carracing_ppo.train"]
+        if step.championship:  # a paused championship car continues where it stopped
+            flags += ["--resume", "auto"]
     cmd += flags
     print("$", " ".join(cmd), flush=True)
     with open(os.path.join(logs, "command.txt"), "w") as fh:
@@ -149,6 +151,8 @@ def neat_curves(step: Step) -> dict:
 
 def ppo_curves(step: Step) -> dict:
     logs = os.path.join(step.out_dir, "logs")
+    if not os.path.exists(os.path.join(logs, "evaluations.npz")):
+        return {"curve": []}  # no reward evaluations (lab recipes): the lap checks are the curve
     ev = np.load(os.path.join(logs, "evaluations.npz"))
     curve = [{"steps": int(ts), "t": ppo_train_seconds(logs, int(ts)), "eval": round(float(r.mean()), 1)}
              for ts, r in zip(ev["timesteps"], ev["results"])]

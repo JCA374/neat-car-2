@@ -1,0 +1,30 @@
+id = "ppo32"
+model = "ppo"
+championship = true
+parent = "p15_raw3_r4_g995_32rays"
+title = "PPO 32: the finer view"
+why = """
+PPO 16's recipe with 32 forward rays (p15), the only PPO step that finished all five race tracks on both seeds.
+Trained from scratch for 8 hours.
+"""
+lidar_rays = 32
+lidar_fov = 240
+action_smoothing = 0.1
+controls = "raw3"
+action_repeat = 4
+
+[train]
+entropy-coef = 0.005
+normalize-reward = true
+num-envs = 8
+batch-size = 256
+offtrack-penalty = 0.0
+allow-multiple-laps = false
+max-episode-steps = 2000
+eval-frequency = 0
+checkpoint-frequency = 0
+lap-check-frequency = 25000
+n-steps = 256
+gamma = 0.995
+max-hours = 8
+total-timesteps = 100000000

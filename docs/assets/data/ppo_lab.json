@@ -1,0 +1,515 @@
+[
+ {
+  "recipe": "sanity_fixed_track",
+  "round": "round0",
+  "controls": "raw3",
+  "repeat": 1,
+  "gamma": 0.99,
+  "log_std_init": 0.0,
+  "fixed_track": true,
+  "seeds": [
+   {
+    "seed": 0,
+    "best_finished": 4,
+    "best_lap": 36.265,
+    "best_at_min": 2.4,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 42,
+    "std": 0.751
+   }
+  ]
+ },
+ {
+  "recipe": "raw3_r1",
+  "round": "round1",
+  "controls": "raw3",
+  "repeat": 1,
+  "gamma": 0.99,
+  "log_std_init": 0.0,
+  "fixed_track": false,
+  "seeds": [
+   {
+    "seed": 0,
+    "best_finished": 0,
+    "best_lap": null,
+    "best_at_min": 0.7,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 2,
+    "std": 0.805
+   },
+   {
+    "seed": 1,
+    "best_finished": 3,
+    "best_lap": 20.56,
+    "best_at_min": 4.2,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 0,
+    "std": 0.814
+   },
+   {
+    "seed": 2,
+    "best_finished": 3,
+    "best_lap": 27.833,
+    "best_at_min": 4.6,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 6,
+    "std": 0.883
+   }
+  ]
+ },
+ {
+  "recipe": "raw3_r4",
+  "round": "round1",
+  "controls": "raw3",
+  "repeat": 4,
+  "gamma": 0.99,
+  "log_std_init": 0.0,
+  "fixed_track": false,
+  "seeds": [
+   {
+    "seed": 0,
+    "best_finished": 5,
+    "best_lap": 22.932,
+    "best_at_min": 4.9,
+    "final_finished": 5,
+    "first_5of5_min": 4.9,
+    "train_lap_pct": 56,
+    "std": 0.837
+   },
+   {
+    "seed": 1,
+    "best_finished": 4,
+    "best_lap": 29.535,
+    "best_at_min": 4.3,
+    "final_finished": 1,
+    "first_5of5_min": null,
+    "train_lap_pct": 36,
+    "std": 0.782
+   },
+   {
+    "seed": 2,
+    "best_finished": 4,
+    "best_lap": 22.77,
+    "best_at_min": 5.1,
+    "final_finished": 4,
+    "first_5of5_min": null,
+    "train_lap_pct": 24,
+    "std": 0.808
+   }
+  ]
+ },
+ {
+  "recipe": "throttle_r1",
+  "round": "round1",
+  "controls": "throttle",
+  "repeat": 1,
+  "gamma": 0.99,
+  "log_std_init": 0.0,
+  "fixed_track": false,
+  "seeds": [
+   {
+    "seed": 0,
+    "best_finished": 0,
+    "best_lap": null,
+    "best_at_min": 0.7,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 2,
+    "std": 0.609
+   },
+   {
+    "seed": 1,
+    "best_finished": 0,
+    "best_lap": null,
+    "best_at_min": 0.8,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 2,
+    "std": 0.707
+   },
+   {
+    "seed": 2,
+    "best_finished": 0,
+    "best_lap": null,
+    "best_at_min": 0.7,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 2,
+    "std": 0.662
+   }
+  ]
+ },
+ {
+  "recipe": "throttle_r4",
+  "round": "round1",
+  "controls": "throttle",
+  "repeat": 4,
+  "gamma": 0.99,
+  "log_std_init": 0.0,
+  "fixed_track": false,
+  "seeds": [
+   {
+    "seed": 0,
+    "best_finished": 5,
+    "best_lap": 22.468,
+    "best_at_min": 3.3,
+    "final_finished": 0,
+    "first_5of5_min": 2.8,
+    "train_lap_pct": 54,
+    "std": 0.659
+   },
+   {
+    "seed": 1,
+    "best_finished": 4,
+    "best_lap": 21.96,
+    "best_at_min": 2.5,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 26,
+    "std": 0.701
+   },
+   {
+    "seed": 2,
+    "best_finished": 4,
+    "best_lap": 25.19,
+    "best_at_min": 2.2,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 40,
+    "std": 0.717
+   }
+  ]
+ },
+ {
+  "recipe": "discrete_r1",
+  "round": "round1",
+  "controls": "discrete",
+  "repeat": 1,
+  "gamma": 0.99,
+  "log_std_init": 0.0,
+  "fixed_track": false,
+  "seeds": [
+   {
+    "seed": 0,
+    "best_finished": 0,
+    "best_lap": null,
+    "best_at_min": 0.7,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 32,
+    "std": null
+   },
+   {
+    "seed": 1,
+    "best_finished": 0,
+    "best_lap": null,
+    "best_at_min": 0.8,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 56,
+    "std": null
+   },
+   {
+    "seed": 2,
+    "best_finished": 0,
+    "best_lap": null,
+    "best_at_min": 0.6,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 6,
+    "std": null
+   }
+  ]
+ },
+ {
+  "recipe": "discrete_r4",
+  "round": "round1",
+  "controls": "discrete",
+  "repeat": 4,
+  "gamma": 0.99,
+  "log_std_init": 0.0,
+  "fixed_track": false,
+  "seeds": [
+   {
+    "seed": 0,
+    "best_finished": 1,
+    "best_lap": 16.4,
+    "best_at_min": 4.8,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 12,
+    "std": null
+   },
+   {
+    "seed": 1,
+    "best_finished": 3,
+    "best_lap": 23.433,
+    "best_at_min": 3.6,
+    "final_finished": 3,
+    "first_5of5_min": null,
+    "train_lap_pct": 42,
+    "std": null
+   },
+   {
+    "seed": 2,
+    "best_finished": 2,
+    "best_lap": 21.0,
+    "best_at_min": 5.1,
+    "final_finished": 2,
+    "first_5of5_min": null,
+    "train_lap_pct": 60,
+    "std": null
+   }
+  ]
+ },
+ {
+  "recipe": "raw3_r4_calm",
+  "round": "round2",
+  "controls": "raw3",
+  "repeat": 4,
+  "gamma": 0.99,
+  "log_std_init": -1.0,
+  "fixed_track": false,
+  "seeds": [
+   {
+    "seed": 0,
+    "best_finished": 1,
+    "best_lap": 14.36,
+    "best_at_min": 2.6,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 10,
+    "std": 0.312
+   },
+   {
+    "seed": 1,
+    "best_finished": 5,
+    "best_lap": 21.884,
+    "best_at_min": 4.8,
+    "final_finished": 1,
+    "first_5of5_min": 3.1,
+    "train_lap_pct": 72,
+    "std": 0.287
+   },
+   {
+    "seed": 2,
+    "best_finished": 3,
+    "best_lap": 20.34,
+    "best_at_min": 2.1,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 36,
+    "std": 0.293
+   }
+  ]
+ },
+ {
+  "recipe": "throttle_r4_calm",
+  "round": "round2",
+  "controls": "throttle",
+  "repeat": 4,
+  "gamma": 0.99,
+  "log_std_init": -1.0,
+  "fixed_track": false,
+  "seeds": [
+   {
+    "seed": 0,
+    "best_finished": 0,
+    "best_lap": null,
+    "best_at_min": 0.4,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 34,
+    "std": 0.254
+   },
+   {
+    "seed": 1,
+    "best_finished": 1,
+    "best_lap": 15.58,
+    "best_at_min": 1.8,
+    "final_finished": 1,
+    "first_5of5_min": null,
+    "train_lap_pct": 62,
+    "std": 0.261
+   },
+   {
+    "seed": 2,
+    "best_finished": 5,
+    "best_lap": 23.388,
+    "best_at_min": 3.3,
+    "final_finished": 2,
+    "first_5of5_min": 3.3,
+    "train_lap_pct": 68,
+    "std": 0.253
+   }
+  ]
+ },
+ {
+  "recipe": "raw3_r2",
+  "round": "round2",
+  "controls": "raw3",
+  "repeat": 2,
+  "gamma": 0.99,
+  "log_std_init": 0.0,
+  "fixed_track": false,
+  "seeds": [
+   {
+    "seed": 0,
+    "best_finished": 2,
+    "best_lap": 20.28,
+    "best_at_min": 3.5,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 4,
+    "std": 0.781
+   },
+   {
+    "seed": 1,
+    "best_finished": 0,
+    "best_lap": null,
+    "best_at_min": 0.5,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 0,
+    "std": 0.763
+   },
+   {
+    "seed": 2,
+    "best_finished": 0,
+    "best_lap": null,
+    "best_at_min": 0.5,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 10,
+    "std": 0.81
+   }
+  ]
+ },
+ {
+  "recipe": "raw3_r8",
+  "round": "round2",
+  "controls": "raw3",
+  "repeat": 8,
+  "gamma": 0.99,
+  "log_std_init": 0.0,
+  "fixed_track": false,
+  "seeds": [
+   {
+    "seed": 0,
+    "best_finished": 0,
+    "best_lap": null,
+    "best_at_min": 0.3,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 0,
+    "std": 0.884
+   },
+   {
+    "seed": 1,
+    "best_finished": 1,
+    "best_lap": 39.92,
+    "best_at_min": 3.8,
+    "final_finished": 0,
+    "first_5of5_min": null,
+    "train_lap_pct": 2,
+    "std": 0.885
+   },
+   {
+    "seed": 2,
+    "best_finished": 3,
+    "best_lap": 37.967,
+    "best_at_min": 5.5,
+    "final_finished": 3,
+    "first_5of5_min": null,
+    "train_lap_pct": 0,
+    "std": 0.819
+   }
+  ]
+ },
+ {
+  "recipe": "raw3_r4_g995",
+  "round": "round3",
+  "controls": "raw3",
+  "repeat": 4,
+  "gamma": 0.995,
+  "log_std_init": 0.0,
+  "fixed_track": false,
+  "seeds": [
+   {
+    "seed": 0,
+    "best_finished": 5,
+    "best_lap": 24.952,
+    "best_at_min": 3.6,
+    "final_finished": 2,
+    "first_5of5_min": 3.6,
+    "train_lap_pct": 68,
+    "std": 0.806
+   },
+   {
+    "seed": 1,
+    "best_finished": 5,
+    "best_lap": 31.24,
+    "best_at_min": 4.5,
+    "final_finished": 2,
+    "first_5of5_min": 3.3,
+    "train_lap_pct": 42,
+    "std": 0.835
+   },
+   {
+    "seed": 2,
+    "best_finished": 5,
+    "best_lap": 28.812,
+    "best_at_min": 5.8,
+    "final_finished": 5,
+    "first_5of5_min": 5.8,
+    "train_lap_pct": 38,
+    "std": 0.843
+   }
+  ]
+ },
+ {
+  "recipe": "throttle_r4_g995",
+  "round": "round3",
+  "controls": "throttle",
+  "repeat": 4,
+  "gamma": 0.995,
+  "log_std_init": 0.0,
+  "fixed_track": false,
+  "seeds": [
+   {
+    "seed": 0,
+    "best_finished": 3,
+    "best_lap": 23.767,
+    "best_at_min": 4.8,
+    "final_finished": 1,
+    "first_5of5_min": null,
+    "train_lap_pct": 50,
+    "std": 0.75
+   },
+   {
+    "seed": 1,
+    "best_finished": 5,
+    "best_lap": 25.7,
+    "best_at_min": 2.3,
+    "final_finished": 0,
+    "first_5of5_min": 2.3,
+    "train_lap_pct": 34,
+    "std": 0.684
+   },
+   {
+    "seed": 2,
+    "best_finished": 5,
+    "best_lap": 21.696,
+    "best_at_min": 6.3,
+    "final_finished": 5,
+    "first_5of5_min": 4.7,
+    "train_lap_pct": 36,
+    "std": 0.737
+   }
+  ]
+ }
+]

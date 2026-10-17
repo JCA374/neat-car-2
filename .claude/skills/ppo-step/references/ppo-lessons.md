@@ -19,6 +19,13 @@ Each line is a lesson, followed by the steps that show it. Re-read the step's `o
 - `raw3_r4_g995` (raw3 controls, decide every 4 frames, gamma 0.995) was the most consistent recipe, with 5/5 on validation at its best on all 3 seeds. Its finals fall back, though. (lab round 2 → p14: 4/5 at 21.7 s on the benchmark after 13 min)
 - **Calm exploration** (`log-std-init -1`, no entropy bonus) gives fast single laps but unstable runs. (lab `raw3_r4_calm`, p12 gSDE: 1/5)
 
+## Braking (off-road analysis of p14, 60 non-benchmark tracks, `outputs/analysis/p14_raw3_r4_g995/`)
+- **With raw3 controls PPO never learns to brake.** The brake is above 0.1 in 0 of 83,647 frames, and the unclipped brake output sits near −1 everywhere, even just before leaving the road. The car slows only by lifting off the gas (gas output falls from −0.44 on straights to −1.8 before corners), which is too weak for hairpins.
+- So it leaves the road in sharp turns (13–20× the rate on straights), **always on the outside**. Its inputs already predict this (AUC 0.96): the missing piece is an action, not a sensor.
+- The speed input's cap at 50 (38% of frames) and bang-bang steering are not the cause.
+- 5 validation tracks overrate it: 5/5 there, 38/55 (69%) on fresh tracks.
+- Being tested: one pedal axis (`throttle`), so lifting off becomes braking (lab round 3).
+
 ## Other results so far
 - Normalising the reward: 2/5 at 17.9 s. (p11)
 - RL Zoo's CarRacing settings: 0/5. (p13)

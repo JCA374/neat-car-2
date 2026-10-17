@@ -15,6 +15,7 @@ from stable_baselines3.common.callbacks import BaseCallback, CallbackList, Check
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecNormalize
 
+from carracing.controls import HeldControls
 from carracing.env import make_env
 from carracing.rules import LAP_CHECK_PPO_STEPS, MAX_FRAMES, smooth
 
@@ -98,10 +99,15 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         default=MAX_FRAMES,
         help="Frames per training episode (rulebook: the same 2000 as lap checks and the benchmark).",
     )
-    parser.add_argument("--track-seeds", choices=("train", "any"), default="train",
+    parser.add_argument("--track-seeds", default="train",
                         help="'train': draw tracks from the rulebook's training range (never a reserved track).")
     parser.add_argument("--action-smoothing", type=float, default=0.0,
                         help="Blend each action with the previous one (rulebook: 0.1, as NEAT does).")
+    parser.add_argument("--controls", choices=("raw3", "throttle", "discrete"), default="raw3",
+                        help="How the policy's outputs become steer/gas/brake (carracing/controls.py).")
+    parser.add_argument("--action-repeat", type=int, default=1,
+                        help="Decide every N frames and hold the controls in between. --total-timesteps and "
+                             "--lap-check-frequency count frames; --n-steps counts decisions.")
     parser.add_argument("--normalize-reward", action="store_true", help="VecNormalize the reward (not the observations).")
     parser.add_argument("--use-sde", action="store_true", help="generalised State-Dependent Exploration (gSDE).")
     parser.add_argument("--sde-sample-freq", type=int, default=-1, help="gSDE: resample the noise every N steps.")
@@ -159,7 +165,8 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "--resume",
         default=None,
-        help="Path to a saved PPO zip to resume from. If missing, training starts fresh.",
+        help="Path to a saved PPO zip to resume from, or 'auto': continue a paused run from its last lap-check "
+             "checkpoint (training time and lap checks carry on). If missing, training starts fresh.",
     )
     return parser.parse_args(argv)
 
@@ -187,7 +194,21 @@ def _env_kwargs(args: argparse.Namespace) -> dict:
         "lap_time_bonus": args.lap_time_bonus,
         "track_seeds": None if args.track_seeds == "any" else args.track_seeds,
         "action_smoothing": args.action_smoothing,
+        "controls": args.controls,
+        "action_repeat": args.action_repeat,
     }
+
+
+def _paused_run(checkpoint_dir: str, log_dir: str) -> list:
+    """Lap checks of an earlier, unfinished run of this step whose checkpoint exists (else [])."""
+    path = os.path.join(log_dir, "validation_laps.csv")
+    if not os.path.exists(path):
+        return []
+    with open(path, newline="") as fh:
+        rows = [r for r in csv.DictReader(fh) if r.get("time_s")]
+    while rows and not os.path.exists(os.path.join(checkpoint_dir, f"val_{rows[-1]['timestep']}.zip")):
+        rows.pop()
+    return rows
 
 
 def _make_vector_envs(
@@ -215,16 +236,18 @@ def _make_vector_envs(
 class _Driver:
     """Deterministic policy wrapper in the shape carracing.benchmark.drive expects."""
 
-    def __init__(self, model, action_smoothing: float = 0.0) -> None:
+    def __init__(self, model, action_smoothing: float = 0.0, controls: str = "raw3", repeat: int = 1) -> None:
         self.model = model
         self.smoothing = action_smoothing
+        self.held = HeldControls(controls, repeat)
         self.reset()
 
     def reset(self) -> None:
         self.prev = np.zeros(3, dtype=np.float32)
+        self.held.reset()
 
     def __call__(self, obs):
-        action = self.model.predict(obs, deterministic=True)[0]
+        action = self.held(lambda: self.model.predict(obs, deterministic=True)[0])
         if self.smoothing:
             action = self.prev = smooth(action, self.prev, self.smoothing)
         return action
@@ -237,8 +260,10 @@ class LapCheckCallback(BaseCallback):
 
     def __init__(self, frequency: int, checkpoint_dir: str, log_dir: str, env_kwargs: dict,
                  max_hours: Optional[float] = None, patience_hours: Optional[float] = None,
-                 action_smoothing: float = 0.0) -> None:
+                 action_smoothing: float = 0.0, controls: str = "raw3", repeat: int = 1) -> None:
         super().__init__()
+        self.controls = controls
+        self.repeat = max(1, repeat)
         self.frequency = frequency
         self.checkpoint_dir = checkpoint_dir
         self.csv_path = os.path.join(log_dir, "validation_laps.csv")
@@ -249,11 +274,22 @@ class LapCheckCallback(BaseCallback):
         self.next_check = frequency
         self.best = None
         self.best_at = 0.0
+        self.offset = 0.0  # training seconds before this process (a resumed run)
+
+    def resume_from(self, rows: list) -> None:
+        """Carry on a paused run: its lap checks so far and the training time they took."""
+        self.offset = float(rows[-1]["time_s"]) if rows else 0.0
+        for r in rows:
+            key = (int(r["finished"]), -(float(r["mean_lap_s"]) if r["mean_lap_s"] else 1e9))
+            if self.best is None or key > self.best:
+                self.best, self.best_at = key, float(r["time_s"])
 
     def _on_training_start(self) -> None:
-        self.start = time.time()
-        with open(self.csv_path, "w", newline="") as fh:
-            csv.writer(fh).writerow(["timestep", "time_s", "finished", "mean_lap_s"])
+        self.start = time.time() - self.offset
+        self.next_check = self.num_timesteps + self.frequency
+        if not self.offset:
+            with open(self.csv_path, "w", newline="") as fh:
+                csv.writer(fh).writerow(["timestep", "time_s", "finished", "mean_lap_s"])
 
     def _on_step(self) -> bool:
         from carracing.benchmark import lap_check
@@ -261,13 +297,17 @@ class LapCheckCallback(BaseCallback):
         if self.num_timesteps < self.next_check:
             return True
         self.next_check += self.frequency
-        laps = lap_check(_Driver(self.model, self.action_smoothing), self.env_kwargs)
-        self.model.save(os.path.join(self.checkpoint_dir, f"val_{self.num_timesteps}.zip"))
+        frames = self.num_timesteps * self.repeat
+        laps = lap_check(_Driver(self.model, self.action_smoothing, self.controls, self.repeat), self.env_kwargs)
+        self.model.save(os.path.join(self.checkpoint_dir, f"val_{frames}.zip"))
+        env = self.model.get_env()
+        if isinstance(env, VecNormalize):  # the reward scale, so a paused run can resume where it was
+            env.save(os.path.join(self.checkpoint_dir, "vecnormalize.pkl"))
         now = time.time() - self.start
         with open(self.csv_path, "a", newline="") as fh:
-            csv.writer(fh).writerow([self.num_timesteps, f"{now:.1f}", laps["finished"],
+            csv.writer(fh).writerow([frames, f"{now:.1f}", laps["finished"],
                                      "" if laps["mean_lap_s"] is None else laps["mean_lap_s"]])
-        print(f"Lap check at {self.num_timesteps} steps: {laps['finished']}/5 validation tracks"
+        print(f"Lap check at {frames} frames: {laps['finished']}/5 validation tracks"
               + (f", mean lap {laps['mean_lap_s']:.2f} s" if laps["mean_lap_s"] else ""), flush=True)
         key = (laps["finished"], -(laps["mean_lap_s"] or 1e9))
         if self.best is None or key > self.best:
@@ -308,8 +348,9 @@ def _build_callbacks(
         )
     if args.lap_check_frequency and args.lap_check_frequency > 0:
         env_kwargs = {"lidar_rays": args.lidar_rays, "lidar_fov": args.lidar_fov, "drop_heading": args.drop_heading}
-        callbacks.append(LapCheckCallback(args.lap_check_frequency, args.checkpoint_dir, args.log_dir, env_kwargs,
-                                          args.max_hours, args.patience_hours, args.action_smoothing))
+        callbacks.append(LapCheckCallback(args.lap_check_frequency // args.action_repeat, args.checkpoint_dir,
+                                          args.log_dir, env_kwargs, args.max_hours, args.patience_hours,
+                                          args.action_smoothing, args.controls, args.action_repeat))
     if not callbacks:
         return None
     return CallbackList(callbacks)
@@ -323,6 +364,28 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     os.makedirs(args.log_dir, exist_ok=True)
 
     env_kwargs = _env_kwargs(args)
+    resume_rows = []
+    if args.resume == "auto":
+        args.resume = None
+        resume_rows = _paused_run(args.checkpoint_dir, args.log_dir)
+        if resume_rows:
+            args.resume = os.path.join(args.checkpoint_dir, f"val_{resume_rows[-1]['timestep']}.zip")
+            with open(os.path.join(args.log_dir, "validation_laps.csv"), "w", newline="") as fh:
+                w = csv.DictWriter(fh, fieldnames=["timestep", "time_s", "finished", "mean_lap_s"])
+                w.writeheader()  # drop lap checks after the checkpoint we continue from
+                w.writerows(resume_rows)
+            done_s = float(resume_rows[-1]["time_s"])
+            if args.max_hours and done_s >= args.max_hours * 3600:
+                print(f"Time budget already used ({done_s / 3600:.2f} h); nothing to train.", flush=True)
+                return 0
+            # Keep the earlier Monitor CSVs: the new envs would overwrite monitor/<i>.monitor.csv.
+            old = os.path.join(args.log_dir, "monitor")
+            if os.path.isdir(old):
+                n = 1
+                while os.path.exists(f"{old}_part{n}"):
+                    n += 1
+                os.rename(old, f"{old}_part{n}")
+
     train_monitor = os.path.join(args.log_dir, "monitor")
     vec_cls = DummyVecEnv if args.num_envs == 1 else SubprocVecEnv
     start_method = "fork" if vec_cls is SubprocVecEnv else None
@@ -342,13 +405,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         env_kwargs, 1, args.seed + 42, os.path.join(args.log_dir, "eval_monitor"), DummyVecEnv
     )
 
-    if args.normalize_reward:
+    stats = os.path.join(args.checkpoint_dir, "vecnormalize.pkl")
+    if args.normalize_reward and args.resume and os.path.exists(stats):
+        train_env = VecNormalize.load(stats, train_env)
+        eval_env = VecNormalize(eval_env, norm_obs=False, norm_reward=False, training=False)
+    elif args.normalize_reward:
         # Scale rewards by a running estimate of the return's spread; observations are already in [-1, 1].
         train_env = VecNormalize(train_env, norm_obs=False, norm_reward=True, gamma=args.gamma)
         eval_env = VecNormalize(eval_env, norm_obs=False, norm_reward=False, training=False)
 
-    policy_kwargs = dict(net_arch=dict(pi=args.policy_hidden_sizes, vf=args.policy_hidden_sizes),
-                         log_std_init=args.log_std_init)
+    policy_kwargs = dict(net_arch=dict(pi=args.policy_hidden_sizes, vf=args.policy_hidden_sizes))
+    if args.controls != "discrete":
+        policy_kwargs["log_std_init"] = args.log_std_init
 
     if args.resume and os.path.exists(args.resume):
         print(f"Resuming PPO from {args.resume}")
@@ -377,8 +445,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         )
 
     callback = _build_callbacks(args, eval_env)
+    if resume_rows and callback is not None:
+        for cb in callback.callbacks:
+            if isinstance(cb, LapCheckCallback):
+                cb.resume_from(resume_rows)
 
-    total_steps = args.total_timesteps
+    total_steps = args.total_timesteps // args.action_repeat  # frames -> decisions
+    if args.resume:
+        print(f"Continuing at {model.num_timesteps * args.action_repeat:,} frames"
+              + (f", {float(resume_rows[-1]['time_s']) / 3600:.2f} h of training so far" if resume_rows else ""), flush=True)
+        total_steps = max(0, total_steps - model.num_timesteps)
     if args.checkpoint_frequency and args.checkpoint_frequency > 0:
         print(
             f"Training for {total_steps} steps "
@@ -387,7 +463,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     else:
         print(f"Training for {total_steps} steps (eval every {args.eval_frequency}).")
 
-    model.learn(total_timesteps=total_steps, callback=callback, progress_bar=True)
+    model.learn(total_timesteps=total_steps, callback=callback, progress_bar=True,
+                reset_num_timesteps=not args.resume)
 
     latest_path = os.path.join(args.checkpoint_dir, "ppo_latest.zip")
     model.save(latest_path)

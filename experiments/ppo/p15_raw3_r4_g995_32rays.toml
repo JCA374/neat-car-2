@@ -1,0 +1,33 @@
+id = "p15_raw3_r4_g995_32rays"
+model = "ppo"
+parent = "p14_raw3_r4_g995"
+title = "32 forward rays instead of 16"
+why = """
+32 forward rays instead of 16. Same as p14 otherwise: does PPO use the finer view (the NEAT 32 car got faster laps with it)?
+The PPO lab (scripts/ppo_lab.py, short 600k-frame runs on 3 seeds, validation tracks only) found that PPO deciding every frame never learns to finish, in any control mode. Recipe 'raw3_r4_g995' scored best (seed 0: best 5/5, final 2/5, seed 1: best 5/5, final 2/5, seed 2: best 5/5, final 5/5). This step trains it for 3M frames on two seeds, benchmarked like every other step.
+"""
+lidar_rays = 32
+lidar_fov = 240
+action_smoothing = 0.1
+controls = "raw3"
+action_repeat = 4
+seeds = [0, 1]
+
+outcome = """
+5/5 on both seeds (22.1 s and 21.9 s), the only PPO step to finish every race track on both seeds. It takes longer to get there (55-65 min against p14's 13-34 min), but the finer view makes it steadier. This is the recipe for the PPO 32 and PPO Smart championship cars.
+"""
+
+[train]
+entropy-coef = 0.005
+normalize-reward = true
+num-envs = 8
+batch-size = 256
+offtrack-penalty = 0.0
+allow-multiple-laps = false
+max-episode-steps = 2000
+eval-frequency = 0
+checkpoint-frequency = 0
+lap-check-frequency = 25000
+n-steps = 256
+gamma = 0.995
+total-timesteps = 3000000

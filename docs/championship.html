@@ -59,7 +59,7 @@ td.p1 { font-weight: 700; }
     <ul class="small muted" style="margin:6px 0 0;padding-left:20px">
       <li><strong>Same tracks:</strong> training tracks are drawn from the same pool; 5 validation tracks pick the checkpoint; the 5 race tracks and 25 exhibition tracks are never used for anything else.</li>
       <li><strong>Same finish rule:</strong> CarRacing's own (every road tile touched), within 2000 frames (40 s), in training, in lap checks and in the race.</li>
-      <li><strong>Same controls:</strong> steering, gas and brake, with the same 0.1 smoothing of each action.</li>
+      <li><strong>Same controls:</strong> steering, gas and brake, with the same 0.1 smoothing of each action every frame. How often a car decides is its own choice: the NEAT cars decide every frame, the PPO cars every 4 frames and hold the controls in between.</li>
       <li><strong>Same selection:</strong> the kept checkpoint is the one that laps the validation tracks best.</li>
       <li><strong>Same budget:</strong> 8 hours of wall-clock training on the same laptop, all 8 threads available. Validation counts as training time.</li>
     </ul>

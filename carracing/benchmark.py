@@ -27,24 +27,30 @@ def _r(v: float, nd: int = 1) -> float:
 
 
 class PPOPolicy:
-    def __init__(self, path: str, legacy_traction: bool = False, action_smoothing: float = 0.0) -> None:
+    def __init__(self, path: str, legacy_traction: bool = False, action_smoothing: float = 0.0,
+                 controls: str = "raw3", action_repeat: int = 1) -> None:
         from stable_baselines3 import PPO
+
+        from carracing.controls import HeldControls
 
         self.model = PPO.load(path, device="cpu")
         # Trained before the traction fix: these models only ever saw state[7] == 1.0.
         self.legacy_traction = legacy_traction
         # Same smoothing the training env applied (rules.ACTION_SMOOTHING for new steps).
         self.smoothing = action_smoothing
+        # The step's action interface and decision rate (carracing/controls.py), frame by frame.
+        self.held = HeldControls(controls, action_repeat)
         self.reset()
 
     def reset(self) -> None:
         self.prev = np.zeros(3, dtype=np.float32)
+        self.held.reset()
 
     def __call__(self, obs: np.ndarray) -> np.ndarray:
         if self.legacy_traction:
             obs = obs.copy()
             obs[7] = 1.0
-        action = self.model.predict(obs, deterministic=True)[0]
+        action = self.held(lambda: self.model.predict(obs, deterministic=True)[0])
         if self.smoothing:
             action = self.prev = smooth(action, self.prev, self.smoothing)
         return action
@@ -88,7 +94,7 @@ def load_policy(step: Step, model_path: Optional[str] = None):
     path = model_path or step.model_path
     if step.model == "neat":
         return NEATPolicy(path, os.path.join(step.out_dir, "neat.cfg"), step.legacy_decode)
-    return PPOPolicy(path, step.legacy_traction, step.action_smoothing)
+    return PPOPolicy(path, step.legacy_traction, step.action_smoothing, step.controls, step.action_repeat)
 
 
 def drive(policy, seed: int, env_kwargs: Optional[Dict] = None, gif: bool = False, activations: bool = False,

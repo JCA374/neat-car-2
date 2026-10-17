@@ -1,0 +1,33 @@
+id = "pposmart"
+model = "ppo"
+championship = true
+parent = "p15_raw3_r4_g995_32rays"
+title = "PPO Smart: the steady one"
+why = """
+PPO 32 with a learning rate that eases off to zero over the run. Every PPO run so far slips back after its best lap
+check (p15 seed 1 ended at 4/5); smaller and smaller updates should let it settle on a good driver instead of
+wandering away from it. The lap-time bonus was not used: on the ladder it made PPO less reliable (p16), as it did
+NEAT Smart. The schedule is sized for 8 hours (about 20M frames at PPO 32's pace on this laptop).
+"""
+lidar_rays = 32
+lidar_fov = 240
+action_smoothing = 0.1
+controls = "raw3"
+action_repeat = 4
+
+[train]
+entropy-coef = 0.005
+normalize-reward = true
+num-envs = 8
+batch-size = 256
+offtrack-penalty = 0.0
+allow-multiple-laps = false
+max-episode-steps = 2000
+eval-frequency = 0
+checkpoint-frequency = 0
+lap-check-frequency = 25000
+n-steps = 256
+gamma = 0.995
+max-hours = 8
+total-timesteps = 20000000
+lr-schedule = "linear"

@@ -23,7 +23,8 @@
 <header class="narrow">
   <p class="eyebrow">Proximal Policy Optimization · Stable-Baselines3</p>
   <h1>PPO: one network, trained by trial and error</h1>
-  <p class="muted">PPO keeps one fixed-shape neural network (two hidden layers) and nudges its weights after every batch of driving, so actions that led to more reward become more likely. Four copies of the game run in parallel on the CPU. Unlike NEAT, PPO learns from every frame of reward, so how the reward is shaped matters a lot.</p>
+  <p class="muted">PPO keeps one fixed-shape neural network (two hidden layers of 256) and nudges its weights after every batch of driving, so choices that led to more reward become more likely. Eight copies of the game run in parallel on the CPU.</p>
+  <p class="muted">For eleven steps PPO barely drove. Putting it on the same rules as NEAT (p10) made that honest, and a quick lab found the fix: <strong>decide every 4 frames, not every frame</strong>. Since p14 PPO finishes most race tracks, and p15 all of them on both seeds.</p>
   <p class="small muted">Each card is one step. The numbers come from the same five benchmark tracks as every other model, with deltas against the step it builds on.</p>
 </header>
 
@@ -32,11 +33,18 @@
   <ol class="ladder" id="ladder"></ol>
 </section>
 
+<section id="lab">
+  <h2>The PPO lab: what made it work</h2>
+  <p class="muted narrow">Short runs (600k frames, 5–10 minutes each), three seeds per recipe, scored only on the five validation tracks, never on the race tracks. Each row of squares is one seed: how many validation tracks its best lap check finished, and how many it still finished at the end of the run. Every recipe uses p11's settings and 16 forward rays.</p>
+  <div class="card table-scroll"><table id="labTable"></table></div>
+  <p class="small muted narrow" id="labNote"></p>
+</section>
+
 <section>
   <h2>Learning against the clock</h2>
-  <p class="muted narrow">Mean evaluation reward during training, plotted against hours of wall-clock training time. Evaluation uses each step's own training reward, so the curves show <em>when</em> each run peaked, not which step drives better. The benchmark above answers that. The ring marks the checkpoint each step kept.</p>
+  <p class="muted narrow">Validation tracks finished at each lap check during training (average of the last five checks), against hours of wall-clock training. Steps from p10 on, the ones under the shared rules. The ring marks the checkpoint each step kept.</p>
   <div class="card">
-    <div class="chart-wrap"><canvas id="curve" role="img" aria-label="Evaluation reward against training hours for each PPO step"></canvas></div>
+    <div class="chart-wrap"><canvas id="curve" role="img" aria-label="Validation tracks finished against training hours for each PPO step"></canvas></div>
     <div class="legend" id="curveLegend"></div>
   </div>
 </section>
@@ -49,19 +57,30 @@
 <script>
 (function () {
   "use strict";
-  var S = window.Site, B = null, CURVES = {}, chart = null;
+  var S = window.Site, B = null, CURVES = {}, LAB = [], chart = null;
+
+  function smooth(checks) {
+    return checks.map(function (c, i) {
+      var w = checks.slice(Math.max(0, i - 4), i + 1);
+      return { x: c.t / 3600, y: w.reduce(function (a, b) { return a + b.finished; }, 0) / w.length, at: c.at, raw: c.finished };
+    });
+  }
 
   function curve() {
     if (chart) chart.destroy();
-    var steps = B.steps.filter(function (s) { return s.model === "ppo" && CURVES[s.id]; }).sort(function (a, b) { return a.id < b.id ? -1 : 1; });
+    var steps = B.steps.filter(function (s) { return s.model === "ppo" && s.id >= "p10" && CURVES[s.id] && (CURVES[s.id].lap_checks || []).length; })
+      .sort(function (a, b) { return a.id < b.id ? -1 : 1; });
+    // Fixed colour per step within this chart (ids sort the same way every build), never by rank.
+    var colorOf = {};
+    steps.forEach(function (s, i) { colorOf[s.id] = S.css("--c" + ((i % 8) + 1)); });
     var ax = S.chartTheme();
     chart = new Chart(document.getElementById("curve"), {
       type: "line",
       data: { datasets: steps.map(function (s) {
-        var col = S.stepColor(s.id, B.steps), sel = s.selected.timestep;
-        return { label: S.label(s), data: CURVES[s.id].curve.map(function (p) { return { x: p.t / 3600, y: p.eval, steps: p.steps }; }),
+        var col = colorOf[s.id], sel = s.selected.timestep, pts = smooth(CURVES[s.id].lap_checks);
+        return { label: S.label(s), data: pts,
           borderColor: col, backgroundColor: col, borderWidth: 2, tension: 0,
-          pointRadius: CURVES[s.id].curve.map(function (p) { return p.steps === sel ? 6 : 0; }),
+          pointRadius: pts.map(function (p) { return p.at === sel ? 6 : 0; }),
           pointBackgroundColor: S.css("--surface"), pointBorderWidth: 2.5, pointHoverRadius: 5 };
       }) },
       options: {
@@ -69,29 +88,62 @@
         interaction: { mode: "nearest", intersect: false },
         plugins: { legend: { display: false }, tooltip: Object.assign(S.tooltipTheme(), { callbacks: {
           title: function (it) { return it[0].dataset.label; },
-          label: function (c) { return " " + S.dur(c.parsed.x * 3600) + " · " + S.fmt(c.raw.steps / 1000, 0) + "k steps · eval " + S.fmt(c.parsed.y, 0); }
+          label: function (c) { return " " + S.dur(c.parsed.x * 3600) + " · " + S.fmt(c.raw.at / 1e6, 2) + "M frames · this check " + c.raw.raw + "/5 · average " + S.fmt(c.parsed.y, 1) + "/5"; }
         } }) },
         scales: {
           x: Object.assign({}, ax, { type: "linear", min: 0, title: { display: true, text: "training time (hours)", color: S.css("--text-3") } }),
-          y: Object.assign({}, ax, { title: { display: true, text: "mean evaluation reward", color: S.css("--text-3") } })
+          y: Object.assign({}, ax, { min: 0, max: 5, title: { display: true, text: "validation tracks finished", color: S.css("--text-3") } })
         }
       }
     });
     document.getElementById("curveLegend").innerHTML = steps.map(function (s) {
-      return '<span><i class="swatch-line" style="background:' + S.stepColor(s.id, B.steps) + '"></i>' + S.esc(S.label(s)) + "</span>";
+      return '<span><i class="swatch-line" style="background:' + colorOf[s.id] + '"></i>' + S.esc(S.label(s)) + "</span>";
     }).join("");
+  }
+
+  function meter(n) {
+    var b = "";
+    for (var i = 0; i < 5; i++) b += '<b class="' + (i < n ? "on" : "") + '"></b>';
+    return '<span class="meter" title="' + n + ' of 5 validation tracks">' + b + "<span>" + n + "</span></span>";
+  }
+
+  var CONTROLS = { raw3: "gas + brake", throttle: "one throttle", discrete: "20 fixed choices" };
+  function lab() {
+    var rows = LAB.filter(function (r) { return !r.fixed_track; });
+    var score = function (r) {
+      var med = function (k) { var v = r.seeds.map(function (x) { return x[k]; }).sort(); return v[Math.floor(v.length / 2)]; };
+      return med("best_finished") * 10 + med("final_finished");
+    };
+    var best = rows.reduce(function (a, r) { return !a || score(r) > score(a) ? r : a; }, null);
+    document.getElementById("labTable").innerHTML = "<thead><tr><th>Round</th><th>Controls</th><th class=\"num\">Decides every</th><th>Extra</th>" +
+      "<th>Best lap check, per seed</th><th>At the end of the run</th><th class=\"num\">Best laps</th></tr></thead><tbody>" +
+      rows.map(function (r) {
+        var extra = [r.gamma !== 0.99 ? "plans further ahead (γ " + r.gamma + ")" : "", r.log_std_init ? "calmer exploration" : ""].filter(Boolean).join(", ") || "–";
+        var laps = r.seeds.map(function (x) { return x.best_lap ? x.best_lap.toFixed(1) : "–"; }).join(" · ");
+        return '<tr class="' + (r === best ? "winner" : "") + '"><td>' + (r.round === "round1" ? "1" : "2") + "</td><td>" + S.esc(CONTROLS[r.controls] || r.controls) +
+          '</td><td class="num">' + r.repeat + (r.repeat === 1 ? " frame" : " frames") + "</td><td>" + S.esc(extra) + (r === best ? ' <span class="tag">winner → p14</span>' : "") +
+          '</td><td class="meters">' + r.seeds.map(function (x) { return meter(x.best_finished); }).join("") +
+          '</td><td class="meters">' + r.seeds.map(function (x) { return meter(x.final_finished); }).join("") +
+          '</td><td class="num nowrap">' + laps + "</td></tr>";
+      }).join("") + "</tbody>";
+    var sanity = LAB.filter(function (r) { return r.fixed_track; })[0];
+    document.getElementById("labNote").textContent = (sanity ? "Round 0 checked the setup first: trained on one fixed track for 5 minutes, PPO went from never finishing to finishing " +
+      sanity.seeds[0].train_lap_pct + "% of its laps, so the training code worked and the recipe was the problem. " : "") +
+      "Round 1 crossed three ways of mapping outputs to controls with two decision rates; round 2 tuned the best one.";
   }
 
   function render() {
     S.ladder(document.getElementById("ladder"), "ppo", B, B.pending.filter(function (p) { return p.model === "ppo"; }));
     curve();
+    if (LAB.length) lab(); else document.getElementById("lab").hidden = true;
     if (location.hash) { var t = document.querySelector(location.hash); if (t) t.scrollIntoView(); }
   }
   S.onTheme(function () { if (B) render(); });
   S.json("assets/data/leaderboard.json").then(function (b) {
     B = b;
     var ids = b.steps.filter(function (s) { return s.model === "ppo"; }).map(function (s) { return s.id; });
-    return Promise.all(ids.map(function (id) { return S.json("assets/data/steps/" + id + ".json").then(function (d) { CURVES[id] = d; }); }));
+    var labLoad = S.json("assets/data/ppo_lab.json").then(function (d) { LAB = d; }, function () { LAB = []; });
+    return Promise.all(ids.map(function (id) { return S.json("assets/data/steps/" + id + ".json").then(function (d) { CURVES[id] = d; }); }).concat([labLoad]));
   }).then(render);
 })();
 </script>

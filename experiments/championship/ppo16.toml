@@ -1,0 +1,35 @@
+id = "ppo16"
+model = "ppo"
+championship = true
+parent = "p14_raw3_r4_g995"
+title = "PPO 16: the lab winner"
+why = """
+The recipe the PPO lab found (p14): decide every 4 frames and hold the controls in between, plan further ahead
+(gamma 0.995), rewards normalised, 16 rays facing forward over ±120°. On the ladder it finished 4 of 5 race tracks on
+both seeds after 13–34 min. Trained from scratch for 8 hours.
+"""
+lidar_rays = 16
+lidar_fov = 240
+action_smoothing = 0.1
+controls = "raw3"
+action_repeat = 4
+
+outcome = """
+The quick learner. It lapped all five validation tracks after 5 minutes, sooner than any NEAT car, and that checkpoint finishes 4 of 5 race tracks (25.1 s; it misses track 34). Its fastest checkpoint came at 2 h 32 min and finishes all five race tracks in 23.1 s, 2.3 s slower than NEAT 16: its 20.1 s validation laps didn't fully carry over (track 11 took 28.3 s). The last 5 hours added nothing; it held all five validation tracks less and less often. Paused once at 4 h 41 min and resumed from its last checkpoint.
+"""
+
+[train]
+entropy-coef = 0.005
+normalize-reward = true
+num-envs = 8
+batch-size = 256
+offtrack-penalty = 0.0
+allow-multiple-laps = false
+max-episode-steps = 2000
+eval-frequency = 0
+checkpoint-frequency = 0
+lap-check-frequency = 25000
+n-steps = 256
+gamma = 0.995
+max-hours = 8
+total-timesteps = 100000000

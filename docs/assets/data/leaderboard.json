@@ -14,7 +14,7 @@
  },
  "champions": {
   "neat": "n05_more_generations",
-  "ppo": "p06_rays_only"
+  "ppo": "p15_raw3_r4_g995_32rays"
  },
  "steps": [
   {
@@ -26,6 +26,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "n04_long_episodes",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -128,6 +130,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "n05_more_generations",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -231,6 +235,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": null,
    "lidar_rays": 32,
    "lidar_fov": null,
@@ -324,6 +330,267 @@
    ]
   },
   {
+   "id": "p15_raw3_r4_g995_32rays",
+   "model": "ppo",
+   "title": "32 forward rays instead of 16",
+   "why": "32 forward rays instead of 16. Same as p14 otherwise: does PPO use the finer view (the NEAT 32 car got faster laps with it)?\nThe PPO lab (scripts/ppo_lab.py, short 600k-frame runs on 3 seeds, validation tracks only) found that PPO deciding every frame never learns to finish, in any control mode. Recipe 'raw3_r4_g995' scored best (seed 0: best 5/5, final 2/5, seed 1: best 5/5, final 2/5, seed 2: best 5/5, final 5/5). This step trains it for 3M frames on two seeds, benchmarked like every other step.",
+   "outcome": "5/5 on both seeds (22.1 s and 21.9 s), the only PPO step to finish every race track on both seeds. It takes longer to get there (55-65 min against p14's 13-34 min), but the finer view makes it steadier. This is the recipe for the PPO 32 and PPO Smart championship cars.",
+   "seed_runs": [
+    {
+     "seed": 0,
+     "train_seconds": 3287.9,
+     "selected": {
+      "timestep": 2775008
+     },
+     "validation": {
+      "finished": 5,
+      "mean_lap_s": 21.56
+     },
+     "summary": {
+      "finished": 5,
+      "lap_s": 22.1,
+      "score": 889.5,
+      "offtrack_pct": 0.1
+     },
+     "tracks": [
+      {
+       "seed": 3,
+       "finished": true,
+       "lap_s": 19.3,
+       "frames": 965,
+       "score": 903.5,
+       "offtrack_pct": 0.0,
+       "avg_speed": 48.7,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 11,
+       "finished": true,
+       "lap_s": 18.96,
+       "frames": 948,
+       "score": 905.2,
+       "offtrack_pct": 0.0,
+       "avg_speed": 46.8,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 21,
+       "finished": true,
+       "lap_s": 25.26,
+       "frames": 1263,
+       "score": 873.7,
+       "offtrack_pct": 0.0,
+       "avg_speed": 46.1,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 34,
+       "finished": true,
+       "lap_s": 23.46,
+       "frames": 1173,
+       "score": 882.7,
+       "offtrack_pct": 0.0,
+       "avg_speed": 47.3,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 55,
+       "finished": true,
+       "lap_s": 23.54,
+       "frames": 1177,
+       "score": 882.3,
+       "offtrack_pct": 0.5,
+       "avg_speed": 46.0,
+       "reached_pct": 100.0,
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "seed": 1,
+     "train_seconds": 3890.2,
+     "selected": {
+      "timestep": 2725024
+     },
+     "validation": {
+      "finished": 5,
+      "mean_lap_s": 20.696
+     },
+     "summary": {
+      "finished": 5,
+      "lap_s": 21.87,
+      "score": 890.6,
+      "offtrack_pct": 1.4
+     },
+     "tracks": [
+      {
+       "seed": 3,
+       "finished": true,
+       "lap_s": 19.72,
+       "frames": 986,
+       "score": 901.4,
+       "offtrack_pct": 0.0,
+       "avg_speed": 47.6,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 11,
+       "finished": true,
+       "lap_s": 18.84,
+       "frames": 942,
+       "score": 905.8,
+       "offtrack_pct": 4.5,
+       "avg_speed": 47.8,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 21,
+       "finished": true,
+       "lap_s": 24.38,
+       "frames": 1219,
+       "score": 878.1,
+       "offtrack_pct": 2.0,
+       "avg_speed": 49.0,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 34,
+       "finished": true,
+       "lap_s": 23.66,
+       "frames": 1183,
+       "score": 881.7,
+       "offtrack_pct": 0.4,
+       "avg_speed": 47.2,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 55,
+       "finished": true,
+       "lap_s": 22.76,
+       "frames": 1138,
+       "score": 886.2,
+       "offtrack_pct": 0.0,
+       "avg_speed": 47.5,
+       "reached_pct": 100.0,
+       "crashed": false
+      }
+     ]
+    }
+   ],
+   "kept_seed": 1,
+   "action_smoothing": 0.1,
+   "controls": "raw3",
+   "action_repeat": 4,
+   "parent": "p14_raw3_r4_g995",
+   "lidar_rays": 32,
+   "lidar_fov": 240.0,
+   "train": {
+    "entropy-coef": 0.005,
+    "normalize-reward": true,
+    "num-envs": 8,
+    "batch-size": 256,
+    "offtrack-penalty": 0.0,
+    "allow-multiple-laps": false,
+    "max-episode-steps": 2000,
+    "eval-frequency": 0,
+    "checkpoint-frequency": 0,
+    "lap-check-frequency": 25000,
+    "n-steps": 256,
+    "gamma": 0.995,
+    "total-timesteps": 3000000,
+    "seed": 1
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "e5e467d",
+   "trained_on": "2026-10-16",
+   "train_seconds": 3890.2,
+   "selected": {
+    "timestep": 2725024
+   },
+   "size": {
+    "params": 153607,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 5,
+    "lap_s": 21.87,
+    "score": 890.6,
+    "offtrack_pct": 1.4
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 19.72,
+     "frames": 986,
+     "score": 901.4,
+     "offtrack_pct": 0.0,
+     "avg_speed": 47.6,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 18.84,
+     "frames": 942,
+     "score": 905.8,
+     "offtrack_pct": 4.5,
+     "avg_speed": 47.8,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": true,
+     "lap_s": 24.38,
+     "frames": 1219,
+     "score": 878.1,
+     "offtrack_pct": 2.0,
+     "avg_speed": 49.0,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": true,
+     "lap_s": 23.66,
+     "frames": 1183,
+     "score": 881.7,
+     "offtrack_pct": 0.4,
+     "avg_speed": 47.2,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": true,
+     "lap_s": 22.76,
+     "frames": 1138,
+     "score": 886.2,
+     "offtrack_pct": 0.0,
+     "avg_speed": 47.5,
+     "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "n04_long_episodes",
    "model": "neat",
    "title": "2000-frame training episodes",
@@ -332,6 +599,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "n02_forward_rays",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -426,6 +695,118 @@
    ]
   },
   {
+   "id": "ppo16",
+   "model": "ppo",
+   "title": "PPO 16: the lab winner",
+   "why": "The recipe the PPO lab found (p14): decide every 4 frames and hold the controls in between, plan further ahead\n(gamma 0.995), rewards normalised, 16 rays facing forward over ±120°. On the ladder it finished 4 of 5 race tracks on\nboth seeds after 13–34 min. Trained from scratch for 8 hours.",
+   "outcome": "The quick learner. It lapped all five validation tracks after 5 minutes, sooner than any NEAT car, and that checkpoint finishes 4 of 5 race tracks (25.1 s; it misses track 34). Its fastest checkpoint came at 2 h 32 min and finishes all five race tracks in 23.1 s, 2.3 s slower than NEAT 16: its 20.1 s validation laps didn't fully carry over (track 11 took 28.3 s). The last 5 hours added nothing; it held all five validation tracks less and less often. Paused once at 4 h 41 min and resumed from its last checkpoint.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": 0.1,
+   "controls": "raw3",
+   "action_repeat": 4,
+   "parent": "p14_raw3_r4_g995",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "entropy-coef": 0.005,
+    "normalize-reward": true,
+    "num-envs": 8,
+    "batch-size": 256,
+    "offtrack-penalty": 0.0,
+    "allow-multiple-laps": false,
+    "max-episode-steps": 2000,
+    "eval-frequency": 0,
+    "checkpoint-frequency": 0,
+    "lap-check-frequency": 25000,
+    "n-steps": 256,
+    "gamma": 0.995,
+    "max-hours": 8,
+    "total-timesteps": 100000000
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "e5e467d",
+   "trained_on": "2026-10-17",
+   "train_seconds": 9119.8,
+   "selected": {
+    "timestep": 12125024
+   },
+   "size": {
+    "params": 145415,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 5,
+    "lap_s": 23.06,
+    "score": 884.7,
+    "offtrack_pct": 2.8
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 18.66,
+     "frames": 933,
+     "score": 906.7,
+     "offtrack_pct": 0.0,
+     "avg_speed": 50.3,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 28.3,
+     "frames": 1415,
+     "score": 858.5,
+     "offtrack_pct": 11.6,
+     "avg_speed": 52.0,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": true,
+     "lap_s": 24.82,
+     "frames": 1241,
+     "score": 875.9,
+     "offtrack_pct": 0.0,
+     "avg_speed": 47.3,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": true,
+     "lap_s": 21.3,
+     "frames": 1065,
+     "score": 893.5,
+     "offtrack_pct": 2.2,
+     "avg_speed": 53.5,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": true,
+     "lap_s": 22.2,
+     "frames": 1110,
+     "score": 889.0,
+     "offtrack_pct": 0.0,
+     "avg_speed": 48.4,
+     "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "n02_forward_rays",
    "model": "neat",
    "title": "16 forward rays instead of 32 all around",
@@ -434,6 +815,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "n01_lap_time",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -535,6 +918,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "neat16",
    "lidar_rays": 32,
    "lidar_fov": 240.0,
@@ -631,6 +1016,529 @@
    ]
   },
   {
+   "id": "p16_raw3_r4_g995_lap_bonus",
+   "model": "ppo",
+   "title": "A lap-time bonus",
+   "why": "A lap-time bonus. Same as p14 plus +1 per frame a lap beats 1000 frames, the bonus the NEAT cars train with: does it make PPO faster without crashing?\nThe PPO lab (scripts/ppo_lab.py, short 600k-frame runs on 3 seeds, validation tracks only) found that PPO deciding every frame never learns to finish, in any control mode. Recipe 'raw3_r4_g995' scored best (seed 0: best 5/5, final 2/5, seed 1: best 5/5, final 2/5, seed 2: best 5/5, final 5/5). This step trains it for 3M frames on two seeds, benchmarked like every other step.",
+   "outcome": "Seed 0 4/5, seed 1 3/5. Seed 0 kept the same checkpoint as p14 (the bonus only pays for laps under 20 s, which it didn't drive yet at 13 min); later it held 5/5 on validation less often (7% of lap checks against 28%). As with NEAT Smart, the speed bonus makes the car less reliable, so the PPO cars train without it.",
+   "seed_runs": [
+    {
+     "seed": 0,
+     "train_seconds": 777.3,
+     "selected": {
+      "timestep": 1150016
+     },
+     "validation": {
+      "finished": 5,
+      "mean_lap_s": 21.14
+     },
+     "summary": {
+      "finished": 4,
+      "lap_s": 21.68,
+      "score": 839.5,
+      "offtrack_pct": 8.0
+     },
+     "tracks": [
+      {
+       "seed": 3,
+       "finished": true,
+       "lap_s": 21.16,
+       "frames": 1058,
+       "score": 894.2,
+       "offtrack_pct": 2.6,
+       "avg_speed": 49.6,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 11,
+       "finished": true,
+       "lap_s": 19.34,
+       "frames": 967,
+       "score": 903.3,
+       "offtrack_pct": 0.9,
+       "avg_speed": 47.0,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 21,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 631.4,
+       "offtrack_pct": 33.5,
+       "avg_speed": 50.5,
+       "reached_pct": 83.1,
+       "crashed": false
+      },
+      {
+       "seed": 34,
+       "finished": true,
+       "lap_s": 23.52,
+       "frames": 1176,
+       "score": 882.4,
+       "offtrack_pct": 2.0,
+       "avg_speed": 48.5,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 55,
+       "finished": true,
+       "lap_s": 22.72,
+       "frames": 1136,
+       "score": 886.4,
+       "offtrack_pct": 1.1,
+       "avg_speed": 47.9,
+       "reached_pct": 100.0,
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "seed": 1,
+     "train_seconds": 2035.6,
+     "selected": {
+      "timestep": 2675008
+     },
+     "validation": {
+      "finished": 5,
+      "mean_lap_s": 21.868
+     },
+     "summary": {
+      "finished": 3,
+      "lap_s": 22.03,
+      "score": 757.9,
+      "offtrack_pct": 12.4
+     },
+     "tracks": [
+      {
+       "seed": 3,
+       "finished": true,
+       "lap_s": 19.8,
+       "frames": 990,
+       "score": 901.0,
+       "offtrack_pct": 0.0,
+       "avg_speed": 47.4,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 11,
+       "finished": true,
+       "lap_s": 18.54,
+       "frames": 927,
+       "score": 907.3,
+       "offtrack_pct": 1.0,
+       "avg_speed": 47.9,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 21,
+       "finished": true,
+       "lap_s": 27.76,
+       "frames": 1388,
+       "score": 861.2,
+       "offtrack_pct": 3.2,
+       "avg_speed": 43.2,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 34,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 737.9,
+       "offtrack_pct": 11.6,
+       "avg_speed": 44.6,
+       "reached_pct": 93.8,
+       "crashed": false
+      },
+      {
+       "seed": 55,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 382.0,
+       "offtrack_pct": 46.2,
+       "avg_speed": 27.8,
+       "reached_pct": 58.2,
+       "crashed": false
+      }
+     ]
+    }
+   ],
+   "kept_seed": 0,
+   "action_smoothing": 0.1,
+   "controls": "raw3",
+   "action_repeat": 4,
+   "parent": "p14_raw3_r4_g995",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "entropy-coef": 0.005,
+    "normalize-reward": true,
+    "num-envs": 8,
+    "batch-size": 256,
+    "offtrack-penalty": 0.0,
+    "allow-multiple-laps": false,
+    "max-episode-steps": 2000,
+    "eval-frequency": 0,
+    "checkpoint-frequency": 0,
+    "lap-check-frequency": 25000,
+    "n-steps": 256,
+    "gamma": 0.995,
+    "lap-time-bonus": 1.0,
+    "total-timesteps": 3000000,
+    "seed": 0
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "e5e467d",
+   "trained_on": "2026-10-16",
+   "train_seconds": 777.3,
+   "selected": {
+    "timestep": 1150016
+   },
+   "size": {
+    "params": 145415,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 4,
+    "lap_s": 21.68,
+    "score": 839.5,
+    "offtrack_pct": 8.0
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 21.16,
+     "frames": 1058,
+     "score": 894.2,
+     "offtrack_pct": 2.6,
+     "avg_speed": 49.6,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 19.34,
+     "frames": 967,
+     "score": 903.3,
+     "offtrack_pct": 0.9,
+     "avg_speed": 47.0,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 631.4,
+     "offtrack_pct": 33.5,
+     "avg_speed": 50.5,
+     "reached_pct": 83.1,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": true,
+     "lap_s": 23.52,
+     "frames": 1176,
+     "score": 882.4,
+     "offtrack_pct": 2.0,
+     "avg_speed": 48.5,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": true,
+     "lap_s": 22.72,
+     "frames": 1136,
+     "score": 886.4,
+     "offtrack_pct": 1.1,
+     "avg_speed": 47.9,
+     "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
+   "id": "p14_raw3_r4_g995",
+   "model": "ppo",
+   "title": "PPO lab winner: raw3 controls, decide every 4 frames",
+   "why": "The PPO lab (scripts/ppo_lab.py, short 600k-frame runs on 3 seeds, validation tracks only) found that PPO deciding every frame never learns to finish, in any control mode. Recipe 'raw3_r4_g995' scored best (seed 0: best 5/5, final 2/5, seed 1: best 5/5, final 2/5, seed 2: best 5/5, final 5/5). This step trains it for 3M frames on two seeds, benchmarked like every other step.",
+   "outcome": "4/5 on both seeds (21.7 s and 23.2 s mean laps), the first PPO step to finish most race tracks under the fair rules. The kept seed needed 13 minutes. Deciding every 4 frames cut an episode from 2000 to 500 decisions, so PPO could connect a steering choice with the tiles it earned; planning further ahead (gamma 0.995) then made it hold up on all three lab seeds.",
+   "seed_runs": [
+    {
+     "seed": 0,
+     "train_seconds": 779.0,
+     "selected": {
+      "timestep": 1150016
+     },
+     "validation": {
+      "finished": 5,
+      "mean_lap_s": 21.14
+     },
+     "summary": {
+      "finished": 4,
+      "lap_s": 21.68,
+      "score": 839.5,
+      "offtrack_pct": 8.0
+     },
+     "tracks": [
+      {
+       "seed": 3,
+       "finished": true,
+       "lap_s": 21.16,
+       "frames": 1058,
+       "score": 894.2,
+       "offtrack_pct": 2.6,
+       "avg_speed": 49.6,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 11,
+       "finished": true,
+       "lap_s": 19.34,
+       "frames": 967,
+       "score": 903.3,
+       "offtrack_pct": 0.9,
+       "avg_speed": 47.0,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 21,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 631.4,
+       "offtrack_pct": 33.5,
+       "avg_speed": 50.5,
+       "reached_pct": 83.1,
+       "crashed": false
+      },
+      {
+       "seed": 34,
+       "finished": true,
+       "lap_s": 23.52,
+       "frames": 1176,
+       "score": 882.4,
+       "offtrack_pct": 2.0,
+       "avg_speed": 48.5,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 55,
+       "finished": true,
+       "lap_s": 22.72,
+       "frames": 1136,
+       "score": 886.4,
+       "offtrack_pct": 1.1,
+       "avg_speed": 47.9,
+       "reached_pct": 100.0,
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "seed": 1,
+     "train_seconds": 2022.7,
+     "selected": {
+      "timestep": 2375008
+     },
+     "validation": {
+      "finished": 5,
+      "mean_lap_s": 21.436
+     },
+     "summary": {
+      "finished": 4,
+      "lap_s": 23.15,
+      "score": 852.7,
+      "offtrack_pct": 9.3
+     },
+     "tracks": [
+      {
+       "seed": 3,
+       "finished": true,
+       "lap_s": 20.02,
+       "frames": 1001,
+       "score": 899.9,
+       "offtrack_pct": 0.0,
+       "avg_speed": 47.2,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 11,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 726.6,
+       "offtrack_pct": 45.4,
+       "avg_speed": 32.0,
+       "reached_pct": 92.7,
+       "crashed": false
+      },
+      {
+       "seed": 21,
+       "finished": true,
+       "lap_s": 25.42,
+       "frames": 1271,
+       "score": 872.9,
+       "offtrack_pct": 0.0,
+       "avg_speed": 46.3,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 34,
+       "finished": true,
+       "lap_s": 24.06,
+       "frames": 1203,
+       "score": 879.7,
+       "offtrack_pct": 1.0,
+       "avg_speed": 46.7,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 55,
+       "finished": true,
+       "lap_s": 23.1,
+       "frames": 1155,
+       "score": 884.5,
+       "offtrack_pct": 0.0,
+       "avg_speed": 46.5,
+       "reached_pct": 100.0,
+       "crashed": false
+      }
+     ]
+    }
+   ],
+   "kept_seed": 0,
+   "action_smoothing": 0.1,
+   "controls": "raw3",
+   "action_repeat": 4,
+   "parent": "p11_normalize_reward",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "entropy-coef": 0.005,
+    "normalize-reward": true,
+    "num-envs": 8,
+    "batch-size": 256,
+    "offtrack-penalty": 0.0,
+    "allow-multiple-laps": false,
+    "max-episode-steps": 2000,
+    "eval-frequency": 0,
+    "checkpoint-frequency": 0,
+    "lap-check-frequency": 25000,
+    "n-steps": 256,
+    "gamma": 0.995,
+    "total-timesteps": 3000000,
+    "seed": 0
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "eed4c43",
+   "trained_on": "2026-10-16",
+   "train_seconds": 779.0,
+   "selected": {
+    "timestep": 1150016
+   },
+   "size": {
+    "params": 145415,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 4,
+    "lap_s": 21.68,
+    "score": 839.5,
+    "offtrack_pct": 8.0
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 21.16,
+     "frames": 1058,
+     "score": 894.2,
+     "offtrack_pct": 2.6,
+     "avg_speed": 49.6,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 19.34,
+     "frames": 967,
+     "score": 903.3,
+     "offtrack_pct": 0.9,
+     "avg_speed": 47.0,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 631.4,
+     "offtrack_pct": 33.5,
+     "avg_speed": 50.5,
+     "reached_pct": 83.1,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": true,
+     "lap_s": 23.52,
+     "frames": 1176,
+     "score": 882.4,
+     "offtrack_pct": 2.0,
+     "avg_speed": 48.5,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": true,
+     "lap_s": 22.72,
+     "frames": 1136,
+     "score": 886.4,
+     "offtrack_pct": 1.1,
+     "avg_speed": 47.9,
+     "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "p06_rays_only",
    "model": "ppo",
    "title": "Check: control + 16 forward rays",
@@ -639,6 +1547,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "p05_control",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -744,6 +1654,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "n00_baseline",
    "lidar_rays": 32,
    "lidar_fov": null,
@@ -845,6 +1757,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": 0.0,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "neat16",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -944,7 +1858,7 @@
    "model": "ppo",
    "title": "Normalise the reward",
    "why": "Tile rewards (+3.7), the time penalty (-0.1 per frame) and the end of a lap sit on very different scales, which\nmakes PPO's value estimates jumpy. Here the reward is scaled by a running estimate of the return's spread\n(VecNormalize, rewards only). Everything else as p10.",
-   "outcome": "",
+   "outcome": "Seed 0 0/5, seed 1 2/5 (17.5 and 18.3 s laps). The only one of p10-p13 that helped, but the policy still peaked after about 4 minutes and then got worse. The exploration noise never shrank (std about 0.8 all run).",
    "seed_runs": [
     {
      "seed": 0,
@@ -1097,6 +2011,8 @@
    ],
    "kept_seed": 1,
    "action_smoothing": 0.1,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "p10_fair_rules",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -1197,6 +2113,268 @@
    ]
   },
   {
+   "id": "p12_calm_exploration",
+   "model": "ppo",
+   "title": "Calmer exploration (gSDE)",
+   "why": "PPO starts with action noise of standard deviation 1.0 on a steering range of -1 to 1: early on the car can\nhardly drive straight. Here the noise starts much smaller (log std -2) and is state-dependent and smooth over\n4 frames (gSDE), as in the RL Zoo's CarRacing recipe. Everything else as p11.",
+   "outcome": "Seed 0 0/5, seed 1 1/5 (17.7 s), with 99-100% of the lap on three more tracks. Smoother driving, but no more finishes than p11.",
+   "seed_runs": [
+    {
+     "seed": 0,
+     "train_seconds": 20.6,
+     "selected": {
+      "timestep": 25000
+     },
+     "validation": {
+      "finished": 0,
+      "mean_lap_s": null
+     },
+     "summary": {
+      "finished": 0,
+      "lap_s": null,
+      "score": -162.2,
+      "offtrack_pct": 96.4
+     },
+     "tracks": [
+      {
+       "seed": 3,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -159.4,
+       "offtrack_pct": 96.5,
+       "avg_speed": 10.4,
+       "reached_pct": 4.1,
+       "crashed": false
+      },
+      {
+       "seed": 11,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -153.7,
+       "offtrack_pct": 96.0,
+       "avg_speed": 17.7,
+       "reached_pct": 4.6,
+       "crashed": false
+      },
+      {
+       "seed": 21,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -167.5,
+       "offtrack_pct": 96.5,
+       "avg_speed": 10.5,
+       "reached_pct": 3.3,
+       "crashed": false
+      },
+      {
+       "seed": 34,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -165.8,
+       "offtrack_pct": 96.5,
+       "avg_speed": 10.4,
+       "reached_pct": 3.4,
+       "crashed": false
+      },
+      {
+       "seed": 55,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -164.6,
+       "offtrack_pct": 96.5,
+       "avg_speed": 10.4,
+       "reached_pct": 3.5,
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "seed": 1,
+     "train_seconds": 72.7,
+     "selected": {
+      "timestep": 75000
+     },
+     "validation": {
+      "finished": 1,
+      "mean_lap_s": 17.12
+     },
+     "summary": {
+      "finished": 1,
+      "lap_s": 17.74,
+      "score": 684.6,
+      "offtrack_pct": 31.4
+     },
+     "tracks": [
+      {
+       "seed": 3,
+       "finished": true,
+       "lap_s": 17.74,
+       "frames": 887,
+       "score": 911.3,
+       "offtrack_pct": 0.0,
+       "avg_speed": 52.2,
+       "reached_pct": 100.0,
+       "crashed": false
+      },
+      {
+       "seed": 11,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 796.1,
+       "offtrack_pct": 42.8,
+       "avg_speed": 47.4,
+       "reached_pct": 99.6,
+       "crashed": false
+      },
+      {
+       "seed": 21,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 134.3,
+       "offtrack_pct": 77.5,
+       "avg_speed": 38.0,
+       "reached_pct": 33.4,
+       "crashed": false
+      },
+      {
+       "seed": 34,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 790.7,
+       "offtrack_pct": 22.6,
+       "avg_speed": 56.0,
+       "reached_pct": 99.1,
+       "crashed": false
+      },
+      {
+       "seed": 55,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 790.4,
+       "offtrack_pct": 14.2,
+       "avg_speed": 58.0,
+       "reached_pct": 99.0,
+       "crashed": false
+      }
+     ]
+    }
+   ],
+   "kept_seed": 1,
+   "action_smoothing": 0.1,
+   "controls": "raw3",
+   "action_repeat": 1,
+   "parent": "p11_normalize_reward",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "entropy-coef": 0.005,
+    "normalize-reward": true,
+    "use-sde": true,
+    "sde-sample-freq": 4,
+    "log-std-init": -2.0,
+    "total-timesteps": 1000000,
+    "num-envs": 8,
+    "n-steps": 1024,
+    "batch-size": 256,
+    "offtrack-penalty": 0.0,
+    "allow-multiple-laps": false,
+    "max-episode-steps": 2000,
+    "eval-frequency": 50000,
+    "checkpoint-frequency": 0,
+    "seed": 1
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "eed4c43",
+   "trained_on": "2026-10-14",
+   "train_seconds": 72.7,
+   "selected": {
+    "timestep": 75000
+   },
+   "size": {
+    "params": 146180,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 1,
+    "lap_s": 17.74,
+    "score": 684.6,
+    "offtrack_pct": 31.4
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 17.74,
+     "frames": 887,
+     "score": 911.3,
+     "offtrack_pct": 0.0,
+     "avg_speed": 52.2,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 796.1,
+     "offtrack_pct": 42.8,
+     "avg_speed": 47.4,
+     "reached_pct": 99.6,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 134.3,
+     "offtrack_pct": 77.5,
+     "avg_speed": 38.0,
+     "reached_pct": 33.4,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 790.7,
+     "offtrack_pct": 22.6,
+     "avg_speed": 56.0,
+     "reached_pct": 99.1,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 790.4,
+     "offtrack_pct": 14.2,
+     "avg_speed": 58.0,
+     "reached_pct": 99.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "p00_baseline",
    "model": "ppo",
    "title": "Baseline: PPO, stopped at its peak",
@@ -1205,6 +2383,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": null,
    "lidar_rays": 32,
    "lidar_fov": null,
@@ -1308,6 +2488,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "p00_baseline",
    "lidar_rays": 32,
    "lidar_fov": null,
@@ -1562,6 +2744,8 @@
    ],
    "kept_seed": 0,
    "action_smoothing": 0.1,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "p06_rays_only",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -1669,6 +2853,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "p02_forward_rays",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -1779,6 +2965,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "p05_control",
    "lidar_rays": 32,
    "lidar_fov": null,
@@ -1877,6 +3065,273 @@
    ]
   },
   {
+   "id": "p13_zoo_settings",
+   "model": "ppo",
+   "title": "RL Zoo's PPO settings for CarRacing",
+   "why": "The update settings known to work for PPO on CarRacing (RL Baselines3 Zoo): shorter rollouts (512 steps per env),\nsmaller batches (128), a lower learning rate (1e-4) easing off over the run, no entropy bonus, and one 256-unit\nlayer. Everything else as p12.",
+   "outcome": "0/5 on both seeds (best lap check 1/5). Settings that work for PPO on CarRacing's pixels did not carry over to our compact state. The PPO lab came next: the problem turned out to be how often PPO decides, not its hyperparameters.",
+   "seed_runs": [
+    {
+     "seed": 0,
+     "train_seconds": 19.9,
+     "selected": {
+      "timestep": 25000
+     },
+     "validation": {
+      "finished": 0,
+      "mean_lap_s": null
+     },
+     "summary": {
+      "finished": 0,
+      "lap_s": null,
+      "score": -49.9,
+      "offtrack_pct": 88.7
+     },
+     "tracks": [
+      {
+       "seed": 3,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -37.6,
+       "offtrack_pct": 88.0,
+       "avg_speed": 27.4,
+       "reached_pct": 16.2,
+       "crashed": false
+      },
+      {
+       "seed": 11,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 16.2,
+       "offtrack_pct": 86.8,
+       "avg_speed": 27.0,
+       "reached_pct": 21.6,
+       "crashed": false
+      },
+      {
+       "seed": 21,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -87.6,
+       "offtrack_pct": 89.5,
+       "avg_speed": 15.3,
+       "reached_pct": 11.2,
+       "crashed": false
+      },
+      {
+       "seed": 34,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -82.0,
+       "offtrack_pct": 89.8,
+       "avg_speed": 27.7,
+       "reached_pct": 11.8,
+       "crashed": false
+      },
+      {
+       "seed": 55,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": -58.5,
+       "offtrack_pct": 89.6,
+       "avg_speed": 22.5,
+       "reached_pct": 14.1,
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "seed": 1,
+     "train_seconds": 273.5,
+     "selected": {
+      "timestep": 250000
+     },
+     "validation": {
+      "finished": 1,
+      "mean_lap_s": 14.1
+     },
+     "summary": {
+      "finished": 0,
+      "lap_s": null,
+      "score": 551.6,
+      "offtrack_pct": 52.6
+     },
+     "tracks": [
+      {
+       "seed": 3,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 667.2,
+       "offtrack_pct": 59.9,
+       "avg_speed": 51.4,
+       "reached_pct": 86.7,
+       "crashed": false
+      },
+      {
+       "seed": 11,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 788.4,
+       "offtrack_pct": 15.6,
+       "avg_speed": 56.5,
+       "reached_pct": 98.8,
+       "crashed": false
+      },
+      {
+       "seed": 21,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 95.9,
+       "offtrack_pct": 86.8,
+       "avg_speed": 42.9,
+       "reached_pct": 29.6,
+       "crashed": false
+      },
+      {
+       "seed": 34,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 654.0,
+       "offtrack_pct": 45.5,
+       "avg_speed": 54.0,
+       "reached_pct": 85.4,
+       "crashed": false
+      },
+      {
+       "seed": 55,
+       "finished": false,
+       "lap_s": null,
+       "frames": 2000,
+       "score": 552.4,
+       "offtrack_pct": 55.1,
+       "avg_speed": 54.6,
+       "reached_pct": 75.2,
+       "crashed": false
+      }
+     ]
+    }
+   ],
+   "kept_seed": 1,
+   "action_smoothing": 0.1,
+   "controls": "raw3",
+   "action_repeat": 1,
+   "parent": "p12_calm_exploration",
+   "lidar_rays": 16,
+   "lidar_fov": 240.0,
+   "train": {
+    "entropy-coef": 0.0,
+    "normalize-reward": true,
+    "use-sde": true,
+    "sde-sample-freq": 4,
+    "log-std-init": -2.0,
+    "learning-rate": 0.0001,
+    "lr-schedule": "linear",
+    "policy-hidden-sizes": [
+     256
+    ],
+    "total-timesteps": 1000000,
+    "num-envs": 8,
+    "n-steps": 512,
+    "batch-size": 128,
+    "offtrack-penalty": 0.0,
+    "allow-multiple-laps": false,
+    "max-episode-steps": 2000,
+    "eval-frequency": 50000,
+    "checkpoint-frequency": 0,
+    "seed": 1
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "eed4c43",
+   "trained_on": "2026-10-14",
+   "train_seconds": 273.5,
+   "selected": {
+    "timestep": 250000
+   },
+   "size": {
+    "params": 14596,
+    "label": "256 MLP"
+   },
+   "summary": {
+    "finished": 0,
+    "lap_s": null,
+    "score": 551.6,
+    "offtrack_pct": 52.6
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 667.2,
+     "offtrack_pct": 59.9,
+     "avg_speed": 51.4,
+     "reached_pct": 86.7,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 788.4,
+     "offtrack_pct": 15.6,
+     "avg_speed": 56.5,
+     "reached_pct": 98.8,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 95.9,
+     "offtrack_pct": 86.8,
+     "avg_speed": 42.9,
+     "reached_pct": 29.6,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 654.0,
+     "offtrack_pct": 45.5,
+     "avg_speed": 54.0,
+     "reached_pct": 85.4,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": false,
+     "lap_s": null,
+     "frames": 2000,
+     "score": 552.4,
+     "offtrack_pct": 55.1,
+     "avg_speed": 54.6,
+     "reached_pct": 75.2,
+     "crashed": false
+    }
+   ]
+  },
+  {
    "id": "p02_forward_rays",
    "model": "ppo",
    "title": "16 forward rays instead of 32 all around",
@@ -1885,6 +3340,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "p01_lap_time",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -1995,6 +3452,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "p00_baseline",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -2101,6 +3560,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "p06_rays_only",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -2207,6 +3668,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "p00_baseline",
    "lidar_rays": 32,
    "lidar_fov": null,
@@ -2317,6 +3780,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "p08_longer",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -2424,6 +3889,8 @@
    "seed_runs": null,
    "kept_seed": null,
    "action_smoothing": null,
+   "controls": "raw3",
+   "action_repeat": 1,
    "parent": "n02_forward_rays",
    "lidar_rays": 16,
    "lidar_fov": 240.0,
@@ -2519,18 +3986,5 @@
    ]
   }
  ],
- "pending": [
-  {
-   "id": "p12_calm_exploration",
-   "model": "ppo",
-   "title": "Calmer exploration (gSDE)",
-   "why": "PPO starts with action noise of standard deviation 1.0 on a steering range of -1 to 1: early on the car can\nhardly drive straight. Here the noise starts much smaller (log std -2) and is state-dependent and smooth over\n4 frames (gSDE), as in the RL Zoo's CarRacing recipe. Everything else as p11."
-  },
-  {
-   "id": "p13_zoo_settings",
-   "model": "ppo",
-   "title": "RL Zoo's PPO settings for CarRacing",
-   "why": "The update settings known to work for PPO on CarRacing (RL Baselines3 Zoo): shorter rollouts (512 steps per env),\nsmaller batches (128), a lower learning rate (1e-4) easing off over the run, no entropy bonus, and one 256-unit\nlayer. Everything else as p12."
-  }
- ]
+ "pending": []
 }

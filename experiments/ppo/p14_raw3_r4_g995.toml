@@ -1,0 +1,32 @@
+id = "p14_raw3_r4_g995"
+model = "ppo"
+parent = "p11_normalize_reward"
+title = "PPO lab winner: raw3 controls, decide every 4 frames"
+why = """
+The PPO lab (scripts/ppo_lab.py, short 600k-frame runs on 3 seeds, validation tracks only) found that PPO deciding every frame never learns to finish, in any control mode. Recipe 'raw3_r4_g995' scored best (seed 0: best 5/5, final 2/5, seed 1: best 5/5, final 2/5, seed 2: best 5/5, final 5/5). This step trains it for 3M frames on two seeds, benchmarked like every other step.
+"""
+lidar_rays = 16
+lidar_fov = 240
+action_smoothing = 0.1
+controls = "raw3"
+action_repeat = 4
+seeds = [0, 1]
+
+outcome = """
+4/5 on both seeds (21.7 s and 23.2 s mean laps), the first PPO step to finish most race tracks under the fair rules. The kept seed needed 13 minutes. Deciding every 4 frames cut an episode from 2000 to 500 decisions, so PPO could connect a steering choice with the tiles it earned; planning further ahead (gamma 0.995) then made it hold up on all three lab seeds.
+"""
+
+[train]
+entropy-coef = 0.005
+normalize-reward = true
+num-envs = 8
+batch-size = 256
+offtrack-penalty = 0.0
+allow-multiple-laps = false
+max-episode-steps = 2000
+eval-frequency = 0
+checkpoint-frequency = 0
+lap-check-frequency = 25000
+n-steps = 256
+gamma = 0.995
+total-timesteps = 3000000

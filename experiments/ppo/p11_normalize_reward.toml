@@ -12,6 +12,10 @@ lidar_fov = 240
 action_smoothing = 0.1
 seeds = [0, 1]
 
+outcome = """
+Seed 0 0/5, seed 1 2/5 (17.5 and 18.3 s laps). The only one of p10-p13 that helped, but the policy still peaked after about 4 minutes and then got worse. The exploration noise never shrank (std about 0.8 all run).
+"""
+
 [train]
 entropy-coef = 0.005
 normalize-reward = true

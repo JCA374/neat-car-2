@@ -19,7 +19,9 @@ RESERVED_SEEDS = set(VALIDATION_SEEDS) | set(BENCHMARK_SEEDS) | set(EXHIBITION_S
 MAX_FRAMES = 2000          # 40 s at 50 fps; training episodes, lap checks and the benchmark alike
 FPS = 50
 
-# Controls: the same action smoothing for every new model (blend with the previous action).
+# Controls: the same action smoothing for every new model (blend with the previous action),
+# applied to the final steer/gas/brake every frame. How a model's outputs become those three
+# controls, and how often it decides (carracing/controls.py), is the model's own choice, like its network.
 ACTION_SMOOTHING = 0.1
 
 # Model selection and budget.

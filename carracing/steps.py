@@ -34,6 +34,8 @@ class Step:
     championship: bool = False         # pick two checkpoints from the lap check: first to finish, fastest
     action_smoothing: float = 0.0      # PPO: blend with the previous action (NEAT does this in its decoder)
     seeds: List[int] = field(default_factory=list)  # PPO: train once per seed, keep the best on validation
+    controls: str = "raw3"             # PPO: how outputs become steer/gas/brake (carracing/controls.py)
+    action_repeat: int = 1             # PPO: decide every N frames
     # Compatibility with models trained before Oct 12 2026 (n00/p00 only).
     legacy_decode: bool = False
     legacy_traction: bool = False
@@ -60,6 +62,10 @@ class Step:
             flags.append("--drop-heading")
         if self.model == "ppo" and self.action_smoothing:
             flags += ["--action-smoothing", str(self.action_smoothing)]
+        if self.model == "ppo" and self.controls != "raw3":
+            flags += ["--controls", self.controls]
+        if self.model == "ppo" and self.action_repeat > 1:
+            flags += ["--action-repeat", str(self.action_repeat)]
         return flags
 
     @property
@@ -93,6 +99,7 @@ def load_step(path: str) -> Step:
         championship=bool(raw.get("championship", False)),
         action_smoothing=float(raw.get("action_smoothing", 0.0)),
         seeds=[int(s) for s in raw.get("seeds", [])],
+        controls=raw.get("controls", "raw3"), action_repeat=int(raw.get("action_repeat", 1)),
         legacy_decode=bool(raw.get("legacy_decode", False)),
         legacy_traction=bool(raw.get("legacy_traction", False)),
         train=dict(raw.get("train", {})), neat_config=dict(raw.get("neat_config", {})),
