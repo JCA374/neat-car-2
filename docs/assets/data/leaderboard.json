@@ -14,7 +14,7 @@
  },
  "champions": {
   "neat": "n05_more_generations",
-  "ppo": "p15_raw3_r4_g995_32rays"
+  "ppo": "pposmart"
  },
  "steps": [
   {
@@ -116,6 +116,119 @@
      "score": 898.3,
      "offtrack_pct": 0.0,
      "avg_speed": 52.1,
+     "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
+   "id": "pposmart",
+   "model": "ppo",
+   "title": "PPO Smart: the steady one",
+   "why": "PPO 32 with a learning rate that eases off to zero over the run. Every PPO run so far slips back after its best lap\ncheck (p15 seed 1 ended at 4/5); smaller and smaller updates should let it settle on a good driver instead of\nwandering away from it. The lap-time bonus was not used: on the ladder it made PPO less reliable (p16), as it did\nNEAT Smart. The schedule is sized for 8 hours (about 20M frames at PPO 32's pace on this laptop).",
+   "outcome": "The steady one, and the fastest Championship car that finishes every race track: 20.58 s on all five, 0.2 s quicker than NEAT 16 and almost never on the grass (0.2% of frames). The easing learning rate did what it was meant to: where PPO 32 fell apart after hour 2, PPO Smart got steadier, holding all five validation tracks in 59% of lap checks in its last hour against PPO 32's 0%. Its fastest checkpoint came at 5 h 21 min. The schedule was sized at 20M frames and finished after 6 h 25 min, under the 8 h budget. Its 4-minute checkpoint finishes 4 of 5 race tracks (34.3 s).",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": 0.1,
+   "controls": "raw3",
+   "action_repeat": 4,
+   "parent": "p15_raw3_r4_g995_32rays",
+   "lidar_rays": 32,
+   "lidar_fov": 240.0,
+   "train": {
+    "entropy-coef": 0.005,
+    "normalize-reward": true,
+    "num-envs": 8,
+    "batch-size": 256,
+    "offtrack-penalty": 0.0,
+    "allow-multiple-laps": false,
+    "max-episode-steps": 2000,
+    "eval-frequency": 0,
+    "checkpoint-frequency": 0,
+    "lap-check-frequency": 25000,
+    "n-steps": 256,
+    "gamma": 0.995,
+    "max-hours": 8,
+    "total-timesteps": 20000000,
+    "lr-schedule": "linear"
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "9ccf0f3",
+   "trained_on": "2026-10-17",
+   "train_seconds": 19257.1,
+   "selected": {
+    "timestep": 16700000
+   },
+   "size": {
+    "params": 153607,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 5,
+    "lap_s": 20.58,
+    "score": 897.1,
+    "offtrack_pct": 0.2
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 18.34,
+     "frames": 917,
+     "score": 908.3,
+     "offtrack_pct": 0.0,
+     "avg_speed": 51.0,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 17.34,
+     "frames": 867,
+     "score": 913.3,
+     "offtrack_pct": 0.0,
+     "avg_speed": 52.0,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": true,
+     "lap_s": 23.74,
+     "frames": 1187,
+     "score": 881.3,
+     "offtrack_pct": 0.0,
+     "avg_speed": 49.0,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": true,
+     "lap_s": 21.88,
+     "frames": 1094,
+     "score": 890.6,
+     "offtrack_pct": 0.2,
+     "avg_speed": 50.9,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": true,
+     "lap_s": 21.58,
+     "frames": 1079,
+     "score": 892.1,
+     "offtrack_pct": 0.8,
+     "avg_speed": 49.4,
      "reached_pct": 100.0,
      "crashed": false
     }
@@ -689,6 +802,118 @@
      "score": 881.3,
      "offtrack_pct": 1.2,
      "avg_speed": 45.4,
+     "reached_pct": 100.0,
+     "crashed": false
+    }
+   ]
+  },
+  {
+   "id": "ppo32",
+   "model": "ppo",
+   "title": "PPO 32: the finer view",
+   "why": "PPO 16's recipe with 32 forward rays (p15), the only PPO step that finished all five race tracks on both seeds.\nTrained from scratch for 8 hours.",
+   "outcome": "Fast but restless. It lapped all five validation tracks after 5 minutes; that checkpoint finishes 4 of 5 race tracks, slowly (32.1 s, misses track 21). Its fastest checkpoint, at 1 h 24 min, finishes all five race tracks in 22.9 s, with the quickest single laps of any PPO car (16.1 s on track 3) but 35.7 s on track 34. After that it drifted: by hour 7 it finished almost no validation tracks (0.2 of 5 on average). With 32 rays it trains at about 880 frames/s against PPO 16's 1300.",
+   "seed_runs": null,
+   "kept_seed": null,
+   "action_smoothing": 0.1,
+   "controls": "raw3",
+   "action_repeat": 4,
+   "parent": "p15_raw3_r4_g995_32rays",
+   "lidar_rays": 32,
+   "lidar_fov": 240.0,
+   "train": {
+    "entropy-coef": 0.005,
+    "normalize-reward": true,
+    "num-envs": 8,
+    "batch-size": 256,
+    "offtrack-penalty": 0.0,
+    "allow-multiple-laps": false,
+    "max-episode-steps": 2000,
+    "eval-frequency": 0,
+    "checkpoint-frequency": 0,
+    "lap-check-frequency": 25000,
+    "n-steps": 256,
+    "gamma": 0.995,
+    "max-hours": 8,
+    "total-timesteps": 100000000
+   },
+   "neat_config": {},
+   "imported": false,
+   "note": "",
+   "hardware": {
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "threads": 8,
+    "gpu": false
+   },
+   "commit": "9ccf0f3",
+   "trained_on": "2026-10-17",
+   "train_seconds": 5052.0,
+   "selected": {
+    "timestep": 4300000
+   },
+   "size": {
+    "params": 153607,
+    "label": "256×256 MLP"
+   },
+   "summary": {
+    "finished": 5,
+    "lap_s": 22.88,
+    "score": 885.6,
+    "offtrack_pct": 2.2
+   },
+   "tracks": [
+    {
+     "seed": 3,
+     "finished": true,
+     "lap_s": 16.06,
+     "frames": 803,
+     "score": 919.7,
+     "offtrack_pct": 2.4,
+     "avg_speed": 59.0,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 11,
+     "finished": true,
+     "lap_s": 17.14,
+     "frames": 857,
+     "score": 914.3,
+     "offtrack_pct": 0.0,
+     "avg_speed": 52.1,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 21,
+     "finished": true,
+     "lap_s": 23.88,
+     "frames": 1194,
+     "score": 880.6,
+     "offtrack_pct": 1.3,
+     "avg_speed": 49.3,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 34,
+     "finished": true,
+     "lap_s": 35.7,
+     "frames": 1785,
+     "score": 821.5,
+     "offtrack_pct": 7.0,
+     "avg_speed": 53.5,
+     "reached_pct": 100.0,
+     "crashed": false
+    },
+    {
+     "seed": 55,
+     "finished": true,
+     "lap_s": 21.64,
+     "frames": 1082,
+     "score": 891.8,
+     "offtrack_pct": 0.3,
+     "avg_speed": 49.4,
      "reached_pct": 100.0,
      "crashed": false
     }

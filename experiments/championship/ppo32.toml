@@ -13,6 +13,10 @@ action_smoothing = 0.1
 controls = "raw3"
 action_repeat = 4
 
+outcome = """
+Fast but restless. It lapped all five validation tracks after 5 minutes; that checkpoint finishes 4 of 5 race tracks, slowly (32.1 s, misses track 21). Its fastest checkpoint, at 1 h 24 min, finishes all five race tracks in 22.9 s, with the quickest single laps of any PPO car (16.1 s on track 3) but 35.7 s on track 34. After that it drifted: by hour 7 it finished almost no validation tracks (0.2 of 5 on average). With 32 rays it trains at about 880 frames/s against PPO 16's 1300.
+"""
+
 [train]
 entropy-coef = 0.005
 normalize-reward = true

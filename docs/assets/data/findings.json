@@ -62,11 +62,20 @@
  },
  {
   "title": "Fast and safe pull against each other",
-  "text": "In the Championship, NEAT Smart's stronger speed bonus produced the quickest laps of any car (16.4 s) but a car that crashes out on three of five tracks. NEAT 16, with the gentler bonus, laps 4 s slower but finishes everywhere. More rays (NEAT 32) also bought speed, at four times the training.",
+  "text": "In the Championship, NEAT Smart's stronger speed bonus produced the quickest laps of any car (16.4 s) but a car that crashes out on three of five tracks. NEAT 16, with the gentler bonus, laps 4 s slower but finishes everywhere. On the PPO ladder a lap-time bonus also cost reliability (p16).",
   "steps": [
    "neatsmart",
    "neat16",
-   "neat32"
+   "p16_raw3_r4_g995_lap_bonus"
+  ]
+ },
+ {
+  "title": "Let PPO settle: ease the learning rate off",
+  "text": "With a constant learning rate, PPO's best driver came early and long runs drifted away from it: PPO 32 held all five validation tracks in 17% of lap checks in hour 1 and 0% by hour 6. PPO Smart is the same car with a learning rate easing to zero; it got steadier the longer it trained (59% in its last hour) and became the fastest Championship car to finish all five race tracks, 20.6 s, just ahead of NEAT 16.",
+  "steps": [
+   "ppo32",
+   "pposmart",
+   "neat16"
   ]
  }
 ]

@@ -15,6 +15,10 @@ action_smoothing = 0.1
 controls = "raw3"
 action_repeat = 4
 
+outcome = """
+The steady one, and the fastest Championship car that finishes every race track: 20.58 s on all five, 0.2 s quicker than NEAT 16 and almost never on the grass (0.2% of frames). The easing learning rate did what it was meant to: where PPO 32 fell apart after hour 2, PPO Smart got steadier, holding all five validation tracks in 59% of lap checks in its last hour against PPO 32's 0%. Its fastest checkpoint came at 5 h 21 min. The schedule was sized at 20M frames and finished after 6 h 25 min, under the 8 h budget. Its 4-minute checkpoint finishes 4 of 5 race tracks (34.3 s).
+"""
+
 [train]
 entropy-coef = 0.005
 normalize-reward = true
